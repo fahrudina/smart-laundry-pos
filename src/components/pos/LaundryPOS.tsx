@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useNavigate } from 'react-router-dom';
 import { useCustomers } from '@/hooks/useCustomers';
-import { useOrders } from '@/hooks/useOrders';
+import { useCreateOrder } from '@/hooks/useOrdersOptimized';
 import { useToast } from '@/hooks/use-toast';
 
 interface Service {
@@ -93,7 +93,7 @@ export const LaundryPOS = () => {
   
   const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading } = useCustomers();
-  const { createOrder, loading: orderLoading } = useOrders();
+  const createOrderMutation = useCreateOrder();
   const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -317,7 +317,7 @@ export const LaundryPOS = () => {
         estimated_completion: completionDate?.toISOString(),
       };
 
-      await createOrder(orderData);
+      await createOrderMutation.mutateAsync(orderData);
 
       // Clear the current order after successful payment
       setCurrentOrder([]);
@@ -376,7 +376,7 @@ export const LaundryPOS = () => {
         estimated_completion: completionDate?.toISOString(),
       };
 
-      await createOrder(orderData);
+      await createOrderMutation.mutateAsync(orderData);
 
       // Clear the current order after successful creation
       setCurrentOrder([]);
@@ -630,20 +630,20 @@ export const LaundryPOS = () => {
                 <Button 
                   className="w-full bg-gradient-accent hover:opacity-90 text-accent-foreground font-semibold py-2 sm:py-3 text-sm sm:text-base" 
                   onClick={processPayment}
-                  disabled={orderLoading || currentOrder.length === 0 || !customerName || !customerPhone}
+                  disabled={createOrderMutation.isPending || currentOrder.length === 0 || !customerName || !customerPhone}
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
-                  {orderLoading ? "Processing..." : "Process Payment"}
+                  {createOrderMutation.isPending ? "Processing..." : "Process Payment"}
                 </Button>
                 
                 <Button 
                   variant="default" 
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 sm:py-3 text-sm sm:text-base"
                   onClick={createDraftOrder}
-                  disabled={orderLoading || currentOrder.length === 0 || !customerName || !customerPhone}
+                  disabled={createOrderMutation.isPending || currentOrder.length === 0 || !customerName || !customerPhone}
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
-                  {orderLoading ? "Creating..." : "Create Order (Draft)"}
+                  {createOrderMutation.isPending ? "Creating..." : "Create Order (Draft)"}
                 </Button>
                 
                 <div className="grid grid-cols-2 gap-2">
@@ -651,7 +651,7 @@ export const LaundryPOS = () => {
                     variant="outline" 
                     className="text-xs sm:text-sm py-2" 
                     onClick={createDraftOrder}
-                    disabled={orderLoading || currentOrder.length === 0 || !customerName || !customerPhone}
+                    disabled={createOrderMutation.isPending || currentOrder.length === 0 || !customerName || !customerPhone}
                   >
                     <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                     Save Draft
