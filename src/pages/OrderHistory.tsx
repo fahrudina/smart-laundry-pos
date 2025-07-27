@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Clock, Search, Eye, Filter, Calendar, AlertTriangle, Edit, X, ChevronDown } from 'lucide-react';
+import { Clock, Search, Eye, Filter, Calendar, AlertTriangle, Edit, X, ChevronDown, ArrowLeft, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useNavigate } from 'react-router-dom';
 import { useOrders } from '@/hooks/useOrders';
 import { OrderDetailsDialog } from '@/components/pos/OrderDetailsDialog';
 import { formatDate, isDateOverdue } from '@/lib/utils';
@@ -24,6 +25,7 @@ interface SortState {
 }
 
 export const OrderHistory = () => {
+  const navigate = useNavigate();
   const { orders, loading, getAllOrders, updatePaymentStatus, updateExecutionStatus } = useOrders();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -231,6 +233,15 @@ export const OrderHistory = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/')}
+              className="flex items-center space-x-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to POS</span>
+            </Button>
             <Clock className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold text-foreground">Order History</h1>
             {hasActiveFilters && (
