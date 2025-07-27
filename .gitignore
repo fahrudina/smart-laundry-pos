@@ -23,3 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 supabase/.temp/
+.vercel
+public/favicon-generator.html

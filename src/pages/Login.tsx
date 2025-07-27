@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface LoginForm {
   email: string;
@@ -24,6 +25,8 @@ export const Login: React.FC = () => {
   const { user, loading, signIn, signUp } = useAuth();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+  
+  usePageTitle('Login');
 
   const loginForm = useForm<LoginForm>();
   const signUpForm = useForm<SignUpForm>();

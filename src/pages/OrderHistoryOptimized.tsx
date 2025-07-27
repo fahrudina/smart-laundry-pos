@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Clock, Search, Eye, Filter, Calendar, AlertTriangle, Edit, X, ChevronDown, ArrowLeft, Home, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { useOrders, useUpdatePaymentStatus, useUpdateExecutionStatus, OrderFilte
 import { OrderDetailsDialog } from '@/components/pos/OrderDetailsDialog';
 import { VirtualizedOrderList } from '@/components/orders/VirtualizedOrderList';
 import { formatDate, isDateOverdue } from '@/lib/utils';
+import { usePageTitle, updatePageTitleWithCount } from '@/hooks/usePageTitle';
 
 interface FilterState {
   executionStatus: string;
@@ -27,7 +28,10 @@ interface SortState {
 
 export const OrderHistory = () => {
   const navigate = useNavigate();
+  usePageTitle('Order History');
+  
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -43,13 +47,25 @@ export const OrderHistory = () => {
     direction: 'desc',
   });
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Only search if there are at least 2 characters or search is empty
+      if (searchTerm.length === 0 || searchTerm.length >= 2) {
+        setDebouncedSearchTerm(searchTerm);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // Memoize query filters to prevent unnecessary re-renders
   const queryFilters = useMemo<OrderFilters>(() => ({
     executionStatus: filters.executionStatus !== 'all' ? filters.executionStatus : undefined,
     paymentStatus: filters.paymentStatus !== 'all' ? filters.paymentStatus : undefined,
     paymentMethod: filters.paymentMethod !== 'all' ? filters.paymentMethod : undefined,
-    searchTerm: searchTerm.trim() || undefined,
-  }), [filters.executionStatus, filters.paymentStatus, filters.paymentMethod, searchTerm]);
+    searchTerm: debouncedSearchTerm.trim() || undefined,
+  }), [filters.executionStatus, filters.paymentStatus, filters.paymentMethod, debouncedSearchTerm]);
 
   // Use optimized hooks
   const { 
@@ -151,6 +167,7 @@ export const OrderHistory = () => {
       isOverdue: false,
     });
     setSearchTerm('');
+    setDebouncedSearchTerm('');
     setSortBy({
       field: 'created_at',
       direction: 'desc',
@@ -166,7 +183,18 @@ export const OrderHistory = () => {
     (filters.paymentMethod && filters.paymentMethod !== 'all') ||
     (filters.dateRange && filters.dateRange !== 'all') ||
     filters.isOverdue ||
-    searchTerm.trim().length > 0;
+    debouncedSearchTerm.trim().length > 0;
+
+  // Update page title with order count
+  useEffect(() => {
+    if (debouncedSearchTerm) {
+      updatePageTitleWithCount(`Search: "${debouncedSearchTerm}"`, filteredOrders.length);
+    } else if (hasActiveFilters) {
+      updatePageTitleWithCount('Filtered Orders', filteredOrders.length);
+    } else {
+      updatePageTitleWithCount('Order History', totalCount);
+    }
+  }, [debouncedSearchTerm, filteredOrders.length, totalCount, hasActiveFilters]);
 
   const getExecutionStatusColor = (status: string) => {
     switch (status) {
@@ -283,7 +311,7 @@ export const OrderHistory = () => {
             <div className="relative">
               <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search orders, customers, phone..."
+                placeholder="Search by customer name, phone, or order ID (min 2 chars)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 w-80"
@@ -292,11 +320,19 @@ export const OrderHistory = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setSearchTerm('')}
+                  onClick={() => {
+                    setSearchTerm('');
+                    setDebouncedSearchTerm('');
+                  }}
                   className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
                 >
                   <X className="h-3 w-3" />
                 </Button>
+              )}
+              {searchTerm !== debouncedSearchTerm && (
+                <div className="absolute -bottom-6 left-0 text-xs text-muted-foreground">
+                  Searching...
+                </div>
               )}
             </div>
 
@@ -307,7 +343,7 @@ export const OrderHistory = () => {
                   Filters
                   {hasActiveFilters && (
                     <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
-                      {Object.values(filters).filter(Boolean).length + (searchTerm ? 1 : 0)}
+                      {Object.values(filters).filter(Boolean).length + (debouncedSearchTerm ? 1 : 0)}
                     </Badge>
                   )}
                   <ChevronDown className="h-4 w-4 ml-2" />

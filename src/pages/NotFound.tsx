@@ -1,8 +1,11 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 const NotFound = () => {
   const location = useLocation();
+  
+  usePageTitle('Page Not Found');
 
   useEffect(() => {
     console.error(

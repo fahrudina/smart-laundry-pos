@@ -65,48 +65,136 @@ export const useOrdersInfinite = (filters?: OrderFilters) => {
   return useInfiniteQuery({
     queryKey: [...ORDERS_QUERY_KEY, 'infinite', filters],
     queryFn: async ({ pageParam = 0 }) => {
-      const from = pageParam * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
+      try {
+        const from = pageParam * PAGE_SIZE;
+        const to = from + PAGE_SIZE - 1;
 
-      let query = supabase
-        .from('orders')
-        .select(`
-          *,
-          order_items (
-            service_name,
-            service_price,
-            quantity,
-            line_total,
-            estimated_completion
-          )
-        `, { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .order('id', { ascending: false })
-        .range(from, to);
+        console.log('Attempting to query orders table...');
+        console.log('Query filters:', filters);
 
-      // Apply filters if provided
-      if (filters?.executionStatus && filters.executionStatus !== 'all') {
-        query = query.eq('execution_status', filters.executionStatus);
-      }
-      if (filters?.paymentStatus && filters.paymentStatus !== 'all') {
-        query = query.eq('payment_status', filters.paymentStatus);
-      }
-      if (filters?.paymentMethod && filters.paymentMethod !== 'all') {
-        query = query.eq('payment_method', filters.paymentMethod);
-      }
-      if (filters?.searchTerm) {
-        query = query.or(`customer_name.ilike.%${filters.searchTerm}%,customer_phone.ilike.%${filters.searchTerm}%,id.ilike.%${filters.searchTerm}%`);
-      }
+        // First, try a simple query without joins to test basic connectivity
+        const { data: testData, error: testError } = await supabase
+          .from('orders')
+          .select('id, customer_name, customer_phone, created_at')
+          .limit(1);
 
-      const { data, error, count } = await query;
-      if (error) throw error;
+        console.log('Test query result:', { testData, testError });
 
-      return {
-        data: data || [],
-        count: count || 0,
-        nextCursor: data && data.length === PAGE_SIZE ? pageParam + 1 : undefined,
-        hasMore: data && data.length === PAGE_SIZE && (pageParam + 1) * PAGE_SIZE < (count || 0),
-      };
+        if (testError) {
+          console.error('Test query failed:', testError);
+          throw testError;
+        }
+
+        // If test query works, proceed with full query
+        let query = supabase
+          .from('orders')
+          .select(`
+            *,
+            order_items (
+              service_name,
+              service_price,
+              quantity,
+              line_total,
+              estimated_completion
+            )
+          `, { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(from, to);
+
+        // Apply filters if provided
+        if (filters?.executionStatus && filters.executionStatus !== 'all') {
+          query = query.eq('execution_status', filters.executionStatus);
+        }
+        if (filters?.paymentStatus && filters.paymentStatus !== 'all') {
+          query = query.eq('payment_status', filters.paymentStatus);
+        }
+        if (filters?.paymentMethod && filters.paymentMethod !== 'all') {
+          query = query.eq('payment_method', filters.paymentMethod);
+        }
+        if (filters?.searchTerm) {
+          // Search in customer name, phone, order ID with case-insensitive matching
+          const searchPattern = filters.searchTerm.toLowerCase().trim();
+          console.log('Search pattern:', searchPattern);
+          
+          // Build comprehensive phone search patterns
+          let phoneSearchQueries = [`customer_phone.ilike.%${searchPattern}%`];
+          
+          // If search contains only digits, create multiple phone format variations
+          const digitsOnly = searchPattern.replace(/\D/g, '');
+          if (digitsOnly.length > 0) {
+            // Try various Indonesian phone number formats
+            const variations = [
+              digitsOnly,                    // Raw digits: 811234567
+              `0${digitsOnly}`,             // With leading zero: 0811234567
+              `+62${digitsOnly}`,           // With country code: +62811234567
+              `62${digitsOnly}`,            // Country code without +: 62811234567
+              `0${digitsOnly.substring(2)}`, // Remove first two digits and add 0: 0811234567 from 62811234567
+              digitsOnly.substring(2),       // Remove first two digits: 811234567 from 62811234567
+            ];
+            
+            // Add formatted versions with spaces, dashes, etc.
+            variations.forEach(variation => {
+              phoneSearchQueries.push(`customer_phone.ilike.%${variation}%`);
+              // Also try with common separators
+              if (variation.length > 3) {
+                const formatted1 = `${variation.substring(0, 4)} ${variation.substring(4)}`;
+                const formatted2 = `${variation.substring(0, 4)}-${variation.substring(4)}`;
+                phoneSearchQueries.push(`customer_phone.ilike.%${formatted1}%`);
+                phoneSearchQueries.push(`customer_phone.ilike.%${formatted2}%`);
+              }
+            });
+          }
+          
+          // If search starts with 0, also try with +62 instead
+          if (searchPattern.startsWith('0')) {
+            const withCountryCode = `+62${searchPattern.substring(1)}`;
+            const withCountryCodeNoPlus = `62${searchPattern.substring(1)}`;
+            phoneSearchQueries.push(`customer_phone.ilike.%${withCountryCode}%`);
+            phoneSearchQueries.push(`customer_phone.ilike.%${withCountryCodeNoPlus}%`);
+          }
+          
+          // If search starts with +62 or 62, also try with 0 instead
+          if (searchPattern.startsWith('+62')) {
+            const withZero = `0${searchPattern.substring(3)}`;
+            phoneSearchQueries.push(`customer_phone.ilike.%${withZero}%`);
+          } else if (searchPattern.startsWith('62') && digitsOnly === searchPattern) {
+            const withZero = `0${searchPattern.substring(2)}`;
+            phoneSearchQueries.push(`customer_phone.ilike.%${withZero}%`);
+          }
+          
+          // Remove duplicates
+          phoneSearchQueries = [...new Set(phoneSearchQueries)];
+          
+          const searchQuery = [
+            `customer_name.ilike.%${searchPattern}%`,
+            ...phoneSearchQueries
+          ].join(',');
+          
+          console.log('Phone search variations:', phoneSearchQueries);
+          console.log('Full search query:', searchQuery);
+          query = query.or(searchQuery);
+        }
+
+        const { data, error, count } = await query;
+        
+        console.log('Query result:', { data, error, count });
+        
+        if (error) {
+          console.error('Supabase query error:', error);
+          throw error;
+        }
+
+        return {
+          data: data || [],
+          count: count || 0,
+          nextCursor: data && data.length === PAGE_SIZE ? pageParam + 1 : undefined,
+          hasMore: data && data.length === PAGE_SIZE && (pageParam + 1) * PAGE_SIZE < (count || 0),
+        };
+      } catch (error) {
+        console.error('Query failed:', error);
+        throw error;
+      }
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: 0,
