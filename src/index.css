@@ -8,37 +8,62 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Professional laundry POS color scheme */
+    --background: 210 20% 98%;
+    --foreground: 215 25% 27%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 215 25% 27%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 215 25% 27%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Soft blue primary */
+    --primary: 205 87% 21%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Light blue secondary */
+    --secondary: 205 40% 94%;
+    --secondary-foreground: 215 25% 27%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Warm grey muted */
+    --muted: 210 17% 95%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Bright yellow accent */
+    --accent: 45 100% 51%;
+    --accent-foreground: 215 25% 27%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 210 20% 90%;
+    --input: 210 20% 95%;
+    --ring: 205 87% 21%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Professional POS system colors */
+    --pos-highlight: 205 87% 85%;
+    --pos-success: 120 45% 50%;
+    --pos-warning: 35 91% 62%;
+    --pos-info: 205 87% 21%;
+
+    /* Enhanced gradients for visual appeal */
+    --gradient-primary: linear-gradient(135deg, hsl(205 87% 21%), hsl(205 87% 31%));
+    --gradient-accent: linear-gradient(135deg, hsl(45 100% 51%), hsl(45 100% 61%));
+    --gradient-subtle: linear-gradient(180deg, hsl(210 20% 98%), hsl(210 17% 95%));
+
+    /* Professional shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(215 25% 27% / 0.08);
+    --shadow-medium: 0 4px 16px -4px hsl(215 25% 27% / 0.12);
+    --shadow-strong: 0 8px 32px -8px hsl(215 25% 27% / 0.16);
+
+    /* Smooth transitions */
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    --sidebar-background: 205 87% 21%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
 
