@@ -53,6 +53,9 @@ interface CreateOrderData {
 export const useOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
 
   const createOrder = async (orderData: CreateOrderData) => {
@@ -115,10 +118,16 @@ export const useOrders = () => {
     }
   };
 
-  const getAllOrders = async () => {
+  const getAllOrders = async (reset: boolean = false) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const pageSize = 10;
+      const page = reset ? 0 : currentPage;
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+
+      // Build the query with proper ordering
+      let query = supabase
         .from('orders')
         .select(`
           *,
@@ -129,11 +138,25 @@ export const useOrders = () => {
             line_total,
             estimated_completion
           )
-        `)
-        .order('created_at', { ascending: false });
+        `, { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(from, to);
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
-      setOrders(data || []);
+
+      if (reset) {
+        setOrders(data || []);
+        setCurrentPage(1);
+      } else {
+        setOrders(prev => [...prev, ...(data || [])]);
+        setCurrentPage(prev => prev + 1);
+      }
+
+      setTotalCount(count || 0);
+      setHasMore((data?.length || 0) === pageSize && (page + 1) * pageSize < (count || 0));
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast({
@@ -144,6 +167,17 @@ export const useOrders = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadMoreOrders = async () => {
+    if (!hasMore || loading) return;
+    await getAllOrders(false);
+  };
+
+  const refreshOrders = async () => {
+    setCurrentPage(0);
+    setHasMore(true);
+    await getAllOrders(true);
   };
 
   const getOrdersByCustomer = async (customerPhone: string) => {
@@ -205,7 +239,7 @@ export const useOrders = () => {
       });
 
       // Refresh orders
-      await getAllOrders();
+      await refreshOrders();
     } catch (error: any) {
       console.error('Error updating payment status:', error);
       toast({
@@ -242,7 +276,7 @@ export const useOrders = () => {
       });
 
       // Refresh orders
-      await getAllOrders();
+      await refreshOrders();
     } catch (error: any) {
       console.error('Error updating execution status:', error);
       toast({
@@ -259,8 +293,13 @@ export const useOrders = () => {
   return {
     orders,
     loading,
+    hasMore,
+    currentPage,
+    totalCount,
     createOrder,
     getAllOrders,
+    loadMoreOrders,
+    refreshOrders,
     getOrdersByCustomer,
     updatePaymentStatus,
     updateExecutionStatus,

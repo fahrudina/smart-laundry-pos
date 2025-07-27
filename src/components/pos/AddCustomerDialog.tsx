@@ -8,9 +8,10 @@ import { useCustomers } from '@/hooks/useCustomers';
 
 interface AddCustomerDialogProps {
   onCustomerAdded?: (customer: any) => void;
+  trigger?: React.ReactNode;
 }
 
-export const AddCustomerDialog = ({ onCustomerAdded }: AddCustomerDialogProps) => {
+export const AddCustomerDialog = ({ onCustomerAdded, trigger }: AddCustomerDialogProps) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -50,10 +51,12 @@ export const AddCustomerDialog = ({ onCustomerAdded }: AddCustomerDialogProps) =
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
-          <UserPlus className="h-4 w-4" />
-          Add New Customer
-        </Button>
+        {trigger || (
+          <Button variant="outline" className="gap-2">
+            <UserPlus className="h-4 w-4" />
+            Add New Customer
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

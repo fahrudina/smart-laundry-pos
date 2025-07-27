@@ -153,12 +153,68 @@ export type Database = {
           },
         ]
       }
+      users: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          is_active: boolean
+          password_hash: string
+          phone: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          password_hash: string
+          phone?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          password_hash?: string
+          phone?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_user: {
+        Args: {
+          user_email: string
+          user_password: string
+          user_full_name?: string
+          user_phone?: string
+          user_role?: string
+        }
+        Returns: string
+      }
+      verify_user_credentials: {
+        Args: { user_email: string; user_password: string }
+        Returns: {
+          user_id: string
+          email: string
+          full_name: string
+          phone: string
+          role: string
+          is_active: boolean
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

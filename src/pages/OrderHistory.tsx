@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Clock, Search, Eye, Filter, Calendar, AlertTriangle, Edit, X, ChevronDown, ArrowLeft, Home } from 'lucide-react';
+import { Clock, Search, Eye, Filter, Calendar, AlertTriangle, Edit, X, ChevronDown, ArrowLeft, Home, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,7 +26,17 @@ interface SortState {
 
 export const OrderHistory = () => {
   const navigate = useNavigate();
-  const { orders, loading, getAllOrders, updatePaymentStatus, updateExecutionStatus } = useOrders();
+  const { 
+    orders, 
+    loading, 
+    hasMore, 
+    totalCount,
+    getAllOrders, 
+    loadMoreOrders,
+    refreshOrders,
+    updatePaymentStatus, 
+    updateExecutionStatus 
+  } = useOrders();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
@@ -44,7 +54,7 @@ export const OrderHistory = () => {
   });
 
   useEffect(() => {
-    getAllOrders();
+    refreshOrders();
   }, []);
 
   // Enhanced filtering function with sorting
@@ -158,6 +168,8 @@ export const OrderHistory = () => {
       field: 'created_at',
       direction: 'desc',
     });
+    // Refresh orders when clearing filters
+    refreshOrders();
   };
 
   // Check if any filters are active
@@ -228,27 +240,51 @@ export const OrderHistory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-subtle p-6">
+    <div className="space-y-8">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/')}
+            className="p-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Order History</h1>
+            <p className="text-muted-foreground">
+              Manage and track all customer orders
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refreshOrders}
+            disabled={loading}
+            className="flex items-center space-x-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </Button>
+          <Button
+            variant="default"
+            onClick={() => navigate('/')}
+            className="flex items-center space-x-2"
+          >
+            <Home className="h-4 w-4" />
+            <span>New Order</span>
+          </Button>
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Search and Filters */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/')}
-              className="flex items-center space-x-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to POS</span>
-            </Button>
-            <Clock className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">Order History</h1>
-            {hasActiveFilters && (
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                {filteredOrders.length} of {orders.length} orders
-              </Badge>
-            )}
           </div>
           <div className="flex items-center space-x-4">
             <div className="relative">
@@ -695,6 +731,34 @@ export const OrderHistory = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+            
+            {/* Load More Button */}
+            {filteredOrders.length > 0 && hasMore && (
+              <div className="flex justify-center mt-6 mb-4">
+                <Button 
+                  variant="outline" 
+                  onClick={loadMoreOrders}
+                  disabled={loading}
+                  className="px-8 py-2"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                      Loading...
+                    </>
+                  ) : (
+                    'Load More Orders'
+                  )}
+                </Button>
+              </div>
+            )}
+            
+            {/* Summary */}
+            {filteredOrders.length > 0 && (
+              <div className="text-center text-sm text-muted-foreground mt-4 mb-4">
+                Showing {filteredOrders.length} of {totalCount} orders
               </div>
             )}
           </CardContent>

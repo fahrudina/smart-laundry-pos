@@ -9,7 +9,6 @@ import { useNavigate } from 'react-router-dom';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useOrders } from '@/hooks/useOrders';
 import { useToast } from '@/hooks/use-toast';
-import { AddCustomerDialog } from './AddCustomerDialog';
 
 interface Service {
   id: string;
@@ -193,14 +192,6 @@ export const LaundryPOS = () => {
     setTimeout(() => {
       setIsSelectingCustomer(false);
     }, 500); // Increased timeout to ensure all updates complete
-  };
-
-  // Handle new customer added
-  const handleCustomerAdded = (customer: any) => {
-    setCustomerPhone(customer.phone);
-    setCustomerName(customer.name);
-    setSearchResults([]);
-    setShowResults(false);
   };
 
   // Clear customer form
@@ -402,320 +393,286 @@ export const LaundryPOS = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      {/* Header */}
-      <header className="bg-card shadow-soft border-b">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-foreground">LaundryPOS Pro</h1>
-            <Badge variant="outline" className="bg-pos-highlight">
-              Station 1
-            </Badge>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm" onClick={() => navigate('/order-history')}>
-              <Clock className="h-4 w-4 mr-2" />
-              Order History
-            </Button>
-            <Button variant="outline" size="sm">
-              <User className="h-4 w-4 mr-2" />
-              Settings
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex">
-        {/* Main Content */}
-        <div className="flex-1 p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Customer Information */}
-            <Card className="lg:col-span-2 shadow-medium animate-fade-in">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <User className="h-5 w-5 mr-2 text-primary" />
-                  Customer Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Phone Number
-                      </label>
-                      {customerPhone && customerName && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={clearCustomerForm}
-                          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-                        >
-                          <X className="h-3 w-3 mr-1" />
-                          Clear
-                        </Button>
-                      )}
-                    </div>
-                    <div className="relative">
-                      <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
-                      {customerPhone && customerName && (
-                        <CheckCircle className="h-4 w-4 absolute right-3 top-3 text-green-500" />
-                      )}
-                      <Input
-                        placeholder="Search by phone..."
-                        value={customerPhone}
-                        onChange={(e) => {
-                          const newValue = e.target.value;
-                          setCustomerPhone(newValue);
-                          
-                          // If user is typing and the name field is filled, it means they want to search for a new customer
-                          // Clear the name field to allow new search
-                          if (customerName.trim().length > 0 && newValue !== customerPhone) {
-                            setCustomerName('');
-                          }
-                        }}
-                        onBlur={handlePhoneInputBlur}
-                        onFocus={() => {
-                          // Only show results if not currently selecting a customer, phone has enough characters,
-                          // form is not already filled, and there are search results
-                          const isFormFilled = customerPhone.length >= 3 && customerName.trim().length > 0;
-                          if (!isSelectingCustomer && customerPhone.length >= 3 && !isFormFilled && searchResults.length > 0) {
-                            setShowResults(true);
-                          }
-                        }}
-                        className="pl-10 pr-10"
-                      />
-                      {showResults && searchResults.length > 0 && (
-                        <div ref={dropdownRef} className="absolute z-10 w-full mt-1 bg-card border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                          {searchResults.map((customer) => (
-                            <div
-                              key={customer.id}
-                              className="p-3 hover:bg-secondary cursor-pointer border-b last:border-b-0"
-                              onMouseDown={(e) => {
-                                // Prevent blur event from firing before click
-                                e.preventDefault();
-                              }}
-                              onClick={() => handleCustomerSelect(customer)}
-                            >
-                              <div className="font-medium">{customer.name}</div>
-                              <div className="text-sm text-muted-foreground">{customer.phone}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                      Customer Name
-                    </label>
-                    <Input
-                      placeholder="Enter customer name..."
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                      Drop-off Date & Time
-                    </label>
-                    <Input
-                      type="datetime-local"
-                      value={dropOffDate.toISOString().slice(0, 16)}
-                      onChange={(e) => setDropOffDate(new Date(e.target.value))}
-                      className="w-full"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      This affects the estimated completion time for all services
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick Actions */}
-            <Card className="shadow-medium animate-fade-in">
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <AddCustomerDialog onCustomerAdded={handleCustomerAdded} />
-                <Button variant="outline" className="w-full justify-start">
-                  <Clock className="h-4 w-4 mr-2" />
-                  Check Order Status
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Recent Orders
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Services Grid */}
-            <Card className="lg:col-span-3 shadow-medium animate-scale-in">
-              <CardHeader>
-                <CardTitle>Services</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {services.map((service) => (
-                    <div
-                      key={service.id}
-                      className="p-4 border rounded-lg hover:shadow-soft transition-smooth cursor-pointer bg-card"
-                      onClick={() => addToOrder(service)}
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-foreground">{service.name}</h3>
-                        <Badge className={getCategoryColor(service.category)}>
-                          {service.category}
-                        </Badge>
-                      </div>
-                      <p className="text-2xl font-bold text-primary mb-1">
-                        ${service.price}
-                      </p>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground flex items-center">
-                          <Clock className="h-3 w-3 mr-1" />
-                          Duration: {service.duration}
-                        </p>
-                        <p className="text-xs text-green-600 font-medium">
-                          Ready: {formatDate(calculateFinishDate(service))}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Order Summary Sidebar */}
-        <div className="w-96 bg-card border-l shadow-strong">
-          <div className="p-6">
-            <h2 className="text-xl font-bold mb-4 flex items-center">
-              <ShoppingCart className="h-5 w-5 mr-2" />
-              Current Order
-            </h2>
-
-            {currentOrder.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <ShoppingCart className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>No items in order</p>
-                <p className="text-sm">Add services to get started</p>
+    <div className="space-y-6">
+      {/* Customer Information */}
+      <Card className="shadow-medium animate-fade-in">
+        <CardHeader>
+          <CardTitle className="flex items-center text-lg">
+            <User className="h-5 w-5 mr-2 text-primary" />
+            Customer Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-muted-foreground">
+                  Phone Number
+                </label>
+                {customerPhone && customerName && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearCustomerForm}
+                    className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Clear
+                  </Button>
+                )}
               </div>
-            ) : (
-              <>
-                <div className="space-y-3 mb-6">
-                  {currentOrder.map((item) => (
-                    <div key={item.service.id} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-foreground">{item.service.name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          ${item.service.price} × {item.quantity}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Ready: {formatDate(calculateFinishDate(item.service))}
-                        </p>
+              <div className="relative">
+                <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
+                {customerPhone && customerName && (
+                  <CheckCircle className="h-4 w-4 absolute right-3 top-3 text-green-500" />
+                )}
+                <Input
+                  placeholder="Search by phone..."
+                  value={customerPhone}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    setCustomerPhone(newValue);
+                    
+                    // If user is typing and the name field is filled, it means they want to search for a new customer
+                    // Clear the name field to allow new search
+                    if (customerName.trim().length > 0 && newValue !== customerPhone) {
+                      setCustomerName('');
+                    }
+                  }}
+                  onBlur={handlePhoneInputBlur}
+                  onFocus={() => {
+                    // Only show results if not currently selecting a customer, phone has enough characters,
+                    // form is not already filled, and there are search results
+                    const isFormFilled = customerPhone.length >= 3 && customerName.trim().length > 0;
+                    if (!isSelectingCustomer && customerPhone.length >= 3 && !isFormFilled && searchResults.length > 0) {
+                      setShowResults(true);
+                    }
+                  }}
+                  className="pl-10 pr-10"
+                />
+                {showResults && searchResults.length > 0 && (
+                  <div ref={dropdownRef} className="absolute z-10 w-full mt-1 bg-card border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {searchResults.map((customer) => (
+                      <div
+                        key={customer.id}
+                        className="p-3 hover:bg-secondary cursor-pointer border-b last:border-b-0"
+                        onMouseDown={(e) => {
+                          // Prevent blur event from firing before click
+                          e.preventDefault();
+                        }}
+                        onClick={() => handleCustomerSelect(customer)}
+                      >
+                        <div className="font-medium">{customer.name}</div>
+                        <div className="text-sm text-muted-foreground">{customer.phone}</div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updateQuantity(item.service.id, item.quantity - 1)}
-                        >
-                          -
-                        </Button>
-                        <span className="w-8 text-center">{item.quantity}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updateQuantity(item.service.id, item.quantity + 1)}
-                        >
-                          +
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <Separator className="mb-4" />
-
-                {/* Order Completion Information */}
-                {getOrderCompletionTime() && (
-                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <Clock className="h-4 w-4 mr-2 text-blue-600" />
-                      <span className="font-medium text-blue-900">Estimated Completion</span>
-                    </div>
-                    <p className="text-blue-800 font-semibold">
-                      {formatDate(getOrderCompletionTime()!)}
-                    </p>
-                    <p className="text-xs text-blue-600 mt-1">
-                      Drop-off: {formatDate(dropOffDate)}
-                    </p>
+                    ))}
                   </div>
                 )}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                Customer Name
+              </label>
+              <Input
+                placeholder="Enter customer name..."
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                Drop-off Date & Time
+              </label>
+              <Input
+                type="datetime-local"
+                value={dropOffDate.toISOString().slice(0, 16)}
+                onChange={(e) => setDropOffDate(new Date(e.target.value))}
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                This affects the estimated completion time for all services
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-                <div className="space-y-2 mb-6">
-                  <div className="flex justify-between text-lg">
-                    <span>Subtotal:</span>
-                    <span>${getTotalPrice().toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Tax (8.25%):</span>
-                    <span>${(getTotalPrice() * 0.0825).toFixed(2)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between text-xl font-bold">
-                    <span>Total:</span>
-                    <span>${(getTotalPrice() * 1.0825).toFixed(2)}</span>
-                  </div>
+      {/* Services Grid */}
+      <Card className="shadow-medium animate-scale-in">
+        <CardHeader>
+          <CardTitle className="text-lg">Services</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {services.map((service) => (
+              <div
+                key={service.id}
+                className="p-3 sm:p-4 border rounded-lg hover:shadow-soft transition-smooth cursor-pointer bg-card"
+                onClick={() => addToOrder(service)}
+              >
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2">
+                  <h3 className="font-semibold text-foreground text-sm sm:text-base">{service.name}</h3>
+                  <Badge className={`${getCategoryColor(service.category)} mt-1 sm:mt-0 w-fit`}>
+                    {service.category}
+                  </Badge>
                 </div>
+                <p className="text-lg sm:text-2xl font-bold text-primary mb-1">
+                  ${service.price}
+                </p>
+                <div className="space-y-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    Duration: {service.duration}
+                  </p>
+                  <p className="text-xs text-green-600 font-medium">
+                    Ready: {formatDate(calculateFinishDate(service))}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-                <div className="space-y-3">
-                  <Button 
-                    className="w-full bg-gradient-accent hover:opacity-90 text-accent-foreground font-semibold py-3" 
-                    onClick={processPayment}
-                    disabled={orderLoading || currentOrder.length === 0 || !customerName || !customerPhone}
-                  >
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    {orderLoading ? "Processing..." : "Process Payment"}
-                  </Button>
-                  
-                  <Button 
-                    variant="default" 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    onClick={createDraftOrder}
-                    disabled={orderLoading || currentOrder.length === 0 || !customerName || !customerPhone}
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    {orderLoading ? "Creating..." : "Create Order (Draft)"}
-                  </Button>
-                  
+      {/* Current Order */}
+      <Card className="bg-card shadow-strong">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center">
+            <ShoppingCart className="h-5 w-5 mr-2" />
+            Current Order
+            {currentOrder.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {currentOrder.reduce((sum, item) => sum + item.quantity, 0)} items
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 lg:p-6">
+          {currentOrder.length === 0 ? (
+            <div className="text-center py-6 sm:py-8 text-muted-foreground">
+              <ShoppingCart className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 opacity-50" />
+              <p className="text-sm sm:text-base">No items in order</p>
+              <p className="text-xs sm:text-sm">Add services to get started</p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
+                {currentOrder.map((item) => (
+                  <div key={item.service.id} className="flex items-center justify-between p-2 sm:p-3 bg-secondary rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{item.service.name}</h4>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        ${item.service.price} × {item.quantity}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
+                        Ready: {formatDate(calculateFinishDate(item.service))}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-1 sm:space-x-2 ml-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateQuantity(item.service.id, item.quantity - 1)}
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                      >
+                        -
+                      </Button>
+                      <span className="w-6 sm:w-8 text-center text-sm">{item.quantity}</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateQuantity(item.service.id, item.quantity + 1)}
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Separator className="mb-4" />
+
+              {/* Order Completion Information */}
+              {getOrderCompletionTime() && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <Clock className="h-4 w-4 mr-2 text-blue-600" />
+                    <span className="font-medium text-blue-900">Estimated Completion</span>
+                  </div>
+                  <p className="text-blue-800 font-semibold">
+                    {formatDate(getOrderCompletionTime()!)}
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Drop-off: {formatDate(dropOffDate)}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-2 mb-4 sm:mb-6">
+                <div className="flex justify-between text-sm sm:text-lg">
+                  <span>Subtotal:</span>
+                  <span>${getTotalPrice().toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
+                  <span>Tax (8.25%):</span>
+                  <span>${(getTotalPrice() * 0.0825).toFixed(2)}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between text-lg sm:text-xl font-bold">
+                  <span>Total:</span>
+                  <span>${(getTotalPrice() * 1.0825).toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2 sm:space-y-3">
+                <Button 
+                  className="w-full bg-gradient-accent hover:opacity-90 text-accent-foreground font-semibold py-2 sm:py-3 text-sm sm:text-base" 
+                  onClick={processPayment}
+                  disabled={orderLoading || currentOrder.length === 0 || !customerName || !customerPhone}
+                >
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  {orderLoading ? "Processing..." : "Process Payment"}
+                </Button>
+                
+                <Button 
+                  variant="default" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 sm:py-3 text-sm sm:text-base"
+                  onClick={createDraftOrder}
+                  disabled={orderLoading || currentOrder.length === 0 || !customerName || !customerPhone}
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  {orderLoading ? "Creating..." : "Create Order (Draft)"}
+                </Button>
+                
+                <div className="grid grid-cols-2 gap-2">
                   <Button 
                     variant="outline" 
-                    className="w-full" 
+                    className="text-xs sm:text-sm py-2" 
                     onClick={createDraftOrder}
                     disabled={orderLoading || currentOrder.length === 0 || !customerName || !customerPhone}
                   >
-                    <Clock className="h-4 w-4 mr-2" />
-                    Save for Later
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    Save Draft
                   </Button>
                   
-                  <Button variant="ghost" className="w-full text-destructive" onClick={() => {
-                    setCurrentOrder([]);
-                    clearCustomerForm();
-                  }}>
-                    Clear Order
+                  <Button 
+                    variant="ghost" 
+                    className="text-destructive text-xs sm:text-sm py-2" 
+                    onClick={() => {
+                      setCurrentOrder([]);
+                      clearCustomerForm();
+                    }}
+                  >
+                    Clear All
                   </Button>
                 </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

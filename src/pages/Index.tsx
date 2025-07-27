@@ -1,12 +1,14 @@
 import { LaundryPOS } from '@/components/pos/LaundryPOS';
-import { Toaster } from '@/components/ui/toaster';
 
 const Index = () => {
   return (
-    <>
+    <div className="space-y-8">
+      {/* Page Header */}
+     
+
+      {/* POS Content */}
       <LaundryPOS />
-      <Toaster />
-    </>
+    </div>
   );
 };
 

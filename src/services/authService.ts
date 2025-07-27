@@ -1,0 +1,172 @@
+import { supabase } from '@/integrations/supabase/client';
+
+export interface User {
+  id: string;
+  email: string;
+  full_name?: string;
+  phone?: string;
+  role: string;
+  is_active: boolean;
+}
+
+export interface AuthSession {
+  user: User;
+  token: string;
+  expires_at: number;
+}
+
+class AuthService {
+  private static instance: AuthService;
+  private session: AuthSession | null = null;
+
+  private constructor() {
+    // Load session from localStorage on initialization
+    this.loadSession();
+  }
+
+  static getInstance(): AuthService {
+    if (!AuthService.instance) {
+      AuthService.instance = new AuthService();
+    }
+    return AuthService.instance;
+  }
+
+  private saveSession(session: AuthSession): void {
+    localStorage.setItem('auth_session', JSON.stringify(session));
+    this.session = session;
+  }
+
+  private loadSession(): void {
+    try {
+      const stored = localStorage.getItem('auth_session');
+      if (stored) {
+        const session = JSON.parse(stored) as AuthSession;
+        // Check if session is still valid
+        if (Date.now() < session.expires_at) {
+          this.session = session;
+        } else {
+          this.clearSession();
+        }
+      }
+    } catch (error) {
+      console.error('Error loading session:', error);
+      this.clearSession();
+    }
+  }
+
+  private clearSession(): void {
+    localStorage.removeItem('auth_session');
+    this.session = null;
+  }
+
+  private generateToken(): string {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  }
+
+  async signUp(email: string, password: string, fullName?: string, phone?: string): Promise<User> {
+    try {
+      const { data, error } = await supabase.rpc('create_user', {
+        user_email: email,
+        user_password: password,
+        user_full_name: fullName || null,
+        user_phone: phone || null,
+        user_role: 'staff'
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Fetch the created user
+      const { data: userData, error: fetchError } = await supabase
+        .from('users')
+        .select('id, email, full_name, phone, role, is_active')
+        .eq('id', data)
+        .single();
+
+      if (fetchError) {
+        throw new Error(fetchError.message);
+      }
+
+      const user: User = {
+        id: userData.id,
+        email: userData.email,
+        full_name: userData.full_name,
+        phone: userData.phone,
+        role: userData.role,
+        is_active: userData.is_active
+      };
+
+      // Create session
+      const session: AuthSession = {
+        user,
+        token: this.generateToken(),
+        expires_at: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+      };
+
+      this.saveSession(session);
+      return user;
+    } catch (error) {
+      console.error('Sign up error:', error);
+      throw error;
+    }
+  }
+
+  async signIn(email: string, password: string): Promise<User> {
+    try {
+      const { data, error } = await supabase.rpc('verify_user_credentials', {
+        user_email: email,
+        user_password: password
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('Invalid email or password');
+      }
+
+      const userData = data[0];
+      const user: User = {
+        id: userData.user_id,
+        email: userData.email,
+        full_name: userData.full_name,
+        phone: userData.phone,
+        role: userData.role,
+        is_active: userData.is_active
+      };
+
+      // Create session
+      const session: AuthSession = {
+        user,
+        token: this.generateToken(),
+        expires_at: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+      };
+
+      this.saveSession(session);
+      return user;
+    } catch (error) {
+      console.error('Sign in error:', error);
+      throw error;
+    }
+  }
+
+  signOut(): void {
+    this.clearSession();
+  }
+
+  getCurrentUser(): User | null {
+    return this.session?.user || null;
+  }
+
+  getSession(): AuthSession | null {
+    return this.session;
+  }
+
+  isAuthenticated(): boolean {
+    return this.session !== null && Date.now() < this.session.expires_at;
+  }
+}
+
+export const authService = AuthService.getInstance();
