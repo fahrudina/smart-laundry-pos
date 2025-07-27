@@ -261,106 +261,128 @@ export const OrderHistory = () => {
   }, [hasMore, loading, loadMore]);
 
   return (
-    <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="p-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Order History</h1>
-            <p className="text-muted-foreground">
-              Manage and track all customer orders
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refresh()}
-            disabled={loading || isRefreshing}
-            className="flex items-center space-x-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </Button>
-          <Button
-            variant="default"
-            onClick={() => navigate('/')}
-            className="flex items-center space-x-2"
-          >
-            <Home className="h-4 w-4" />
-            <span>New Order</span>
-          </Button>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto">
-        {/* Search and Filters */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by customer name, phone, or order ID (min 2 chars)..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-80"
-              />
-              {searchTerm && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setDebouncedSearchTerm('');
-                  }}
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
-              {searchTerm !== debouncedSearchTerm && (
-                <div className="absolute -bottom-6 left-0 text-xs text-muted-foreground">
-                  Searching...
-                </div>
-              )}
+    <div className="min-h-screen bg-gray-50 -mx-4 sm:-mx-6 lg:-mx-8 -my-8">
+      <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+        {/* Mobile-First Page Header */}
+        <div className="bg-white border-b px-4 py-3 sm:px-6 lg:px-8 sm:bg-transparent sm:border-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/')}
+                className="p-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Order History</h1>
+                <p className="text-sm text-muted-foreground hidden sm:block">
+                  Manage and track all customer orders
+                </p>
+              </div>
             </div>
+            
+            {/* Mobile Actions */}
+            <div className="flex items-center space-x-2 sm:hidden">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refresh()}
+                disabled={loading || isRefreshing}
+                className="p-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+            
+            {/* Desktop Actions */}
+            <div className="hidden sm:flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refresh()}
+                disabled={loading || isRefreshing}
+                className="flex items-center space-x-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </Button>
+              <Button
+                variant="default"
+                onClick={() => navigate('/')}
+                className="flex items-center space-x-2"
+              >
+                <Home className="h-4 w-4" />
+                <span>New Order</span>
+              </Button>
+            </div>
+          </div>
+        </div>
 
-            <Popover open={showFilters} onOpenChange={setShowFilters}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className={hasActiveFilters ? 'bg-blue-50 border-blue-200' : ''}>
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filters
-                  {hasActiveFilters && (
-                    <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
-                      {Object.values(filters).filter(Boolean).length + (debouncedSearchTerm ? 1 : 0)}
-                    </Badge>
-                  )}
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80" align="end">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium">Filters</h4>
-                    {hasActiveFilters && (
-                      <Button variant="ghost" size="sm" onClick={clearFilters}>
-                        Clear All
-                      </Button>
-                    )}
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            {/* Mobile-Optimized Search and Filters */}
+            <div className="space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between mb-6">
+              {/* Search Bar - Full Width on Mobile */}
+              <div className="relative order-2 sm:order-1">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search by customer name, phone, or order ID (min 2 chars)..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-full sm:w-80"
+                />
+                {searchTerm && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setDebouncedSearchTerm('');
+                    }}
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+                {searchTerm !== debouncedSearchTerm && (
+                  <div className="absolute -bottom-6 left-0 text-xs text-muted-foreground">
+                    Searching...
                   </div>
+                )}
+              </div>
 
-                  <div className="space-y-3">
+              {/* Filter Button */}
+              <div className="order-1 sm:order-2">
+                <Popover open={showFilters} onOpenChange={setShowFilters}>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className={`w-full sm:w-auto ${hasActiveFilters ? 'bg-blue-50 border-blue-200' : ''}`}
+                    >
+                      <Filter className="h-4 w-4 mr-2" />
+                      Filters
+                      {hasActiveFilters && (
+                        <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
+                          {Object.values(filters).filter(Boolean).length + (debouncedSearchTerm ? 1 : 0)}
+                        </Badge>
+                      )}
+                      <ChevronDown className="h-4 w-4 ml-2" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-screen max-w-sm sm:w-80" align="end" side="bottom">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium">Filters</h4>
+                        {hasActiveFilters && (
+                          <Button variant="ghost" size="sm" onClick={clearFilters}>
+                            Clear All
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="space-y-3 max-h-96 overflow-y-auto">
                     <div>
                       <label className="text-sm font-medium mb-2 block">Execution Status</label>
                       <Select
@@ -449,95 +471,97 @@ export const OrderHistory = () => {
                       </label>
                     </div>
                   </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* Mobile-Optimized Orders List */}
+            <Card>
+              <CardHeader className="pb-3 sm:pb-6">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center space-x-2">
+                    <Clock className="h-5 w-5" />
+                    <span className="text-lg sm:text-xl">Order History ({totalCount} total)</span>
+                  </CardTitle>
                 </div>
-              </PopoverContent>
-            </Popover>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                {loading && filteredOrders.length === 0 ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span className="ml-2">Loading orders...</span>
+                  </div>
+                ) : filteredOrders.length === 0 ? (
+                  <div className="text-center py-8">
+                    <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No orders found</h3>
+                    <p className="text-muted-foreground mb-4">
+                      {hasActiveFilters 
+                        ? "Try adjusting your filters or search terms" 
+                        : "No orders have been created yet"}
+                    </p>
+                    {hasActiveFilters && (
+                      <Button variant="outline" onClick={clearFilters}>
+                        Clear Filters
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Use Virtualized List for better performance with responsive height */}
+                    <VirtualizedOrderList
+                      orders={filteredOrders}
+                      onOrderClick={handleViewOrder}
+                      onUpdatePayment={handleUpdatePaymentStatus}
+                      onUpdateExecution={handleUpdateExecutionStatus}
+                      height={500} // Fixed responsive height
+                    />
+                  </div>
+                )}
+
+                {/* Load More Button */}
+                {filteredOrders.length > 0 && hasMore && (
+                  <div className="flex justify-center mt-6 mb-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleLoadMore}
+                      disabled={loading}
+                      className="px-8 py-2"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                          Loading...
+                        </>
+                      ) : (
+                        'Load More Orders'
+                      )}
+                    </Button>
+                  </div>
+                )}
+                
+                {/* Summary */}
+                {filteredOrders.length > 0 && (
+                  <div className="text-center text-sm text-muted-foreground mt-4 mb-4">
+                    Showing {filteredOrders.length} of {totalCount} orders
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
 
-        {/* Orders List */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center space-x-2">
-                <Clock className="h-5 w-5" />
-                <span>Order History ({totalCount} total)</span>
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading && filteredOrders.length === 0 ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span className="ml-2">Loading orders...</span>
-              </div>
-            ) : filteredOrders.length === 0 ? (
-              <div className="text-center py-8">
-                <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No orders found</h3>
-                <p className="text-muted-foreground mb-4">
-                  {hasActiveFilters 
-                    ? "Try adjusting your filters or search terms" 
-                    : "No orders have been created yet"}
-                </p>
-                {hasActiveFilters && (
-                  <Button variant="outline" onClick={clearFilters}>
-                    Clear Filters
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Use Virtualized List for better performance */}
-                <VirtualizedOrderList
-                  orders={filteredOrders}
-                  onOrderClick={handleViewOrder}
-                  onUpdatePayment={handleUpdatePaymentStatus}
-                  onUpdateExecution={handleUpdateExecutionStatus}
-                  height={600} // Fixed height for virtualization
-                />
-              </div>
-            )}
-            
-            {/* Load More Button */}
-            {filteredOrders.length > 0 && hasMore && (
-              <div className="flex justify-center mt-6 mb-4">
-                <Button 
-                  variant="outline" 
-                  onClick={handleLoadMore}
-                  disabled={loading}
-                  className="px-8 py-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-                      Loading...
-                    </>
-                  ) : (
-                    'Load More Orders'
-                  )}
-                </Button>
-              </div>
-            )}
-            
-            {/* Summary */}
-            {filteredOrders.length > 0 && (
-              <div className="text-center text-sm text-muted-foreground mt-4 mb-4">
-                Showing {filteredOrders.length} of {totalCount} orders
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Order Details Dialog */}
+        {selectedOrder && (
+          <OrderDetailsDialog
+            order={selectedOrder}
+            isOpen={showOrderDetails}
+            onClose={() => setShowOrderDetails(false)}
+          />
+        )}
       </div>
-
-      {/* Order Details Dialog */}
-      {selectedOrder && (
-        <OrderDetailsDialog
-          order={selectedOrder}
-          isOpen={showOrderDetails}
-          onClose={() => setShowOrderDetails(false)}
-        />
-      )}
     </div>
   );
 };

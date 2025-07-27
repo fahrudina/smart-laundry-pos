@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { Clock, Search, Eye, Filter, Calendar, AlertTriangle, Edit, X, ChevronDown, ArrowLeft, Home, RefreshCw } from 'lucide-react';
+import { Clock, Search, Eye, Filter, Calendar, AlertTriangle, Edit, X, ChevronDown, ArrowLeft, Home, RefreshCw, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -31,6 +31,7 @@ export const OrderHistory = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     executionStatus: 'all',
     paymentStatus: 'all',
@@ -226,6 +227,7 @@ export const OrderHistory = () => {
   }, [updatePaymentMutation, orders]);
 
   const handleViewOrder = useCallback((order: any) => {
+    console.log('Viewing order:', order.id);
     setSelectedOrder(order);
     setShowOrderDetails(true);
   }, []);
@@ -237,60 +239,104 @@ export const OrderHistory = () => {
   }, [hasMore, loading, loadMore]);
 
   return (
-    <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="p-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Order History</h1>
-            <p className="text-muted-foreground">
-              Manage and track all customer orders
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refresh()}
-            disabled={loading || isRefreshing}
-            className="flex items-center space-x-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </Button>
-          <Button
-            variant="default"
-            onClick={() => navigate('/')}
-            className="flex items-center space-x-2"
-          >
-            <Home className="h-4 w-4" />
-            <span>New Order</span>
-          </Button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50 pb-safe">
+      <div className="space-y-4 md:space-y-8">
+        {/* Mobile-First Page Header */}
+        <div className="bg-white border-b px-4 py-3 md:px-0 md:py-0 md:bg-transparent md:border-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 md:space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/')}
+                className="p-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div>
+                <h1 className="text-xl md:text-3xl font-bold">Order History</h1>
+                <p className="text-sm text-muted-foreground hidden md:block">
+                  Manage and track all customer orders
+                </p>
+              </div>
+            </div>
+            
+            {/* Mobile Menu Toggle */}
+            <div className="flex items-center space-x-2 md:hidden">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refresh()}
+                disabled={loading || isRefreshing}
+                className="p-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="p-2"
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
+            </div>
 
-      <div className="max-w-7xl mx-auto">
-        {/* Search and Filters */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
+            {/* Desktop Header Actions */}
+            <div className="hidden md:flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refresh()}
+                disabled={loading || isRefreshing}
+                className="flex items-center space-x-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </Button>
+              <Button
+                variant="default"
+                onClick={() => navigate('/')}
+                className="flex items-center space-x-2"
+              >
+                <Home className="h-4 w-4" />
+                <span>New Order</span>
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
+
+          {/* Mobile Menu Dropdown */}
+          {showMobileMenu && (
+            <div className="mt-3 pt-3 border-t md:hidden">
+              <div className="flex flex-col space-y-2">
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    navigate('/');
+                    setShowMobileMenu(false);
+                  }}
+                  className="justify-start"
+                  size="sm"
+                >
+                  <Home className="h-4 w-4 mr-2" />
+                  New Order
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-0">
+          {/* Mobile-Optimized Search and Filters */}
+          <div className="space-y-4 md:space-y-0 md:flex md:items-center md:justify-between mb-6 md:mb-8">
+            {/* Search Bar - Full Width on Mobile */}
+            <div className="relative order-2 md:order-1">
               <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search orders, customers, phone..."
+                placeholder="Search orders, customers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-80"
+                className="pl-10 w-full md:w-80"
               />
               {searchTerm && (
                 <Button
@@ -304,472 +350,581 @@ export const OrderHistory = () => {
               )}
             </div>
 
-            <Popover open={showFilters} onOpenChange={setShowFilters}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className={hasActiveFilters ? 'bg-blue-50 border-blue-200' : ''}>
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filters
-                  {hasActiveFilters && (
-                    <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
-                      {Object.values(filters).filter(Boolean).length + (searchTerm ? 1 : 0)}
-                    </Badge>
-                  )}
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80" align="end">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium">Filters</h4>
+            {/* Filter Button */}
+            <div className="order-1 md:order-2">
+              <Popover open={showFilters} onOpenChange={setShowFilters}>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className={`w-full md:w-auto ${hasActiveFilters ? 'bg-blue-50 border-blue-200' : ''}`}
+                  >
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filters
                     {hasActiveFilters && (
-                      <Button variant="ghost" size="sm" onClick={clearFilters}>
-                        Clear All
-                      </Button>
+                      <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
+                        {Object.values(filters).filter(Boolean).length + (searchTerm ? 1 : 0)}
+                      </Badge>
                     )}
-                  </div>
-
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Execution Status</label>
-                      <Select
-                        value={filters.executionStatus}
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, executionStatus: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="All statuses" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All statuses</SelectItem>
-                          <SelectItem value="in_queue">In Queue</SelectItem>
-                          <SelectItem value="in_progress">In Progress</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <ChevronDown className="h-4 w-4 ml-2" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-screen max-w-sm md:w-80" align="end" side="bottom">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">Filters</h4>
+                      {hasActiveFilters && (
+                        <Button variant="ghost" size="sm" onClick={clearFilters}>
+                          Clear All
+                        </Button>
+                      )}
                     </div>
 
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Payment Status</label>
-                      <Select
-                        value={filters.paymentStatus}
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, paymentStatus: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="All payment statuses" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All payment statuses</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="down_payment">Down Payment</SelectItem>
-                          <SelectItem value="refunded">Refunded</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Payment Method</label>
-                      <Select
-                        value={filters.paymentMethod}
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, paymentMethod: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="All methods" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All methods</SelectItem>
-                          <SelectItem value="cash">Cash</SelectItem>
-                          <SelectItem value="qris">QRIS</SelectItem>
-                          <SelectItem value="transfer">Transfer</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Date Range</label>
-                      <Select
-                        value={filters.dateRange}
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, dateRange: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="All dates" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All dates</SelectItem>
-                          <SelectItem value="today">Today</SelectItem>
-                          <SelectItem value="yesterday">Yesterday</SelectItem>
-                          <SelectItem value="week">Last 7 days</SelectItem>
-                          <SelectItem value="month">Last 30 days</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="overdue"
-                        checked={filters.isOverdue}
-                        onChange={(e) => setFilters(prev => ({ ...prev, isOverdue: e.target.checked }))}
-                        className="rounded border-gray-300"
-                      />
-                      <label htmlFor="overdue" className="text-sm font-medium">
-                        Show only overdue orders
-                      </label>
-                    </div>
-
-                    <div className="border-t pt-3">
-                      <label className="text-sm font-medium mb-2 block">Sort By</label>
-                      <div className="flex space-x-2">
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Execution Status</label>
                         <Select
-                          value={sortBy.field}
-                          onValueChange={(value) => setSortBy(prev => ({ ...prev, field: value }))}
+                          value={filters.executionStatus}
+                          onValueChange={(value) => setFilters(prev => ({ ...prev, executionStatus: value }))}
                         >
-                          <SelectTrigger className="flex-1">
-                            <SelectValue />
+                          <SelectTrigger>
+                            <SelectValue placeholder="All statuses" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="created_at">Date Created</SelectItem>
-                            <SelectItem value="customer_name">Customer Name</SelectItem>
-                            <SelectItem value="total_amount">Total Amount</SelectItem>
-                            <SelectItem value="execution_status">Execution Status</SelectItem>
-                            <SelectItem value="payment_status">Payment Status</SelectItem>
-                            <SelectItem value="estimated_completion">Completion Date</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Select
-                          value={sortBy.direction}
-                          onValueChange={(value: 'asc' | 'desc') => setSortBy(prev => ({ ...prev, direction: value }))}
-                        >
-                          <SelectTrigger className="w-24">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="desc">↓ Desc</SelectItem>
-                            <SelectItem value="asc">↑ Asc</SelectItem>
+                            <SelectItem value="all">All statuses</SelectItem>
+                            <SelectItem value="in_queue">In Queue</SelectItem>
+                            <SelectItem value="in_progress">In Progress</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
+
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Payment Status</label>
+                        <Select
+                          value={filters.paymentStatus}
+                          onValueChange={(value) => setFilters(prev => ({ ...prev, paymentStatus: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All payment statuses" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All payment statuses</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="down_payment">Down Payment</SelectItem>
+                            <SelectItem value="refunded">Refunded</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Payment Method</label>
+                        <Select
+                          value={filters.paymentMethod}
+                          onValueChange={(value) => setFilters(prev => ({ ...prev, paymentMethod: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All methods" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All methods</SelectItem>
+                            <SelectItem value="cash">Cash</SelectItem>
+                            <SelectItem value="qris">QRIS</SelectItem>
+                            <SelectItem value="transfer">Transfer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Date Range</label>
+                        <Select
+                          value={filters.dateRange}
+                          onValueChange={(value) => setFilters(prev => ({ ...prev, dateRange: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All dates" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All dates</SelectItem>
+                            <SelectItem value="today">Today</SelectItem>
+                            <SelectItem value="yesterday">Yesterday</SelectItem>
+                            <SelectItem value="week">Last 7 days</SelectItem>
+                            <SelectItem value="month">Last 30 days</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="overdue"
+                          checked={filters.isOverdue}
+                          onChange={(e) => setFilters(prev => ({ ...prev, isOverdue: e.target.checked }))}
+                          className="rounded border-gray-300"
+                        />
+                        <label htmlFor="overdue" className="text-sm font-medium">
+                          Show only overdue orders
+                        </label>
+                      </div>
+
+                      <div className="border-t pt-3">
+                        <label className="text-sm font-medium mb-2 block">Sort By</label>
+                        <div className="space-y-2 md:flex md:space-y-0 md:space-x-2">
+                          <Select
+                            value={sortBy.field}
+                            onValueChange={(value) => setSortBy(prev => ({ ...prev, field: value }))}
+                          >
+                            <SelectTrigger className="w-full md:flex-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="created_at">Date Created</SelectItem>
+                              <SelectItem value="customer_name">Customer Name</SelectItem>
+                              <SelectItem value="total_amount">Total Amount</SelectItem>
+                              <SelectItem value="execution_status">Execution Status</SelectItem>
+                              <SelectItem value="payment_status">Payment Status</SelectItem>
+                              <SelectItem value="estimated_completion">Completion Date</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Select
+                            value={sortBy.direction}
+                            onValueChange={(value: 'asc' | 'desc') => setSortBy(prev => ({ ...prev, direction: value }))}
+                          >
+                            <SelectTrigger className="w-full md:w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="desc">↓ Desc</SelectItem>
+                              <SelectItem value="asc">↑ Asc</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
-        </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    {hasActiveFilters ? 'Filtered' : 'Total'} Orders
-                  </p>
-                  <p className="text-2xl font-bold">
-                    {hasActiveFilters ? filteredOrders.length : orders.length}
-                  </p>
-                  {hasActiveFilters && (
-                    <p className="text-xs text-muted-foreground">
-                      of {orders.length} total
+          {/* Mobile-Optimized Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6 mb-6 md:mb-8">
+            <Card className="col-span-2 md:col-span-1">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs md:text-sm text-muted-foreground">
+                      {hasActiveFilters ? 'Filtered' : 'Total'} Orders
                     </p>
+                    <p className="text-lg md:text-2xl font-bold">
+                      {hasActiveFilters ? filteredOrders.length : orders.length}
+                    </p>
+                    {hasActiveFilters && (
+                      <p className="text-xs text-muted-foreground">
+                        of {orders.length} total
+                      </p>
+                    )}
+                  </div>
+                  <div className="h-8 w-8 md:h-12 md:w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Clock className="h-4 w-4 md:h-6 md:w-6 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-3 md:p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs md:text-sm text-muted-foreground">
+                      Revenue
+                    </p>
+                    <p className="text-lg md:text-2xl font-bold">
+                      ${(hasActiveFilters ? filteredOrders : orders)
+                        .filter(order => hasActiveFilters || new Date(order.created_at).toDateString() === new Date().toDateString())
+                        .reduce((sum, order) => sum + order.total_amount, 0)
+                        .toFixed(0)}
+                    </p>
+                  </div>
+                  <div className="h-8 w-8 md:h-12 md:w-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <Calendar className="h-4 w-4 md:h-6 md:w-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs md:text-sm text-muted-foreground">Completed</p>
+                    <p className="text-lg md:text-2xl font-bold">
+                      {(hasActiveFilters ? filteredOrders : orders)
+                        .filter(order => order.execution_status === 'completed').length}
+                    </p>
+                  </div>
+                  <div className="h-8 w-8 md:h-12 md:w-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <Eye className="h-4 w-4 md:h-6 md:w-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs md:text-sm text-muted-foreground">In Progress</p>
+                    <p className="text-lg md:text-2xl font-bold">
+                      {(hasActiveFilters ? filteredOrders : orders)
+                        .filter(order => order.execution_status === 'in_progress').length}
+                    </p>
+                  </div>
+                  <div className="h-8 w-8 md:h-12 md:w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Clock className="h-4 w-4 md:h-6 md:w-6 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs md:text-sm text-muted-foreground">Overdue</p>
+                    <p className="text-lg md:text-2xl font-bold text-red-600">
+                      {(hasActiveFilters ? filteredOrders : orders)
+                        .filter(order => isOrderOverdue(order)).length}
+                    </p>
+                  </div>
+                  <div className="h-8 w-8 md:h-12 md:w-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <AlertTriangle className="h-4 w-4 md:h-6 md:w-6 text-red-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Mobile-Optimized Orders List */}
+          <Card>
+            <CardHeader className="pb-3 md:pb-6">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg md:text-xl">
+                  {hasActiveFilters ? 'Filtered Orders' : 'Recent Orders'}
+                  {hasActiveFilters && (
+                    <span className="text-sm font-normal text-muted-foreground ml-2">
+                      ({filteredOrders.length} results)
+                    </span>
                   )}
-                </div>
-                <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    {hasActiveFilters ? 'Filtered' : "Today's"} Revenue
-                  </p>
-                  <p className="text-2xl font-bold">
-                    ${(hasActiveFilters ? filteredOrders : orders)
-                      .filter(order => hasActiveFilters || new Date(order.created_at).toDateString() === new Date().toDateString())
-                      .reduce((sum, order) => sum + order.total_amount, 0)
-                      .toFixed(2)}
-                  </p>
-                </div>
-                <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <Calendar className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Completed</p>
-                  <p className="text-2xl font-bold">
-                    {(hasActiveFilters ? filteredOrders : orders)
-                      .filter(order => order.execution_status === 'completed').length}
-                  </p>
-                </div>
-                <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <Eye className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">In Progress</p>
-                  <p className="text-2xl font-bold">
-                    {(hasActiveFilters ? filteredOrders : orders)
-                      .filter(order => order.execution_status === 'in_progress').length}
-                  </p>
-                </div>
-                <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Overdue</p>
-                  <p className="text-2xl font-bold text-red-600">
-                    {(hasActiveFilters ? filteredOrders : orders)
-                      .filter(order => isOrderOverdue(order)).length}
-                  </p>
-                </div>
-                <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="h-6 w-6 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Orders Table */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>
-                {hasActiveFilters ? 'Filtered Orders' : 'Recent Orders'}
+                </CardTitle>
                 {hasActiveFilters && (
-                  <span className="text-sm font-normal text-muted-foreground ml-2">
-                    ({filteredOrders.length} results)
-                  </span>
+                  <Button variant="outline" size="sm" onClick={clearFilters} className="hidden md:flex">
+                    <X className="h-4 w-4 mr-2" />
+                    Clear Filters
+                  </Button>
                 )}
-              </CardTitle>
+              </div>
               {hasActiveFilters && (
-                <Button variant="outline" size="sm" onClick={clearFilters}>
+                <Button variant="outline" size="sm" onClick={clearFilters} className="md:hidden w-full mt-2">
                   <X className="h-4 w-4 mr-2" />
-                  Clear Filters
+                  Clear All Filters
                 </Button>
               )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">Loading orders...</div>
-            ) : filteredOrders.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                {hasActiveFilters ? (
-                  <div>
-                    <p>No orders match your filters</p>
-                    <Button variant="outline" size="sm" onClick={clearFilters} className="mt-2">
-                      Clear filters to see all orders
-                    </Button>
-                  </div>
-                ) : (
-                  <p>No orders found</p>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="p-4 border rounded-lg hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-4 mb-3">
-                          <h3 className="font-semibold text-lg">
-                            Order #{order.id.slice(-8).toUpperCase()}
-                          </h3>
-                          <div className="flex space-x-2">
-                            <Badge className={getExecutionStatusColor(order.execution_status)}>
-                              Execution: {order.execution_status}
-                            </Badge>
-                            <Badge className={getPaymentStatusColor(order.payment_status)}>
-                              Payment: {order.payment_status}
-                            </Badge>
+            </CardHeader>
+            <CardContent className="p-4 md:p-6">
+              {loading ? (
+                <div className="text-center py-8">Loading orders...</div>
+              ) : filteredOrders.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  {hasActiveFilters ? (
+                    <div>
+                      <p>No orders match your filters</p>
+                      <Button variant="outline" size="sm" onClick={clearFilters} className="mt-2">
+                        Clear filters to see all orders
+                      </Button>
+                    </div>
+                  ) : (
+                    <p>No orders found</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-6 md:space-y-8">
+                  {filteredOrders.map((order, index) => (
+                    <div
+                      key={`order-${order.id}-${index}`}
+                      className="order-card-mobile p-5 md:p-6 border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all bg-white mb-6 md:mb-8"
+                    >
+                      <div className="space-y-5 md:space-y-4">
+                        {/* Mobile-First Order Header */}
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-lg md:text-xl truncate">
+                              Order #{order.id.slice(-8).toUpperCase()}
+                            </h3>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {order.customer_name}
+                            </p>
+                            <p className="text-xs text-blue-600">
+                              Status: {order.execution_status} | Payment: {order.payment_status}
+                            </p>
                           </div>
+                          <div className="text-right ml-3 flex-shrink-0">
+                            <p className="text-xl md:text-2xl font-bold text-primary">
+                              ${order.total_amount.toFixed(2)}
+                            </p>
+                            {order.payment_amount && order.payment_amount !== order.total_amount && (
+                              <p className="text-sm text-muted-foreground">
+                                Paid: ${order.payment_amount.toFixed(2)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Status Badges */}
+                        <div className="flex flex-wrap gap-2">
+                          <Badge className={getExecutionStatusColor(order.execution_status)} variant="secondary">
+                            <span className="hidden sm:inline">{order.execution_status.replace('_', ' ')}</span>
+                            <span className="sm:hidden">
+                              {order.execution_status === 'in_queue' ? '⏳' : 
+                               order.execution_status === 'in_progress' ? '🔄' : 
+                               order.execution_status === 'completed' ? '✅' : 
+                               order.execution_status === 'cancelled' ? '❌' : ''}
+                            </span>
+                          </Badge>
+                          <Badge className={getPaymentStatusColor(order.payment_status)} variant="secondary">
+                            <span className="hidden sm:inline">{order.payment_status.replace('_', ' ')}</span>
+                            <span className="sm:hidden">
+                              {order.payment_status === 'completed' ? '💳' : 
+                               order.payment_status === 'pending' ? '⏳' : 
+                               order.payment_status === 'down_payment' ? '💰' : 
+                               order.payment_status === 'refunded' ? '↩️' : ''}
+                            </span>
+                          </Badge>
                           {isOrderOverdue(order) && (
                             <Badge variant="destructive" className="flex items-center gap-1">
                               <AlertTriangle className="h-3 w-3" />
-                              Overdue
+                              <span className="hidden sm:inline">Overdue</span>
+                              <span className="sm:hidden">!</span>
                             </Badge>
                           )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-muted-foreground mb-3">
-                          <div>
-                            <span className="font-medium">Customer: </span>
-                            {order.customer_name}
+                        {/* Order Details */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
+                          <div className="flex justify-between md:block">
+                            <span className="font-medium">Phone:</span>
+                            <span className="md:block">{order.customer_phone}</span>
                           </div>
-                          <div>
-                            <span className="font-medium">Phone: </span>
-                            {order.customer_phone}
+                          <div className="flex justify-between md:block">
+                            <span className="font-medium">Payment:</span>
+                            <span className="md:block">{getPaymentMethodDisplay(order.payment_method)}</span>
                           </div>
-                          <div>
-                            <span className="font-medium">Payment Method: </span>
-                            {getPaymentMethodDisplay(order.payment_method)}
+                          <div className="flex justify-between md:block">
+                            <span className="font-medium">Drop-off:</span>
+                            <span className="md:block">{order.order_date ? formatDate(order.order_date) : formatDate(order.created_at)}</span>
                           </div>
-                          <div>
-                            <span className="font-medium">Drop-off: </span>
-                            {order.order_date ? formatDate(order.order_date) : formatDate(order.created_at)}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
-                          <div>
-                            <span className="font-medium">Est. Completion: </span>
-                            {order.estimated_completion ? (
-                              <span className={isOrderOverdue(order) ? 'text-red-600 font-medium' : ''}>
-                                {formatDate(order.estimated_completion)}
-                              </span>
-                            ) : 'N/A'}
-                          </div>
-                          <div>
-                            <span className="font-medium">Items: </span>
-                            {order.order_items?.length || 0} items
+                          <div className="flex justify-between md:block">
+                            <span className="font-medium">Est. Completion:</span>
+                            <span className={`md:block ${isOrderOverdue(order) ? 'text-red-600 font-medium' : ''}`}>
+                              {order.estimated_completion ? formatDate(order.estimated_completion) : 'N/A'}
+                            </span>
                           </div>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex space-x-2 mt-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewOrder(order)}
+                        {/* ALWAYS VISIBLE TEST SECTION */}
+                        <div className="w-full bg-red-100 border-2 border-red-500 p-4 text-center">
+                          <p className="text-red-800 font-bold">TEST: This should ALWAYS be visible!</p>
+                          <p className="text-sm">Order: {order.id.slice(-8)} | Status: {order.execution_status}</p>
+                          
+                          {/* Simple Test Button */}
+                          <button 
+                            onClick={() => alert(`Test button clicked for order ${order.id}`)}
+                            style={{
+                              display: 'block',
+                              width: '100%',
+                              height: '50px',
+                              backgroundColor: 'blue',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontSize: '16px',
+                              fontWeight: 'bold',
+                              marginTop: '10px',
+                              cursor: 'pointer'
+                            }}
                           >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View Details
-                          </Button>
-
-                          {/* Execution Status Actions */}
-                          {order.execution_status === 'in_queue' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleUpdateExecutionStatus(order.id, 'in_progress')}
-                            >
-                              Start Processing
-                            </Button>
-                          )}
-                          {order.execution_status === 'in_progress' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleUpdateExecutionStatus(order.id, 'completed')}
-                            >
-                              Mark Complete
-                            </Button>
-                          )}
-
-                          {/* Payment Status Actions */}
-                          {order.payment_status === 'pending' && (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleUpdatePaymentStatus(order.id, 'completed', 'cash')}
-                              >
-                                Cash Payment
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleUpdatePaymentStatus(order.id, 'completed', 'qris')}
-                              >
-                                QRIS Payment
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleUpdatePaymentStatus(order.id, 'down_payment', 'cash')}
-                              >
-                                Down Payment
-                              </Button>
-                            </>
-                          )}
+                            🔴 TEST BUTTON - CLICK ME!
+                          </button>
+                          
+                          <button 
+                            onClick={() => {
+                              console.log('View order clicked:', order.id);
+                              handleViewOrder(order);
+                            }}
+                            style={{
+                              display: 'block',
+                              width: '100%',
+                              height: '50px',
+                              backgroundColor: 'green',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontSize: '16px',
+                              fontWeight: 'bold',
+                              marginTop: '10px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            👀 VIEW ORDER DETAILS
+                          </button>
                         </div>
-                      </div>
 
-                      <div className="text-right ml-4">
-                        <p className="text-2xl font-bold text-primary">
-                          ${order.total_amount.toFixed(2)}
-                        </p>
-                        {order.payment_amount && order.payment_amount !== order.total_amount && (
-                          <p className="text-sm text-muted-foreground">
-                            Paid: ${order.payment_amount.toFixed(2)}
-                          </p>
+                        {/* Mobile-Optimized Action Buttons - Force Visible */}
+                        <div className="button-container-mobile block w-full mt-4 space-y-3 border-t border-gray-200 pt-3 bg-gray-50 p-3 rounded-lg">
+                          {/* View Details Button - Force Visible on Mobile */}
+                          <div className="text-xs text-blue-600 mb-2 block md:hidden">
+                            DEBUG: Mobile buttons section for Order #{order.id.slice(-8)}
+                          </div>
+                          <button
+                            onClick={() => {
+                              console.log(`Viewing order ${order.id} for ${order.customer_name}`);
+                              handleViewOrder(order);
+                            }}
+                            className="mobile-button-fix !block !visible w-full h-12 px-4 py-2 bg-white border-2 border-blue-300 rounded-md text-sm font-medium text-gray-900 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                          >
+                            <div className="flex items-center justify-center">
+                              <Eye className="h-4 w-4 mr-2" />
+                              👀 View Order Details
+                            </div>
+                          </button>
+
+                          {/* Status Action Buttons */}
+                          <div className="button-container-mobile block w-full space-y-2">
+                            {order.execution_status === 'in_queue' && (
+                              <button
+                                onClick={() => {
+                                  console.log(`Starting processing for order ${order.id}`);
+                                  handleUpdateExecutionStatus(order.id, 'in_progress');
+                                }}
+                                className="mobile-button-fix !block !visible w-full h-10 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                              >
+                                🚀 Start Processing
+                              </button>
+                            )}
+                            
+                            {order.execution_status === 'in_progress' && (
+                              <button
+                                onClick={() => {
+                                  console.log(`Marking complete for order ${order.id}`);
+                                  handleUpdateExecutionStatus(order.id, 'completed');
+                                }}
+                                className="mobile-button-fix !block !visible w-full h-10 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+                              >
+                                ✅ Mark Complete
+                              </button>
+                            )}
+                            
+                            {order.execution_status === 'completed' && (
+                              <div className="block w-full h-10 px-4 py-2 bg-green-100 text-green-800 rounded-md text-sm font-medium flex items-center justify-center">
+                                ✅ Order Completed
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Payment Actions - Force Visible on Mobile */}
+                        {order.payment_status === 'pending' && (
+                          <div className="button-container-mobile block w-full mt-3 space-y-3 border-t border-yellow-200 pt-3 bg-yellow-50 p-3 rounded-lg">
+                            <div className="text-sm font-medium text-yellow-800 flex items-center">
+                              💳 Payment Required - Choose Payment Method:
+                            </div>
+                            <div className="button-container-mobile block w-full space-y-2">
+                              <button
+                                onClick={() => {
+                                  console.log(`Processing cash payment for order ${order.id}`);
+                                  handleUpdatePaymentStatus(order.id, 'completed', 'cash');
+                                }}
+                                className="mobile-button-fix !block !visible w-full h-10 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+                              >
+                                💵 Pay with Cash
+                              </button>
+                              <button
+                                onClick={() => {
+                                  console.log(`Processing QRIS payment for order ${order.id}`);
+                                  handleUpdatePaymentStatus(order.id, 'completed', 'qris');
+                                }}
+                                className="mobile-button-fix !block !visible w-full h-10 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                              >
+                                📱 Pay with QRIS
+                              </button>
+                              <button
+                                onClick={() => {
+                                  console.log(`Processing down payment for order ${order.id}`);
+                                  handleUpdatePaymentStatus(order.id, 'down_payment', 'cash');
+                                }}
+                                className="mobile-button-fix !block !visible w-full h-10 px-4 py-2 bg-white border-2 border-orange-400 text-orange-700 rounded-md text-sm font-medium hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+                              >
+                                💰 Down Payment
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {order.payment_status === 'completed' && (
+                          <div className="block w-full mt-3 p-3 bg-green-50 rounded-lg">
+                            <div className="text-sm font-medium text-green-800 flex items-center">
+                              ✅ Payment Completed via {order.payment_method?.toUpperCase() || 'Unknown'}
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {/* Load More Button */}
-            {filteredOrders.length > 0 && hasMore && (
-              <div className="flex justify-center mt-6 mb-4">
-                <Button 
-                  variant="outline" 
-                  onClick={handleLoadMore}
-                  disabled={loading}
-                  className="px-8 py-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-                      Loading...
-                    </>
-                  ) : (
-                    'Load More Orders'
-                  )}
-                </Button>
-              </div>
-            )}
-            
-            {/* Summary */}
-            {filteredOrders.length > 0 && (
-              <div className="text-center text-sm text-muted-foreground mt-4 mb-4">
-                Showing {filteredOrders.length} of {totalCount} orders
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Load More Button */}
+              {filteredOrders.length > 0 && hasMore && (
+                <div className="flex justify-center mt-6 mb-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleLoadMore}
+                    disabled={loading}
+                    className="px-6 md:px-8 py-2 w-full md:w-auto"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                        Loading...
+                      </>
+                    ) : (
+                      'Load More Orders'
+                    )}
+                  </Button>
+                </div>
+              )}
+              
+              {/* Summary */}
+              {filteredOrders.length > 0 && (
+                <div className="text-center text-sm text-muted-foreground mt-4 mb-4">
+                  Showing {filteredOrders.length} of {totalCount} orders
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Order Details Dialog */}
-      {selectedOrder && (
-        <OrderDetailsDialog
-          order={selectedOrder}
-          isOpen={showOrderDetails}
-          onClose={() => setShowOrderDetails(false)}
-        />
-      )}
+        {/* Order Details Dialog */}
+        {selectedOrder && (
+          <OrderDetailsDialog
+            order={selectedOrder}
+            isOpen={showOrderDetails}
+            onClose={() => setShowOrderDetails(false)}
+          />
+        )}
+      </div>
     </div>
   );
 };

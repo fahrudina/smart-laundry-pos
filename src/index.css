@@ -128,3 +128,32 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile-specific fixes for buttons */
+@layer utilities {
+  @media (max-width: 640px) {
+    .mobile-button-fix {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      transform: none !important;
+      position: relative !important;
+      z-index: auto !important;
+    }
+    
+    /* Ensure order cards are visible on mobile */
+    .order-card-mobile {
+      display: block !important;
+      min-height: auto !important;
+      overflow: visible !important;
+    }
+    
+    /* Force button containers to be visible */
+    .button-container-mobile {
+      display: block !important;
+      visibility: visible !important;
+      height: auto !important;
+      width: 100% !important;
+    }
+  }
+}

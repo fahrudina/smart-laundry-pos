@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -62,39 +62,50 @@ const OrderItem = memo(({ index, style, data }: {
   };
 
   return (
-    <div style={style} className="px-2">
+    <div style={style} className="px-2 sm:px-4">
       <Card className="mb-2 hover:shadow-md transition-shadow">
-        <CardContent className="p-4">
+        <CardContent className="p-3 sm:p-4">
           <div className="flex justify-between items-start">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-lg">{order.customer_name}</h3>
-                <div className="flex space-x-2">
-                  <Badge className={getExecutionStatusColor(order.execution_status)}>
-                    {order.execution_status.replace('_', ' ')}
+                <h3 className="font-semibold text-base sm:text-lg truncate">{order.customer_name}</h3>
+                <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-2 ml-2 flex-shrink-0">
+                  <Badge className={`${getExecutionStatusColor(order.execution_status)} text-xs`}>
+                    <span className="hidden sm:inline">{order.execution_status.replace('_', ' ')}</span>
+                    <span className="sm:hidden">
+                      {order.execution_status === 'in_queue' ? '⏳' : 
+                       order.execution_status === 'in_progress' ? '🔄' : 
+                       order.execution_status === 'completed' ? '✅' : 
+                       order.execution_status === 'cancelled' ? '❌' : ''}
+                    </span>
                   </Badge>
-                  <Badge className={getPaymentStatusColor(order.payment_status)}>
-                    {order.payment_status.replace('_', ' ')}
+                  <Badge className={`${getPaymentStatusColor(order.payment_status)} text-xs`}>
+                    <span className="hidden sm:inline">{order.payment_status.replace('_', ' ')}</span>
+                    <span className="sm:hidden">
+                      {order.payment_status === 'completed' ? '💳' : 
+                       order.payment_status === 'pending' ? '⏳' : 
+                       order.payment_status === 'down_payment' ? '💰' : '❌'}
+                    </span>
                   </Badge>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-muted-foreground mb-3">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground mb-3">
+                <div className="truncate">
                   <span className="font-medium">Phone: </span>
                   {order.customer_phone}
                 </div>
-                <div>
+                <div className="truncate">
                   <span className="font-medium">Order ID: </span>
                   {order.id.slice(-8)}
                 </div>
-                <div>
+                <div className="truncate">
                   <span className="font-medium">Created: </span>
                   {formatDate(order.created_at)}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground mb-3">
                 <div>
                   <span className="font-medium">Items: </span>
                   {order.order_items?.length || 0} items
@@ -107,25 +118,28 @@ const OrderItem = memo(({ index, style, data }: {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-2">
+              {/* Mobile-optimized Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onOrderClick(order)}
+                  className="flex items-center justify-center space-x-2 w-full sm:w-auto"
                 >
-                  <Eye className="h-4 w-4 mr-1" />
-                  View Details
+                  <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="text-xs sm:text-sm">View Details</span>
                 </Button>
 
-                {/* Execution Status Actions */}
+                {/* Execution Status Actions - Simplified for mobile */}
                 {order.execution_status === 'in_queue' && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => onUpdateExecution(order.id, 'in_progress')}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    Start Processing
+                    <span className="hidden sm:inline">Start Processing</span>
+                    <span className="sm:hidden">🔄 Start</span>
                   </Button>
                 )}
                 {order.execution_status === 'in_progress' && (
@@ -133,29 +147,35 @@ const OrderItem = memo(({ index, style, data }: {
                     variant="outline"
                     size="sm"
                     onClick={() => onUpdateExecution(order.id, 'completed')}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    Mark Complete
+                    <span className="hidden sm:inline">Mark Complete</span>
+                    <span className="sm:hidden">✅ Complete</span>
                   </Button>
                 )}
 
-                {/* Payment Status Actions */}
+                {/* Payment Status Actions - Simplified for mobile */}
                 {order.payment_status === 'pending' && (
-                  <>
+                  <div className="flex gap-2 w-full sm:w-auto">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => onUpdatePayment(order.id, 'completed', 'cash')}
+                      className="flex-1 sm:flex-none text-xs sm:text-sm"
                     >
-                      Cash Payment
+                      <span className="hidden sm:inline">Cash Payment</span>
+                      <span className="sm:hidden">💵</span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => onUpdatePayment(order.id, 'completed', 'qris')}
+                      className="flex-1 sm:flex-none text-xs sm:text-sm"
                     >
-                      QRIS Payment
+                      <span className="hidden sm:inline">QRIS Payment</span>
+                      <span className="sm:hidden">📱</span>
                     </Button>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
@@ -175,6 +195,19 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
   onUpdateExecution,
   height
 }) => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+    
+    return () => window.removeEventListener('resize', checkIfMobile);
+  }, []);
+
   const itemData: ItemData = {
     orders,
     onOrderClick,
@@ -182,12 +215,15 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
     onUpdateExecution,
   };
 
+  // Responsive item size - larger on mobile for better touch interaction
+  const itemSize = isMobile ? 300 : 220;
+
   return (
     <List
       height={height}
       width="100%"
       itemCount={orders.length}
-      itemSize={200} // Increased height to accommodate all content
+      itemSize={itemSize}
       itemData={itemData}
       overscanCount={5} // Render 5 extra items outside visible area for smoother scrolling
     >
