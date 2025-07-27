@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { useNavigate } from 'react-router-dom';
 import { useCustomers } from '@/hooks/useCustomers';
+import { useOrders } from '@/hooks/useOrders';
+import { useToast } from '@/hooks/use-toast';
 import { AddCustomerDialog } from './AddCustomerDialog';
 
 interface Service {
@@ -13,6 +16,8 @@ interface Service {
   name: string;
   price: number;
   duration: string;
+  durationValue: number; // in hours
+  durationUnit: 'hours' | 'days';
   category: 'wash' | 'dry' | 'special';
 }
 
@@ -22,12 +27,60 @@ interface OrderItem {
 }
 
 const services: Service[] = [
-  { id: '1', name: 'Regular Wash', price: 12.99, duration: '2-3 days', category: 'wash' },
-  { id: '2', name: 'Express Wash', price: 19.99, duration: '24 hours', category: 'wash' },
-  { id: '3', name: 'Dry Clean', price: 24.99, duration: '3-4 days', category: 'dry' },
-  { id: '4', name: 'Express Dry Clean', price: 34.99, duration: '48 hours', category: 'dry' },
-  { id: '5', name: 'Ironing Service', price: 8.99, duration: '1-2 days', category: 'special' },
-  { id: '6', name: 'Stain Removal', price: 15.99, duration: '2-3 days', category: 'special' },
+  { 
+    id: '1', 
+    name: 'Regular Wash', 
+    price: 12.99, 
+    duration: '2 days', 
+    durationValue: 2, 
+    durationUnit: 'days', 
+    category: 'wash' 
+  },
+  { 
+    id: '2', 
+    name: 'Express Wash', 
+    price: 19.99, 
+    duration: '1 day', 
+    durationValue: 1, 
+    durationUnit: 'days', 
+    category: 'wash' 
+  },
+  { 
+    id: '3', 
+    name: 'Dry Clean', 
+    price: 24.99, 
+    duration: '2 days', 
+    durationValue: 2, 
+    durationUnit: 'days', 
+    category: 'dry' 
+  },
+  { 
+    id: '4', 
+    name: 'Express Dry Clean', 
+    price: 34.99, 
+    duration: '6 hours', 
+    durationValue: 6, 
+    durationUnit: 'hours', 
+    category: 'dry' 
+  },
+  { 
+    id: '5', 
+    name: 'Ironing Service', 
+    price: 8.99, 
+    duration: '2 hours', 
+    durationValue: 2, 
+    durationUnit: 'hours', 
+    category: 'special' 
+  },
+  { 
+    id: '6', 
+    name: 'Stain Removal', 
+    price: 15.99, 
+    duration: '1 day', 
+    durationValue: 1, 
+    durationUnit: 'days', 
+    category: 'special' 
+  },
 ];
 
 export const LaundryPOS = () => {
@@ -36,16 +89,72 @@ export const LaundryPOS = () => {
   const [customerName, setCustomerName] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [isSelectingCustomer, setIsSelectingCustomer] = useState(false);
+  const [dropOffDate, setDropOffDate] = useState(new Date());
   
+  const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading } = useCustomers();
+  const { createOrder, loading: orderLoading } = useOrders();
+  const { toast } = useToast();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Helper function to calculate finish date based on service duration
+  const calculateFinishDate = (service: Service, startDate: Date = dropOffDate) => {
+    const finishDate = new Date(startDate);
+    
+    if (service.durationUnit === 'hours') {
+      finishDate.setHours(finishDate.getHours() + service.durationValue);
+    } else if (service.durationUnit === 'days') {
+      finishDate.setDate(finishDate.getDate() + service.durationValue);
+    }
+    
+    return finishDate;
+  };
+
+  // Helper function to format date for display
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const isTomorrow = date.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString();
+    
+    if (isToday) {
+      return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (isTomorrow) {
+      return `Tomorrow at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+      return date.toLocaleDateString([], { 
+        month: 'short', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    }
+  };
+
+  // Get the estimated completion time for the entire order
+  const getOrderCompletionTime = () => {
+    if (currentOrder.length === 0) return null;
+    
+    // Find the service with the longest duration
+    const longestService = currentOrder.reduce((longest, item) => {
+      const currentFinish = calculateFinishDate(item.service);
+      const longestFinish = longest ? calculateFinishDate(longest.service) : new Date();
+      return currentFinish > longestFinish ? item : longest;
+    }, currentOrder[0]);
+    
+    return calculateFinishDate(longestService.service);
+  };
 
   // Search for customers when phone number changes
   useEffect(() => {
     const searchCustomer = async () => {
-      if (customerPhone.length >= 3) {
+      // Don't search if form is already filled (customer selected) or currently selecting
+      const isFormFilled = customerPhone.length >= 3 && customerName.trim().length > 0;
+      
+      if (customerPhone.length >= 3 && !isSelectingCustomer && !isFormFilled) {
         await searchCustomers(customerPhone);
         setShowResults(true);
-      } else {
+      } else if (!isSelectingCustomer) {
         setSearchResults([]);
         setShowResults(false);
       }
@@ -53,26 +162,82 @@ export const LaundryPOS = () => {
 
     const debounceTimer = setTimeout(searchCustomer, 300);
     return () => clearTimeout(debounceTimer);
-  }, [customerPhone, searchCustomers]);
+  }, [customerPhone, customerName, searchCustomers, isSelectingCustomer]);
 
-  // Update search results when customers data changes
+  // Update search results when customers data changes, but only if we should show results
   useEffect(() => {
-    setSearchResults(customers);
-  }, [customers]);
+    const isFormFilled = customerPhone.length >= 3 && customerName.trim().length > 0;
+    
+    if (showResults && customerPhone.length >= 3 && !isSelectingCustomer && !isFormFilled && customers.length > 0) {
+      setSearchResults(customers);
+    } else if (isSelectingCustomer || isFormFilled) {
+      // Clear search results when selecting a customer or form is already filled
+      setSearchResults([]);
+    }
+  }, [customers, showResults, customerPhone, customerName, isSelectingCustomer]);
 
   // Handle customer selection from search
   const handleCustomerSelect = (customer: any) => {
+    // Prevent any further searching while selecting
+    setIsSelectingCustomer(true);
+    
+    // Immediately hide the dropdown and clear results
+    setShowResults(false);
+    setSearchResults([]);
+    
+    // Update the form fields
     setCustomerPhone(customer.phone);
     setCustomerName(customer.name);
-    setSearchResults([]);
-    setShowResults(false);
+    
+    // Reset the selection flag after state updates
+    setTimeout(() => {
+      setIsSelectingCustomer(false);
+    }, 500); // Increased timeout to ensure all updates complete
   };
 
   // Handle new customer added
   const handleCustomerAdded = (customer: any) => {
     setCustomerPhone(customer.phone);
     setCustomerName(customer.name);
+    setSearchResults([]);
+    setShowResults(false);
   };
+
+  // Clear customer form
+  const clearCustomerForm = () => {
+    setCustomerPhone('');
+    setCustomerName('');
+    setSearchResults([]);
+    setShowResults(false);
+    setIsSelectingCustomer(false);
+    setDropOffDate(new Date());
+  };
+
+  // Handle input blur to hide results
+  const handlePhoneInputBlur = () => {
+    // Only hide if we haven't just selected a customer
+    if (!isSelectingCustomer) {
+      setTimeout(() => {
+        setShowResults(false);
+        setSearchResults([]);
+      }, 150); // Slight delay to allow click events to fire first
+    }
+  };
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowResults(false);
+        setSearchResults([]);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const addToOrder = (service: Service) => {
     setCurrentOrder(prev => {
@@ -116,6 +281,126 @@ export const LaundryPOS = () => {
     }
   };
 
+  const processPayment = async () => {
+    if (currentOrder.length === 0) {
+      toast({
+        title: "Error",
+        description: "No items in order",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!customerName || !customerPhone) {
+      toast({
+        title: "Error",
+        description: "Please provide customer information",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const subtotal = getTotalPrice();
+      const taxAmount = subtotal * 0.0825;
+      const totalAmount = subtotal + taxAmount;
+      const completionDate = getOrderCompletionTime();
+
+      const orderData = {
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        items: currentOrder.map(item => ({
+          service_name: item.service.name,
+          service_price: item.service.price,
+          quantity: item.quantity,
+          estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
+        })),
+        subtotal,
+        tax_amount: taxAmount,
+        total_amount: totalAmount,
+        execution_status: 'in_queue',
+        payment_status: 'completed',
+        payment_method: 'cash', // Default to cash, will be configurable later
+        payment_amount: totalAmount,
+        order_date: dropOffDate.toISOString(),
+        estimated_completion: completionDate?.toISOString(),
+      };
+
+      await createOrder(orderData);
+
+      // Clear the current order after successful payment
+      setCurrentOrder([]);
+      setCustomerName('');
+      setCustomerPhone('');
+      
+      toast({
+        title: "Success",
+        description: `Payment processed successfully! Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
+      });
+    } catch (error) {
+      // Error is already handled in the hook
+    }
+  };
+
+  const createDraftOrder = async () => {
+    if (currentOrder.length === 0) {
+      toast({
+        title: "Error",
+        description: "No items in order",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!customerName || !customerPhone) {
+      toast({
+        title: "Error", 
+        description: "Please provide customer information",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const subtotal = getTotalPrice();
+      const taxAmount = subtotal * 0.0825;
+      const totalAmount = subtotal + taxAmount;
+      const completionDate = getOrderCompletionTime();
+
+      const orderData = {
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        items: currentOrder.map(item => ({
+          service_name: item.service.name,
+          service_price: item.service.price,
+          quantity: item.quantity,
+          estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
+        })),
+        subtotal,
+        tax_amount: taxAmount,
+        total_amount: totalAmount,
+        execution_status: 'in_queue',
+        payment_status: 'pending',
+        order_date: dropOffDate.toISOString(),
+        estimated_completion: completionDate?.toISOString(),
+      };
+
+      await createOrder(orderData);
+
+      // Clear the current order after successful creation
+      setCurrentOrder([]);
+      setCustomerName('');
+      setCustomerPhone('');
+      
+      toast({
+        title: "Success",
+        description: `Draft order created successfully! Estimated completion: ${completionDate ? formatDate(completionDate) : 'TBD'}.`,
+      });
+    } catch (error) {
+      // Error is already handled in the hook
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-subtle">
       {/* Header */}
@@ -128,7 +413,7 @@ export const LaundryPOS = () => {
             </Badge>
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => navigate('/order-history')}>
               <Clock className="h-4 w-4 mr-2" />
               Order History
             </Button>
@@ -156,23 +441,61 @@ export const LaundryPOS = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                      Phone Number
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Phone Number
+                      </label>
+                      {customerPhone && customerName && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearCustomerForm}
+                          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="h-3 w-3 mr-1" />
+                          Clear
+                        </Button>
+                      )}
+                    </div>
                     <div className="relative">
                       <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
+                      {customerPhone && customerName && (
+                        <CheckCircle className="h-4 w-4 absolute right-3 top-3 text-green-500" />
+                      )}
                       <Input
                         placeholder="Search by phone..."
                         value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
-                        className="pl-10"
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          setCustomerPhone(newValue);
+                          
+                          // If user is typing and the name field is filled, it means they want to search for a new customer
+                          // Clear the name field to allow new search
+                          if (customerName.trim().length > 0 && newValue !== customerPhone) {
+                            setCustomerName('');
+                          }
+                        }}
+                        onBlur={handlePhoneInputBlur}
+                        onFocus={() => {
+                          // Only show results if not currently selecting a customer, phone has enough characters,
+                          // form is not already filled, and there are search results
+                          const isFormFilled = customerPhone.length >= 3 && customerName.trim().length > 0;
+                          if (!isSelectingCustomer && customerPhone.length >= 3 && !isFormFilled && searchResults.length > 0) {
+                            setShowResults(true);
+                          }
+                        }}
+                        className="pl-10 pr-10"
                       />
                       {showResults && searchResults.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-card border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        <div ref={dropdownRef} className="absolute z-10 w-full mt-1 bg-card border rounded-md shadow-lg max-h-60 overflow-y-auto">
                           {searchResults.map((customer) => (
                             <div
                               key={customer.id}
                               className="p-3 hover:bg-secondary cursor-pointer border-b last:border-b-0"
+                              onMouseDown={(e) => {
+                                // Prevent blur event from firing before click
+                                e.preventDefault();
+                              }}
                               onClick={() => handleCustomerSelect(customer)}
                             >
                               <div className="font-medium">{customer.name}</div>
@@ -192,6 +515,20 @@ export const LaundryPOS = () => {
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                     />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                      Drop-off Date & Time
+                    </label>
+                    <Input
+                      type="datetime-local"
+                      value={dropOffDate.toISOString().slice(0, 16)}
+                      onChange={(e) => setDropOffDate(new Date(e.target.value))}
+                      className="w-full"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      This affects the estimated completion time for all services
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -237,10 +574,15 @@ export const LaundryPOS = () => {
                       <p className="text-2xl font-bold text-primary mb-1">
                         ${service.price}
                       </p>
-                      <p className="text-sm text-muted-foreground flex items-center">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {service.duration}
-                      </p>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground flex items-center">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Duration: {service.duration}
+                        </p>
+                        <p className="text-xs text-green-600 font-medium">
+                          Ready: {formatDate(calculateFinishDate(service))}
+                        </p>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -273,6 +615,9 @@ export const LaundryPOS = () => {
                         <p className="text-sm text-muted-foreground">
                           ${item.service.price} × {item.quantity}
                         </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Ready: {formatDate(calculateFinishDate(item.service))}
+                        </p>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Button
@@ -297,6 +642,22 @@ export const LaundryPOS = () => {
 
                 <Separator className="mb-4" />
 
+                {/* Order Completion Information */}
+                {getOrderCompletionTime() && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <Clock className="h-4 w-4 mr-2 text-blue-600" />
+                      <span className="font-medium text-blue-900">Estimated Completion</span>
+                    </div>
+                    <p className="text-blue-800 font-semibold">
+                      {formatDate(getOrderCompletionTime()!)}
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Drop-off: {formatDate(dropOffDate)}
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-2 mb-6">
                   <div className="flex justify-between text-lg">
                     <span>Subtotal:</span>
@@ -314,14 +675,39 @@ export const LaundryPOS = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <Button className="w-full bg-gradient-accent hover:opacity-90 text-accent-foreground font-semibold py-3">
+                  <Button 
+                    className="w-full bg-gradient-accent hover:opacity-90 text-accent-foreground font-semibold py-3" 
+                    onClick={processPayment}
+                    disabled={orderLoading || currentOrder.length === 0 || !customerName || !customerPhone}
+                  >
                     <CreditCard className="h-4 w-4 mr-2" />
-                    Process Payment
+                    {orderLoading ? "Processing..." : "Process Payment"}
                   </Button>
-                  <Button variant="outline" className="w-full">
+                  
+                  <Button 
+                    variant="default" 
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={createDraftOrder}
+                    disabled={orderLoading || currentOrder.length === 0 || !customerName || !customerPhone}
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    {orderLoading ? "Creating..." : "Create Order (Draft)"}
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={createDraftOrder}
+                    disabled={orderLoading || currentOrder.length === 0 || !customerName || !customerPhone}
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
                     Save for Later
                   </Button>
-                  <Button variant="ghost" className="w-full text-destructive" onClick={() => setCurrentOrder([])}>
+                  
+                  <Button variant="ghost" className="w-full text-destructive" onClick={() => {
+                    setCurrentOrder([]);
+                    clearCustomerForm();
+                  }}>
                     Clear Order
                   </Button>
                 </div>

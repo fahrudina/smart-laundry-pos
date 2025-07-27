@@ -44,6 +44,115 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          created_at: string
+          estimated_completion: string | null
+          id: string
+          line_total: number
+          order_id: string
+          quantity: number
+          service_name: string
+          service_price: number
+        }
+        Insert: {
+          created_at?: string
+          estimated_completion?: string | null
+          id?: string
+          line_total: number
+          order_id: string
+          quantity?: number
+          service_name: string
+          service_price: number
+        }
+        Update: {
+          created_at?: string
+          estimated_completion?: string | null
+          id?: string
+          line_total?: number
+          order_id?: string
+          quantity?: number
+          service_name?: string
+          service_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string
+          estimated_completion: string | null
+          execution_notes: string | null
+          execution_status: string
+          id: string
+          order_date: string | null
+          payment_amount: number | null
+          payment_method: string | null
+          payment_notes: string | null
+          payment_status: string
+          subtotal: number
+          tax_amount: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name: string
+          customer_phone: string
+          estimated_completion?: string | null
+          execution_notes?: string | null
+          execution_status?: string
+          id?: string
+          order_date?: string | null
+          payment_amount?: number | null
+          payment_method?: string | null
+          payment_notes?: string | null
+          payment_status?: string
+          subtotal: number
+          tax_amount: number
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string
+          customer_phone?: string
+          estimated_completion?: string | null
+          execution_notes?: string | null
+          execution_status?: string
+          id?: string
+          order_date?: string | null
+          payment_amount?: number | null
+          payment_method?: string | null
+          payment_notes?: string | null
+          payment_status?: string
+          subtotal?: number
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
