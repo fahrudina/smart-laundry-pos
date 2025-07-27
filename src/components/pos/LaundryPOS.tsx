@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { useCustomers } from '@/hooks/useCustomers';
+import { AddCustomerDialog } from './AddCustomerDialog';
 
 interface Service {
   id: string;
@@ -32,6 +34,45 @@ export const LaundryPOS = () => {
   const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([]);
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerName, setCustomerName] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  
+  const { customers, searchCustomers, getCustomerByPhone, loading } = useCustomers();
+
+  // Search for customers when phone number changes
+  useEffect(() => {
+    const searchCustomer = async () => {
+      if (customerPhone.length >= 3) {
+        await searchCustomers(customerPhone);
+        setShowResults(true);
+      } else {
+        setSearchResults([]);
+        setShowResults(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(searchCustomer, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [customerPhone, searchCustomers]);
+
+  // Update search results when customers data changes
+  useEffect(() => {
+    setSearchResults(customers);
+  }, [customers]);
+
+  // Handle customer selection from search
+  const handleCustomerSelect = (customer: any) => {
+    setCustomerPhone(customer.phone);
+    setCustomerName(customer.name);
+    setSearchResults([]);
+    setShowResults(false);
+  };
+
+  // Handle new customer added
+  const handleCustomerAdded = (customer: any) => {
+    setCustomerPhone(customer.phone);
+    setCustomerName(customer.name);
+  };
 
   const addToOrder = (service: Service) => {
     setCurrentOrder(prev => {
@@ -126,6 +167,20 @@ export const LaundryPOS = () => {
                         onChange={(e) => setCustomerPhone(e.target.value)}
                         className="pl-10"
                       />
+                      {showResults && searchResults.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-card border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                          {searchResults.map((customer) => (
+                            <div
+                              key={customer.id}
+                              className="p-3 hover:bg-secondary cursor-pointer border-b last:border-b-0"
+                              onClick={() => handleCustomerSelect(customer)}
+                            >
+                              <div className="font-medium">{customer.name}</div>
+                              <div className="text-sm text-muted-foreground">{customer.phone}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -148,10 +203,7 @@ export const LaundryPOS = () => {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full justify-start bg-gradient-primary hover:opacity-90 transition-smooth">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Customer
-                </Button>
+                <AddCustomerDialog onCustomerAdded={handleCustomerAdded} />
                 <Button variant="outline" className="w-full justify-start">
                   <Clock className="h-4 w-4 mr-2" />
                   Check Order Status
