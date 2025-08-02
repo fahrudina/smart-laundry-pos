@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useStore } from '@/contexts/StoreContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface OrderItem {
@@ -23,6 +24,7 @@ interface Order {
   payment_amount?: number;
   payment_notes?: string;
   execution_notes?: string;
+  store_id?: string;
   created_at: string;
   order_date?: string;
   estimated_completion?: string;
@@ -56,9 +58,19 @@ export const useOrders = () => {
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const { currentStore } = useStore();
   const { toast } = useToast();
 
   const createOrder = async (orderData: CreateOrderData) => {
+    if (!currentStore) {
+      toast({
+        title: "Error",
+        description: "No store selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       // Create the order
@@ -77,6 +89,7 @@ export const useOrders = () => {
           payment_notes: orderData.payment_notes,
           order_date: orderData.order_date || new Date().toISOString(),
           estimated_completion: orderData.estimated_completion,
+          store_id: currentStore.store_id,
         }])
         .select()
         .single();
@@ -119,6 +132,15 @@ export const useOrders = () => {
   };
 
   const getAllOrders = async (reset: boolean = false) => {
+    if (!currentStore) {
+      toast({
+        title: "Error",
+        description: "No store selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const pageSize = 10;
@@ -126,7 +148,7 @@ export const useOrders = () => {
       const from = page * pageSize;
       const to = from + pageSize - 1;
 
-      // Build the query with proper ordering
+      // Build the query with proper ordering and store filtering
       let query = supabase
         .from('orders')
         .select(`
@@ -139,6 +161,7 @@ export const useOrders = () => {
             estimated_completion
           )
         `, { count: 'exact' })
+        .eq('store_id', currentStore.store_id)
         .order('created_at', { ascending: false })
         .order('id', { ascending: false })
         .range(from, to);
@@ -181,6 +204,15 @@ export const useOrders = () => {
   };
 
   const getOrdersByCustomer = async (customerPhone: string) => {
+    if (!currentStore) {
+      toast({
+        title: "Error",
+        description: "No store selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -195,6 +227,7 @@ export const useOrders = () => {
           )
         `)
         .eq('customer_phone', customerPhone)
+        .eq('store_id', currentStore.store_id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

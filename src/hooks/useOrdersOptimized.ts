@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useStore } from '@/contexts/StoreContext';
 
 interface OrderItem {
   service_name: string;
@@ -23,6 +24,7 @@ interface Order {
   payment_amount?: number;
   payment_notes?: string;
   execution_notes?: string;
+  store_id?: string;
   created_at: string;
   order_date?: string;
   estimated_completion?: string;
@@ -62,20 +64,29 @@ const PAGE_SIZE = 10;
 
 // Fetch orders with infinite query for pagination
 export const useOrdersInfinite = (filters?: OrderFilters) => {
+  const { currentStore } = useStore();
+
   return useInfiniteQuery({
-    queryKey: [...ORDERS_QUERY_KEY, 'infinite', filters],
+    queryKey: [...ORDERS_QUERY_KEY, 'infinite', filters, currentStore?.store_id],
     queryFn: async ({ pageParam = 0 }) => {
       try {
+        if (!currentStore) {
+          console.log('No current store selected, returning empty result');
+          return { data: [], count: 0, nextCursor: null, hasNextPage: false };
+        }
+
         const from = pageParam * PAGE_SIZE;
         const to = from + PAGE_SIZE - 1;
 
         console.log('Attempting to query orders table...');
         console.log('Query filters:', filters);
+        console.log('Current store:', currentStore);
 
         // First, try a simple query without joins to test basic connectivity
         const { data: testData, error: testError } = await supabase
           .from('orders')
           .select('id, customer_name, customer_phone, created_at')
+          .eq('store_id', currentStore.store_id)
           .limit(1);
 
         console.log('Test query result:', { testData, testError });
@@ -98,6 +109,7 @@ export const useOrdersInfinite = (filters?: OrderFilters) => {
               estimated_completion
             )
           `, { count: 'exact' })
+          .eq('store_id', currentStore.store_id)
           .order('created_at', { ascending: false })
           .order('id', { ascending: false })
           .range(from, to);
@@ -383,9 +395,16 @@ export const useUpdateExecutionStatus = () => {
 
 // Get orders by customer
 export const useOrdersByCustomer = (customerPhone: string) => {
+  const { currentStore } = useStore();
+
   return useQuery({
-    queryKey: [...ORDERS_QUERY_KEY, 'customer', customerPhone],
+    queryKey: [...ORDERS_QUERY_KEY, 'customer', customerPhone, currentStore?.store_id],
     queryFn: async () => {
+      if (!currentStore) {
+        console.log('No current store selected, returning empty result');
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -398,12 +417,13 @@ export const useOrdersByCustomer = (customerPhone: string) => {
           )
         `)
         .eq('customer_phone', customerPhone)
+        .eq('store_id', currentStore.store_id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
     },
-    enabled: !!customerPhone,
+    enabled: !!customerPhone && !!currentStore,
     staleTime: 3 * 60 * 1000, // 3 minutes
   });
 };

@@ -1,8 +1,9 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useStore } from '@/contexts/StoreContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, History, Home, Settings, Bell, UserPlus } from 'lucide-react';
+import { LogOut, History, Home, Settings, Bell, UserPlus, Building2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,9 +15,11 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { AddCustomerDialog } from '@/components/pos/AddCustomerDialog';
+import { StoreSelector } from '@/components/stores/StoreSelector';
 
 export const AppHeader: React.FC = () => {
   const { user, signOut } = useAuth();
+  const { currentStore, isOwner } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -75,6 +78,21 @@ export const AppHeader: React.FC = () => {
               <History className="h-4 w-4" />
               Order History
             </Button>
+            {isOwner && (
+              <Button
+                variant={location.pathname === '/stores' ? "default" : "ghost"}
+                size="sm"
+                onClick={() => navigate('/stores')}
+                className={`flex items-center gap-2 h-9 px-4 ${
+                  location.pathname === '/stores'
+                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <Building2 className="h-4 w-4" />
+                Store Management
+              </Button>
+            )}
             <AddCustomerDialog 
               trigger={
                 <Button
@@ -89,16 +107,26 @@ export const AppHeader: React.FC = () => {
             />
           </nav>
 
-          {/* Right Side - User Menu */}
+          {/* Right Side - Store Selector and User Menu */}
           <div className="flex items-center space-x-3">
+            {/* Store Selector */}
+            <StoreSelector />
+
             {/* User Info - Hidden on mobile */}
             <div className="hidden lg:flex items-center space-x-3">
               <div className="text-right">
                 <div className="text-sm font-medium text-gray-900">
                   {user.full_name || 'User'}
                 </div>
-                <div className="text-xs text-gray-500 capitalize">
-                  {user.role}
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-gray-500 capitalize">
+                    {user.role === 'laundry_owner' ? 'Owner' : 'Staff'}
+                  </div>
+                  {currentStore && (
+                    <Badge variant="outline" className="text-xs">
+                      {currentStore.store_name}
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>

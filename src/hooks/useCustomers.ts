@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useStore } from '@/contexts/StoreContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface Customer {
@@ -8,6 +9,7 @@ interface Customer {
   phone: string;
   email?: string;
   address?: string;
+  store_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -15,14 +17,25 @@ interface Customer {
 export const useCustomers = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
+  const { currentStore } = useStore();
   const { toast } = useToast();
 
   const searchCustomers = async (query: string) => {
+    if (!currentStore) {
+      toast({
+        title: "Error",
+        description: "No store selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('customers')
         .select('*')
+        .eq('store_id', currentStore.store_id)
         .or(`name.ilike.%${query}%,phone.ilike.%${query}%`)
         .order('created_at', { ascending: false });
 
@@ -41,11 +54,23 @@ export const useCustomers = () => {
   };
 
   const addCustomer = async (customerData: Omit<Customer, 'id' | 'created_at' | 'updated_at'>) => {
+    if (!currentStore) {
+      toast({
+        title: "Error",
+        description: "No store selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('customers')
-        .insert([customerData])
+        .insert([{
+          ...customerData,
+          store_id: currentStore.store_id
+        }])
         .select()
         .single();
 
@@ -71,11 +96,14 @@ export const useCustomers = () => {
   };
 
   const getCustomerByPhone = async (phone: string) => {
+    if (!currentStore) return null;
+    
     try {
       const { data, error } = await supabase
         .from('customers')
         .select('*')
         .eq('phone', phone)
+        .eq('store_id', currentStore.store_id)
         .maybeSingle();
 
       if (error) throw error;
@@ -87,11 +115,21 @@ export const useCustomers = () => {
   };
 
   const getAllCustomers = async () => {
+    if (!currentStore) {
+      toast({
+        title: "Error",
+        description: "No store selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('customers')
         .select('*')
+        .eq('store_id', currentStore.store_id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

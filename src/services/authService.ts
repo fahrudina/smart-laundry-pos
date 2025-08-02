@@ -5,7 +5,8 @@ export interface User {
   email: string;
   full_name?: string;
   phone?: string;
-  role: string;
+  role: 'staff' | 'laundry_owner';
+  store_id?: string;
   is_active: boolean;
 }
 
@@ -80,7 +81,7 @@ class AuthService {
       // Fetch the created user
       const { data: userData, error: fetchError } = await supabase
         .from('users')
-        .select('id, email, full_name, phone, role, is_active')
+        .select('id, email, full_name, phone, role, store_id, is_active')
         .eq('id', data)
         .single();
 
@@ -93,7 +94,8 @@ class AuthService {
         email: userData.email,
         full_name: userData.full_name,
         phone: userData.phone,
-        role: userData.role,
+        role: userData.role as 'staff' | 'laundry_owner',
+        store_id: userData.store_id,
         is_active: userData.is_active
       };
 
@@ -128,12 +130,21 @@ class AuthService {
       }
 
       const userData = data[0];
+      
+      // Get store_id from users table
+      const { data: userStoreData } = await supabase
+        .from('users')
+        .select('store_id')
+        .eq('id', userData.user_id)
+        .single();
+      
       const user: User = {
         id: userData.user_id,
         email: userData.email,
         full_name: userData.full_name,
         phone: userData.phone,
-        role: userData.role,
+        role: userData.role as 'staff' | 'laundry_owner',
+        store_id: userStoreData?.store_id,
         is_active: userData.is_active
       };
 
@@ -166,6 +177,85 @@ class AuthService {
 
   isAuthenticated(): boolean {
     return this.session !== null && Date.now() < this.session.expires_at;
+  }
+
+  // Store management methods
+  async createStore(storeData: {
+    name: string;
+    description?: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+  }): Promise<string> {
+    if (!this.isAuthenticated()) {
+      throw new Error('User not authenticated');
+    }
+
+    const { data, error } = await supabase.rpc('create_store', {
+      user_id: this.session!.user.id,
+      store_name: storeData.name,
+      store_description: storeData.description,
+      store_address: storeData.address,
+      store_phone: storeData.phone,
+      store_email: storeData.email
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  }
+
+  async assignStaffToStore(staffUserId: string, storeId: string): Promise<boolean> {
+    if (!this.isAuthenticated()) {
+      throw new Error('User not authenticated');
+    }
+
+    const { data, error } = await supabase.rpc('assign_staff_to_store', {
+      user_id: this.session!.user.id,
+      staff_user_id: staffUserId,
+      target_store_id: storeId
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  }
+
+  async getUserStores() {
+    if (!this.isAuthenticated()) {
+      throw new Error('User not authenticated');
+    }
+
+    const { data, error } = await supabase.rpc('get_user_stores', {
+      user_id: this.session!.user.id
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  }
+
+  isOwner(): boolean {
+    return this.session?.user.role === 'laundry_owner';
+  }
+
+  isStaff(): boolean {
+    return this.session?.user.role === 'staff';
+  }
+
+  hasStoreAccess(storeId: string): boolean {
+    if (!this.session) return false;
+    
+    const user = this.session.user;
+    if (user.role === 'laundry_owner') return true; // Owners can access all their stores
+    
+    return user.store_id === storeId; // Staff can only access their assigned store
   }
 }
 

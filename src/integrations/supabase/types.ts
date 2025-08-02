@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -22,6 +23,7 @@ export type Database = {
           id: string
           name: string
           phone: string
+          store_id: string | null
           updated_at: string
         }
         Insert: {
@@ -31,6 +33,7 @@ export type Database = {
           id?: string
           name: string
           phone: string
+          store_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -40,9 +43,18 @@ export type Database = {
           id?: string
           name?: string
           phone?: string
+          store_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_items: {
         Row: {
@@ -100,6 +112,7 @@ export type Database = {
           payment_method: string | null
           payment_notes: string | null
           payment_status: string
+          store_id: string | null
           subtotal: number
           tax_amount: number
           total_amount: number
@@ -119,6 +132,7 @@ export type Database = {
           payment_method?: string | null
           payment_notes?: string | null
           payment_status?: string
+          store_id?: string | null
           subtotal: number
           tax_amount: number
           total_amount: number
@@ -138,6 +152,7 @@ export type Database = {
           payment_method?: string | null
           payment_notes?: string | null
           payment_status?: string
+          store_id?: string | null
           subtotal?: number
           tax_amount?: number
           total_amount?: number
@@ -149,6 +164,60 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stores: {
+        Row: {
+          address: string | null
+          created_at: string
+          description: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          owner_id: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          owner_id?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          owner_id?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stores_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -163,6 +232,7 @@ export type Database = {
           password_hash: string
           phone: string | null
           role: string
+          store_id: string | null
           updated_at: string
         }
         Insert: {
@@ -174,6 +244,7 @@ export type Database = {
           password_hash: string
           phone?: string | null
           role?: string
+          store_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -185,15 +256,49 @@ export type Database = {
           password_hash?: string
           phone?: string | null
           role?: string
+          store_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      assign_staff_to_store: {
+        Args:
+          | { staff_user_id: string; target_store_id: string }
+          | { user_id: string; staff_user_id: string; target_store_id: string }
+        Returns: boolean
+      }
+      create_store: {
+        Args:
+          | {
+              store_name: string
+              store_description?: string
+              store_address?: string
+              store_phone?: string
+              store_email?: string
+            }
+          | {
+              user_id: string
+              store_name: string
+              store_description?: string
+              store_address?: string
+              store_phone?: string
+              store_email?: string
+            }
+        Returns: string
+      }
       create_user: {
         Args: {
           user_email: string
@@ -203,6 +308,51 @@ export type Database = {
           user_role?: string
         }
         Returns: string
+      }
+      get_user_stores: {
+        Args: Record<PropertyKey, never> | { user_id: string }
+        Returns: {
+          store_id: string
+          store_name: string
+          store_description: string
+          store_address: string
+          store_phone: string
+          store_email: string
+          is_owner: boolean
+          is_active: boolean
+        }[]
+      }
+      gtrgm_compress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_decompress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_in: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_options: {
+        Args: { "": unknown }
+        Returns: undefined
+      }
+      gtrgm_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      set_limit: {
+        Args: { "": number }
+        Returns: number
+      }
+      show_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      show_trgm: {
+        Args: { "": string }
+        Returns: string[]
       }
       verify_user_credentials: {
         Args: { user_email: string; user_password: string }
