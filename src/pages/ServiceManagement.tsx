@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, DollarSign, Settings } from 'lucide-react';
+import { Plus, Edit2, Trash2, DollarSign, Settings, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useServices, useCreateService, useUpdateService, useDeleteService, ServiceFormData as ServiceFormType } from '@/hooks/useServices';
 
 interface ServiceFormData {
   name: string;
@@ -39,56 +40,69 @@ const initialFormData: ServiceFormData = {
 const ServiceManagement = () => {
   usePageTitle('Service Management');
   
-  const [services, setServices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingService, setEditingService] = useState<any>(null);
   const [formData, setFormData] = useState<ServiceFormData>(initialFormData);
   const { toast } = useToast();
 
-  // Sample data for now - will be replaced with real data
-  React.useEffect(() => {
-    setServices([
+  // Use hooks to fetch and manage services
+  const { data: services = [], isLoading: loading, error } = useServices();
+  const createServiceMutation = useCreateService();
+  const updateServiceMutation = useUpdateService();
+  const deleteServiceMutation = useDeleteService();
+
+  const isProcessing = createServiceMutation.isPending || updateServiceMutation.isPending || deleteServiceMutation.isPending;
+
+  // Function to seed initial services
+  const seedInitialServices = async () => {
+    const initialServices = [
       {
-        id: '1',
-        name: 'Regular Wash',
-        description: 'Standard washing service',
-        category: 'wash',
-        unit_price: 12.99,
-        kilo_price: 8.99,
+        name: 'Cuci Setrika Regular',
+        description: 'Cuci - Pengeringan - Setrika - Packing',
+        category: 'wash' as const,
+        unit_price: 18000,
+        kilo_price: 6000,
         supports_unit: true,
         supports_kilo: true,
         duration_value: 2,
-        duration_unit: 'days',
-        is_active: true
+        duration_unit: 'days' as const,
       },
       {
-        id: '2',
         name: 'Express Wash',
-        description: 'Fast washing service',
-        category: 'wash',
-        unit_price: 19.99,
-        kilo_price: 14.99,
+        description: 'Pencucian cepat dalam 24 jam',
+        category: 'wash' as const,
+        unit_price: 25000,
+        kilo_price: 8000,
         supports_unit: true,
         supports_kilo: true,
         duration_value: 1,
-        duration_unit: 'days',
-        is_active: true
+        duration_unit: 'days' as const,
       },
       {
-        id: '3',
-        name: 'Dry Clean',
-        description: 'Professional dry cleaning',
-        category: 'dry',
-        unit_price: 24.99,
+        name: 'Setrika Saja',
+        description: 'Layanan setrika dan pressing saja',
+        category: 'ironing' as const,
+        unit_price: 5000,
+        kilo_price: 3000,
         supports_unit: true,
-        supports_kilo: false,
-        duration_value: 2,
-        duration_unit: 'days',
-        is_active: true
+        supports_kilo: true,
+        duration_value: 4,
+        duration_unit: 'hours' as const,
+      },
+    ];
+
+    try {
+      for (const service of initialServices) {
+        await createServiceMutation.mutateAsync(service);
       }
-    ]);
-  }, []);
+      toast({
+        title: "Success",
+        description: "Initial services created successfully",
+      });
+    } catch (error) {
+      console.error('Error seeding services:', error);
+    }
+  };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -142,45 +156,23 @@ const ServiceManagement = () => {
     }
 
     try {
-      setLoading(true);
-      
       if (editingService) {
         // Update existing service
-        const updatedServices = services.map(service => 
-          service.id === editingService.id 
-            ? { ...service, ...formData }
-            : service
-        );
-        setServices(updatedServices);
-        toast({
-          title: "Success",
-          description: "Service updated successfully",
+        await updateServiceMutation.mutateAsync({
+          id: editingService.id,
+          data: formData
         });
       } else {
         // Create new service
-        const newService = {
-          ...formData,
-          id: Date.now().toString(),
-          is_active: true
-        };
-        setServices([...services, newService]);
-        toast({
-          title: "Success",
-          description: "Service created successfully",
-        });
+        await createServiceMutation.mutateAsync(formData);
       }
 
       setFormData(initialFormData);
       setEditingService(null);
       setShowCreateDialog(false);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save service",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      // Error handling is done in the mutation hooks
+      console.error('Error saving service:', error);
     }
   };
 
@@ -206,18 +198,10 @@ const ServiceManagement = () => {
     }
 
     try {
-      const updatedServices = services.filter(service => service.id !== serviceId);
-      setServices(updatedServices);
-      toast({
-        title: "Success",
-        description: "Service deleted successfully",
-      });
+      await deleteServiceMutation.mutateAsync(serviceId);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete service",
-        variant: "destructive",
-      });
+      // Error handling is done in the mutation hook
+      console.error('Error deleting service:', error);
     }
   };
 
@@ -235,14 +219,71 @@ const ServiceManagement = () => {
           <h1 className="text-3xl font-bold">Service Management</h1>
           <p className="text-muted-foreground">Manage your laundry services and pricing</p>
         </div>
-        <Button onClick={openCreateDialog} className="flex items-center space-x-2">
+        <Button 
+          onClick={openCreateDialog} 
+          className="flex items-center space-x-2"
+          disabled={isProcessing}
+        >
           <Plus className="h-4 w-4" />
           <span>Add Service</span>
         </Button>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+            <p className="text-muted-foreground">Loading services...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <div>
+                <h3 className="font-medium text-red-800">Error loading services</h3>
+                <p className="text-sm text-red-600">
+                  Please try refreshing the page or contact support if the problem persists.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Services Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {!loading && !error && (
+        <>
+          {services.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Settings className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-medium mb-2">No services found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Get started by creating your first laundry service or load some sample services.
+                </p>
+                <div className="flex justify-center gap-2">
+                  <Button onClick={openCreateDialog}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Service
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={seedInitialServices}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? 'Loading...' : 'Load Sample Services'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {services.map((service) => (
           <Card key={service.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
@@ -319,7 +360,10 @@ const ServiceManagement = () => {
             </Button>
           </div>
         )}
-      </div>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Create/Edit Service Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>

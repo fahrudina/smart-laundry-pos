@@ -37,3 +37,6 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
+      });
+  });
+}

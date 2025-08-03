@@ -58,8 +58,8 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
   if (currentOrder.length === 0) return null;
 
   const subtotal = getTotalPrice();
-  const taxAmount = subtotal * 0.11;
-  const totalAmount = subtotal + taxAmount;
+  // const taxAmount = subtotal * 0.11;
+  const totalAmount = subtotal; // + taxAmount;
   const completionTime = getOrderCompletionTime();
 
   return (
@@ -173,10 +173,10 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
               <span className="text-gray-600">Subtotal:</span>
               <span className="font-medium">Rp{subtotal.toLocaleString('id-ID')}</span>
             </div>
-            <div className="flex justify-between text-xs text-gray-500">
+            {/* <div className="flex justify-between text-xs text-gray-500">
               <span>Tax (11%):</span>
               <span>Rp{taxAmount.toLocaleString('id-ID')}</span>
-            </div>
+            </div> */}
             <Separator />
             <div className="flex justify-between text-lg font-bold text-gray-900">
               <span>Total:</span>

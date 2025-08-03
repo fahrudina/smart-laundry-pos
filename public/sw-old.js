@@ -7,8 +7,7 @@ const urlsToCache = [
   '/manifest.json',
   '/favicon.ico',
   '/favicon-192.png',
-  '/favicon-512.png',
-  '/placeholder.svg'
+  '/favicon-512.png'
 ];
 
 // Install event - cache resources
@@ -86,36 +85,22 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
-
-// Handle background sync for offline form submissions
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'background-sync') {
-    event.waitUntil(doBackgroundSync());
-  }
+      })
+  );
 });
 
-function doBackgroundSync() {
-  // Handle offline data sync when connection is restored
-  return new Promise((resolve) => {
-    console.log('Background sync triggered');
-    resolve();
-  });
-}
-
-// Handle push notifications (for future use)
-self.addEventListener('push', (event) => {
-  const options = {
-    body: event.data ? event.data.text() : 'New notification',
-    icon: '/favicon-192.png',
-    badge: '/favicon-192.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    }
-  };
-  
+// Activate event - clean up old caches
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    self.registration.showNotification('Smart Laundry POS', options)
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
   );
 });

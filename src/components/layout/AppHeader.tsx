@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { AddCustomerDialog } from '@/components/pos/AddCustomerDialog';
 import { StoreSelector } from '@/components/stores/StoreSelector';
+import { PWAInstallButton } from '@/components/ui/PWAInstallButton';
 
 export const AppHeader: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -122,8 +123,11 @@ export const AppHeader: React.FC = () => {
             />
           </nav>
 
-          {/* Right Side - Store Selector and User Menu */}
+          {/* Right Side - PWA Install, Store Selector and User Menu */}
           <div className="flex items-center space-x-3">
+            {/* PWA Install Button */}
+            <PWAInstallButton />
+
             {/* Store Selector */}
             <StoreSelector />
 
