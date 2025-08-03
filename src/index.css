@@ -171,5 +171,35 @@ All colors MUST be HSL.
       height: auto !important;
       width: 100% !important;
     }
+
+    /* Mobile-friendly dialog adjustments */
+    [data-radix-dialog-content] {
+      max-height: 90vh !important;
+      margin: 0 !important;
+      width: 95vw !important;
+      max-width: 425px !important;
+      z-index: 9999 !important;
+    }
+
+    /* Ensure dialogs don't overflow on small screens */
+    [data-radix-dialog-overlay] {
+      padding: 1rem !important;
+      z-index: 9998 !important;
+    }
+
+    /* Better touch targets for mobile */
+    .mobile-touch-target {
+      min-height: 44px !important;
+      min-width: 44px !important;
+    }
+
+    /* Larger text inputs on mobile for better usability */
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="password"],
+    textarea {
+      font-size: 16px !important; /* Prevents zoom on iOS */
+    }
   }
 }

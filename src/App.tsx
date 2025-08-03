@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import { OrderHistory } from "./pages/OrderHistoryOptimized";
 import { Login } from "./pages/Login";
-import { LandingPage } from "./pages/LandingPage";
+import { SmartHomePage } from "./pages/SmartHomePage";
 import NotFound from "./pages/NotFound";
 import { StoreManagementPage } from "./pages/StoreManagementPage";
 import ServiceManagement from "./pages/ServiceManagement";
@@ -15,6 +15,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { StoreProvider } from "./contexts/StoreContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { OwnerRoute } from "./components/auth/OwnerRoute";
+import { ProtectedRedirect } from "./components/auth/ProtectedRedirect";
 import { AppLayout } from "./components/layout/AppLayout";
 import { queryClient } from "./lib/queryClient";
 
@@ -28,7 +29,7 @@ const App = () => (
           <StoreProvider>
             <Routes>
               {/* Public Routes */}
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<SmartHomePage />} />
               <Route path="/login" element={<Login />} />
               
               {/* Protected Routes */}
@@ -77,7 +78,7 @@ const App = () => (
                 } 
               />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
+              <Route path="*" element={<ProtectedRedirect />} />
             </Routes>
           </StoreProvider>
         </AuthProvider>

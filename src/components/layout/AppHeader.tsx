@@ -28,6 +28,31 @@ export const AppHeader: React.FC = () => {
     await signOut();
   };
 
+  // Smart navigation handlers
+  const handlePOSNavigation = () => {
+    if (location.pathname !== '/pos') {
+      navigate('/pos');
+    }
+  };
+
+  const handleHistoryNavigation = () => {
+    if (location.pathname !== '/order-history') {
+      navigate('/order-history');
+    }
+  };
+
+  const handleServicesNavigation = () => {
+    if (location.pathname !== '/services') {
+      navigate('/services');
+    }
+  };
+
+  const handleStoresNavigation = () => {
+    if (location.pathname !== '/stores') {
+      navigate('/stores');
+    }
+  };
+
   if (!user) return null;
 
   const userInitials = user.full_name 
@@ -56,7 +81,7 @@ export const AppHeader: React.FC = () => {
             <Button
               variant={isOnPOS ? "default" : "ghost"}
               size="sm"
-              onClick={() => navigate('/pos')}
+              onClick={handlePOSNavigation}
               className={`flex items-center gap-2 h-9 px-4 ${
                 isOnPOS 
                   ? 'bg-blue-600 text-white hover:bg-blue-700' 
@@ -69,7 +94,7 @@ export const AppHeader: React.FC = () => {
             <Button
               variant={isOnHistory ? "default" : "ghost"}
               size="sm"
-              onClick={() => navigate('/order-history')}
+              onClick={handleHistoryNavigation}
               className={`flex items-center gap-2 h-9 px-4 ${
                 isOnHistory 
                   ? 'bg-blue-600 text-white hover:bg-blue-700' 
@@ -84,7 +109,7 @@ export const AppHeader: React.FC = () => {
                 <Button
                   variant={location.pathname === '/services' ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => navigate('/services')}
+                  onClick={handleServicesNavigation}
                   className={`flex items-center gap-2 h-9 px-4 ${
                     location.pathname === '/services'
                       ? 'bg-blue-600 text-white hover:bg-blue-700' 
@@ -97,7 +122,7 @@ export const AppHeader: React.FC = () => {
                 <Button
                   variant={location.pathname === '/stores' ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => navigate('/stores')}
+                  onClick={handleStoresNavigation}
                   className={`flex items-center gap-2 h-9 px-4 ${
                     location.pathname === '/stores'
                       ? 'bg-blue-600 text-white hover:bg-blue-700' 
@@ -114,10 +139,11 @@ export const AppHeader: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="flex items-center gap-2 h-9 px-4 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  className="flex items-center gap-2 h-10 px-4 text-gray-600 hover:text-gray-900 hover:bg-gray-100 mobile-touch-target"
                 >
                   <UserPlus className="h-4 w-4" />
-                  Add Customer
+                  <span className="hidden sm:inline">Add Customer</span>
+                  <span className="sm:hidden">Add</span>
                 </Button>
               }
             />
@@ -217,38 +243,39 @@ export const AppHeader: React.FC = () => {
             <Button
               variant={isOnPOS ? "default" : "ghost"}
               size="sm"
-              onClick={() => navigate('/')}
-              className={`flex items-center gap-2 flex-1 justify-center h-8 ${
+              onClick={handlePOSNavigation}
+              className={`flex items-center gap-2 flex-1 justify-center h-10 mobile-touch-target ${
                 isOnPOS 
                   ? 'bg-blue-600 text-white' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               <Home className="h-4 w-4" />
-              POS
+              <span className="text-xs">POS</span>
             </Button>
             <Button
               variant={isOnHistory ? "default" : "ghost"}
               size="sm"
-              onClick={() => navigate('/order-history')}
-              className={`flex items-center gap-2 flex-1 justify-center h-8 ${
+              onClick={handleHistoryNavigation}
+              className={`flex items-center gap-2 flex-1 justify-center h-10 mobile-touch-target ${
                 isOnHistory 
                   ? 'bg-blue-600 text-white' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               <History className="h-4 w-4" />
-              History
+              <span className="text-xs">History</span>
             </Button>
             <AddCustomerDialog 
               trigger={
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="flex items-center gap-2 flex-1 justify-center h-8 text-gray-600 hover:text-gray-900"
+                  className="flex items-center gap-2 flex-1 justify-center h-10 text-gray-600 hover:text-gray-900 mobile-touch-target"
                 >
                   <UserPlus className="h-4 w-4" />
-                  Add
+                  <span className="hidden xs:inline">Add</span>
+                  <span className="xs:hidden">+</span>
                 </Button>
               }
             />

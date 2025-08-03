@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UserPlus } from 'lucide-react';
 import { useCustomers } from '@/hooks/useCustomers';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddCustomerDialogProps {
   onCustomerAdded?: (customer: any) => void;
@@ -20,11 +21,17 @@ export const AddCustomerDialog = ({ onCustomerAdded, trigger }: AddCustomerDialo
     address: '',
   });
   const { addCustomer, loading } = useCustomers();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name.trim() || !formData.phone.trim()) {
+      toast({
+        title: "Error",
+        description: "Name and phone number are required",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -39,6 +46,11 @@ export const AddCustomerDialog = ({ onCustomerAdded, trigger }: AddCustomerDialo
       setFormData({ name: '', phone: '', email: '', address: '' });
       setOpen(false);
       onCustomerAdded?.(customer);
+      
+      toast({
+        title: "Success",
+        description: "Customer added successfully!",
+      });
     } catch (error) {
       // Error is handled in the hook
     }
@@ -58,23 +70,25 @@ export const AddCustomerDialog = ({ onCustomerAdded, trigger }: AddCustomerDialo
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="w-[95vw] max-w-[425px] max-h-[90vh] overflow-y-auto mx-4 my-8">
         <DialogHeader>
-          <DialogTitle>Add New Customer</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Add New Customer</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 pb-2">
           <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+            <Label htmlFor="name" className="text-sm font-medium">Name *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
               placeholder="Customer name"
               required
+              className="h-11 text-base"
+              autoComplete="name"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number *</Label>
+            <Label htmlFor="phone" className="text-sm font-medium">Phone Number *</Label>
             <Input
               id="phone"
               type="tel"
@@ -82,32 +96,47 @@ export const AddCustomerDialog = ({ onCustomerAdded, trigger }: AddCustomerDialo
               onChange={(e) => handleInputChange('phone', e.target.value)}
               placeholder="Phone number"
               required
+              className="h-11 text-base"
+              autoComplete="tel"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
               placeholder="Email address"
+              className="h-11 text-base"
+              autoComplete="email"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="address" className="text-sm font-medium">Address</Label>
             <Input
               id="address"
               value={formData.address}
               onChange={(e) => handleInputChange('address', e.target.value)}
               placeholder="Customer address"
+              className="h-11 text-base"
+              autoComplete="address-line1"
             />
           </div>
-          <div className="flex gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setOpen(false)} 
+              className="flex-1 h-11 text-base"
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !formData.name.trim() || !formData.phone.trim()} className="flex-1">
+            <Button 
+              type="submit" 
+              disabled={loading || !formData.name.trim() || !formData.phone.trim()} 
+              className="flex-1 h-11 text-base"
+            >
               {loading ? 'Adding...' : 'Add Customer'}
             </Button>
           </div>
