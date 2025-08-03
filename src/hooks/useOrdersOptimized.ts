@@ -239,9 +239,14 @@ export const useOrders = (filters?: OrderFilters) => {
 export const useCreateOrder = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { currentStore } = useStore();
 
   return useMutation({
     mutationFn: async (orderData: CreateOrderData) => {
+      if (!currentStore) {
+        throw new Error('No store selected');
+      }
+
       // Create the order
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -258,6 +263,7 @@ export const useCreateOrder = () => {
           payment_notes: orderData.payment_notes,
           order_date: orderData.order_date || new Date().toISOString(),
           estimated_completion: orderData.estimated_completion,
+          store_id: currentStore.store_id,
         }])
         .select()
         .single();
