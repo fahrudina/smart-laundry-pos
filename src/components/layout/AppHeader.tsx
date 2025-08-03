@@ -34,7 +34,7 @@ export const AppHeader: React.FC = () => {
     ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
     : user.email?.substring(0, 2).toUpperCase() || 'U';
 
-  const isOnPOS = location.pathname === '/';
+  const isOnPOS = location.pathname === '/pos';
   const isOnHistory = location.pathname === '/order-history';
 
   return (
@@ -56,7 +56,7 @@ export const AppHeader: React.FC = () => {
             <Button
               variant={isOnPOS ? "default" : "ghost"}
               size="sm"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/pos')}
               className={`flex items-center gap-2 h-9 px-4 ${
                 isOnPOS 
                   ? 'bg-blue-600 text-white hover:bg-blue-700' 

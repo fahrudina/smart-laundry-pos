@@ -12,3 +12,15 @@ Allow: /
 
 User-agent: *
 Allow: /
+Allow: /login
+Disallow: /pos
+Disallow: /order-history
+Disallow: /services
+Disallow: /stores
+
+# Sitemap
+Sitemap: https://smart-laundry-pos.vercel.app/sitemap.xml
+
+# Contact Information
+# Email: fahrudinjaya@gmail.com
+# Smart Laundry POS - Sistem Kasir Modern untuk Laundry Indonesia

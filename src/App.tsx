@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import { OrderHistory } from "./pages/OrderHistoryOptimized";
 import { Login } from "./pages/Login";
+import { LandingPage } from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import { StoreManagementPage } from "./pages/StoreManagementPage";
 import ServiceManagement from "./pages/ServiceManagement";
@@ -26,9 +27,13 @@ const App = () => (
         <AuthProvider>
           <StoreProvider>
             <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
+              
+              {/* Protected Routes */}
               <Route 
-                path="/" 
+                path="/pos" 
                 element={
                   <ProtectedRoute>
                     <AppLayout>

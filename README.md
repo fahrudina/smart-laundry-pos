@@ -2,6 +2,38 @@
 
 A modern, comprehensive Point of Sale (POS) system designed specifically for laundry businesses. Built with React, TypeScript, and Supabase for a seamless user experience.
 
+## 🌟 New Features
+
+### 📱 Progressive Web App (PWA)
+- **Installable**: Can be installed on Android devices like a native app
+- **Offline Support**: Works offline with cached content and service worker
+- **App-like Experience**: Runs in standalone mode without browser UI
+- **Fast Loading**: Intelligent caching for instant startup
+
+### 🏠 Landing Page
+- **Professional Presentation**: Beautiful landing page showcasing POS features
+- **Direct Access**: Easy navigation to login and app access
+- **Mobile Optimized**: Responsive design for all devices
+- **PWA Install**: Built-in install prompts for mobile users
+
+## 📱 Installation Options
+
+### For End Users
+1. **Visit Landing Page**: Navigate to your deployed URL
+2. **Install on Android**: 
+   - Automatic "Add to Home Screen" banner in Chrome
+   - Manual: Chrome menu → "Install app"
+   - Custom button: Click "Install App" in header
+3. **Login**: Click "Login" from landing page to access POS
+
+### Route Structure
+- `/` - Landing page (public)
+- `/login` - Login page (public)
+- `/pos` - Main POS interface (protected)
+- `/order-history` - Order history (protected)
+- `/services` - Service management (owner only)
+- `/stores` - Store management (owner only)
+
 ## 🚀 Features
 
 ### Core POS Functionality
