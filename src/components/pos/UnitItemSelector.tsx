@@ -81,7 +81,7 @@ const UnitItemRow: React.FC<UnitItemRowProps> = ({
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">
-              ${((item.quantity || 0) * (item.price_per_unit || 0)).toFixed(2)}
+              Rp{((item.quantity || 0) * (item.price_per_unit || 0)).toLocaleString('id-ID')}
             </span>
             <Button
               type="button"
@@ -200,7 +200,7 @@ export const UnitItemSelector: React.FC<UnitItemSelectorProps> = ({
           
           <div className="flex justify-between items-center pt-3 border-t">
             <span className="font-medium">Total Unit Items:</span>
-            <span className="font-semibold text-lg">${totalAmount.toFixed(2)}</span>
+            <span className="font-semibold text-lg">Rp{totalAmount.toLocaleString('id-ID')}</span>
           </div>
         </div>
       )}

@@ -29,15 +29,23 @@ interface SelectedService {
 interface ServiceSelectionPopupProps {
   onServicesSelected: (services: SelectedService[]) => void;
   disabled?: boolean;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const ServiceSelectionPopup: React.FC<ServiceSelectionPopupProps> = ({
   onServicesSelected,
   disabled = false,
+  isOpen: externalIsOpen,
+  onOpenChange: externalOnOpenChange,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [selectedServices, setSelectedServices] = useState<SelectedService[]>([]);
   const { data: services = [], isLoading } = useServices();
+
+  // Use external state if provided, otherwise use internal state
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const setIsOpen = externalOnOpenChange || setInternalIsOpen;
 
   const getCategoryColor = (category: string) => {
     switch (category) {

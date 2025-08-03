@@ -131,6 +131,22 @@ All colors MUST be HSL.
 
 /* Mobile-specific fixes for buttons */
 @layer utilities {
+  /* Floating overlay animation */
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   @media (max-width: 640px) {
     .mobile-button-fix {
       display: block !important;

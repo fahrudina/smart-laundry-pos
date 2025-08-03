@@ -20,7 +20,12 @@ export const EnhancedLaundryPOS = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSelectingCustomer, setIsSelectingCustomer] = useState(false);
-  const [dropOffDate, setDropOffDate] = useState(new Date());
+  const [dropOffDate, setDropOffDate] = useState(() => {
+    // Set to current date/time in Asia/Jakarta timezone
+    const now = new Date();
+    const jakartaTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
+    return jakartaTime;
+  });
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [showServiceDialog, setShowServiceDialog] = useState(false);
   
@@ -162,6 +167,10 @@ export const EnhancedLaundryPOS = () => {
     setCustomerName('');
     setSearchResults([]);
     setShowResults(false);
+    // Reset to current Jakarta time
+    const now = new Date();
+    const jakartaTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
+    setDropOffDate(jakartaTime);
   };
 
   // Handle phone input blur
@@ -526,11 +535,11 @@ export const EnhancedLaundryPOS = () => {
                   </div>
                   <div className="space-y-1">
                     <p className="text-lg sm:text-xl font-bold text-primary">
-                      ${service.price}
+                      Rp{service.price.toLocaleString('id-ID')}
                     </p>
                     {service.supportsKilo && service.kiloPrice && (
                       <p className="text-sm text-gray-600">
-                        ${service.kiloPrice}/kg
+                        Rp{service.kiloPrice.toLocaleString('id-ID')}/kg
                       </p>
                     )}
                     <p className="text-xs sm:text-sm text-muted-foreground flex items-center">
@@ -597,7 +606,7 @@ export const EnhancedLaundryPOS = () => {
                     </div>
                     <div className="flex items-center space-x-2 ml-2">
                       <span className="font-semibold text-primary">
-                        ${item.totalPrice.toFixed(2)}
+                        Rp{item.totalPrice.toLocaleString('id-ID')}
                       </span>
                       <Button
                         variant="outline"
@@ -631,16 +640,16 @@ export const EnhancedLaundryPOS = () => {
               <div className="space-y-2 mb-6">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal:</span>
-                  <span>${getTotalPrice().toFixed(2)}</span>
+                  <span>Rp{getTotalPrice().toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Tax (8.25%):</span>
-                  <span>${(getTotalPrice() * 0.0825).toFixed(2)}</span>
+                  <span>Rp{(getTotalPrice() * 0.0825).toLocaleString('id-ID')}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total:</span>
-                  <span>${(getTotalPrice() * 1.0825).toFixed(2)}</span>
+                  <span>Rp{(getTotalPrice() * 1.0825).toLocaleString('id-ID')}</span>
                 </div>
               </div>
 

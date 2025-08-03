@@ -139,9 +139,9 @@ export const EnhancedServiceSelector: React.FC<EnhancedServiceSelectorProps> = (
         <div className="flex items-center justify-between text-sm text-gray-600">
           <span>Duration: {service.duration}</span>
           <div className="text-right">
-            <div>Unit: ${service.price.toFixed(2)}</div>
+            <div>Unit: Rp{service.price.toLocaleString('id-ID')}</div>
             {service.supportsKilo && service.kiloPrice && (
-              <div>Kilo: ${service.kiloPrice.toFixed(2)}/kg</div>
+              <div>Kilo: Rp{service.kiloPrice.toLocaleString('id-ID')}/kg</div>
             )}
           </div>
         </div>
@@ -208,7 +208,7 @@ export const EnhancedServiceSelector: React.FC<EnhancedServiceSelectorProps> = (
         <div className="flex justify-between items-center pt-4 border-t">
           <span className="font-medium">Total Price:</span>
           <span className="font-semibold text-lg text-blue-600">
-            ${totalPrice.toFixed(2)}
+            Rp{totalPrice.toLocaleString('id-ID')}
           </span>
         </div>
       </CardContent>

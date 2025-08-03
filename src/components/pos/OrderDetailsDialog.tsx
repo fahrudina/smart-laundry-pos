@@ -160,14 +160,14 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Total Amount: </span>
                   <span className="text-lg font-bold text-primary">
-                    ${order.total_amount.toFixed(2)}
+                    Rp{order.total_amount.toLocaleString('id-ID')}
                   </span>
                 </div>
                 {order.payment_amount && order.payment_amount !== order.total_amount && (
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Amount Paid: </span>
                     <span className="text-lg font-semibold text-green-600">
-                      ${order.payment_amount.toFixed(2)}
+                      Rp{order.payment_amount.toLocaleString('id-ID')}
                     </span>
                   </div>
                 )}
@@ -201,7 +201,7 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                       </div>
                       <div className="text-sm text-muted-foreground space-y-1">
                         {/* Basic pricing info */}
-                        <p>${item.service_price.toFixed(2)} × {item.quantity}</p>
+                        <p>Rp{item.service_price.toLocaleString('id-ID')} × {item.quantity}</p>
                         
                         {/* Service type specific details */}
                         {item.service_type === 'kilo' && item.weight_kg && (
@@ -216,7 +216,7 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                                 <p className="font-medium">Unit Items:</p>
                                 {item.unit_items.map((unitItem: any, unitIndex: number) => (
                                   <p key={unitIndex} className="ml-2 text-xs">
-                                    • {unitItem.item_name}: {unitItem.quantity} × ${unitItem.price_per_unit.toFixed(2)}
+                                    • {unitItem.item_name}: {unitItem.quantity} × Rp{unitItem.price_per_unit.toLocaleString('id-ID')}
                                   </p>
                                 ))}
                               </div>
@@ -229,7 +229,7 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                             <p className="font-medium">Unit Items:</p>
                             {item.unit_items.map((unitItem: any, unitIndex: number) => (
                               <p key={unitIndex} className="ml-2 text-xs">
-                                • {unitItem.item_name}: {unitItem.quantity} × ${unitItem.price_per_unit.toFixed(2)}
+                                • {unitItem.item_name}: {unitItem.quantity} × Rp{unitItem.price_per_unit.toLocaleString('id-ID')}
                               </p>
                             ))}
                           </div>
@@ -243,7 +243,7 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">${item.line_total.toFixed(2)}</p>
+                      <p className="font-semibold">Rp{item.line_total.toLocaleString('id-ID')}</p>
                     </div>
                   </div>
                 </div>
@@ -257,16 +257,16 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
           <div className="space-y-2">
             <div className="flex justify-between text-lg">
               <span>Subtotal:</span>
-              <span>${order.subtotal.toFixed(2)}</span>
+              <span>Rp{order.subtotal.toLocaleString('id-ID')}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Tax:</span>
-              <span>${order.tax_amount.toFixed(2)}</span>
+              <span>Rp{order.tax_amount.toLocaleString('id-ID')}</span>
             </div>
             <Separator />
             <div className="flex justify-between text-xl font-bold">
               <span>Total:</span>
-              <span>${order.total_amount.toFixed(2)}</span>
+              <span>Rp{order.total_amount.toLocaleString('id-ID')}</span>
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ import { useCustomers } from '@/hooks/useCustomers';
 import { useCreateOrder, UnitItem } from '@/hooks/useOrdersOptimized';
 import { useToast } from '@/hooks/use-toast';
 import { ServiceSelectionPopup } from './ServiceSelectionPopup';
+import { FloatingOrderSummary } from './FloatingOrderSummary';
 
 interface Service {
   id: string;
@@ -105,7 +106,13 @@ export const LaundryPOS = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSelectingCustomer, setIsSelectingCustomer] = useState(false);
-  const [dropOffDate, setDropOffDate] = useState(new Date());
+  const [isServicePopupOpen, setIsServicePopupOpen] = useState(false);
+  const [dropOffDate, setDropOffDate] = useState(() => {
+    // Set to current date/time in Asia/Jakarta timezone
+    const now = new Date();
+    const jakartaTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
+    return jakartaTime;
+  });
   
   const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading } = useCustomers();
@@ -217,7 +224,10 @@ export const LaundryPOS = () => {
     setSearchResults([]);
     setShowResults(false);
     setIsSelectingCustomer(false);
-    setDropOffDate(new Date());
+    // Reset to current Jakarta time
+    const now = new Date();
+    const jakartaTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
+    setDropOffDate(jakartaTime);
   };
 
   // Handle input blur to hide results
@@ -589,171 +599,35 @@ export const LaundryPOS = () => {
           <ServiceSelectionPopup
             onServicesSelected={handleServicesSelected}
             disabled={!customerName || !customerPhone}
+            isOpen={isServicePopupOpen}
+            onOpenChange={setIsServicePopupOpen}
           />
         </CardContent>
       </Card>
 
-      {/* Current Order */}
-      <Card className="bg-card shadow-strong">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center">
-            <ShoppingCart className="h-5 w-5 mr-2" />
-            Current Order
-            {currentOrder.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {currentOrder.reduce((sum, item) => sum + item.quantity, 0)} items
-              </Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 lg:p-6">
-          {currentOrder.length === 0 ? (
-            <div className="text-center py-6 sm:py-8 text-muted-foreground">
-              <ShoppingCart className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 opacity-50" />
-              <p className="text-sm sm:text-base">No items in order</p>
-              <p className="text-xs sm:text-sm">Add services to get started</p>
-            </div>
-          ) : (
-            <>
-              <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
-                {currentOrder.map((item, index) => (
-                  <div key={`${item.service.id}-${item.serviceType}-${index}`} className="flex items-center justify-between p-2 sm:p-3 bg-secondary rounded-lg">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{item.service.name}</h4>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        Rp{item.service.price.toLocaleString('id-ID')} × {item.quantity}
-                        {item.serviceType === 'kilo' ? ' kg' : ' unit'}
-                        {item.serviceType === 'kilo' && ' (Min. 3 kg)'}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
-                        Ready: {formatDate(calculateFinishDate(item.service))}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-1 sm:space-x-2 ml-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => updateQuantity(item.service.id, item.quantity - 1, item.serviceType)}
-                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                      >
-                        -
-                      </Button>
-                      {item.serviceType === 'kilo' ? (
-                        <Input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => {
-                            const value = Math.max(3, parseInt(e.target.value) || 3);
-                            updateQuantity(item.service.id, value, item.serviceType);
-                          }}
-                          className="w-12 sm:w-16 text-center text-sm"
-                          min="3"
-                        />
-                      ) : (
-                        <span className="w-6 sm:w-8 text-center text-sm">{item.quantity}</span>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => updateQuantity(item.service.id, item.quantity + 1, item.serviceType)}
-                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                      >
-                        +
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFromOrder(item.service.id, item.serviceType)}
-                        className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-red-600"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+      {/* 
+        Current Order Section - Replaced by FloatingOrderSummary
+        This section has been commented out as the order summary is now displayed 
+        in a floating overlay at the bottom of the screen for better UX
+      */}
 
-              <Separator className="mb-4" />
-
-              {/* Order Completion Information */}
-              {getOrderCompletionTime() && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center mb-2">
-                    <Clock className="h-4 w-4 mr-2 text-blue-600" />
-                    <span className="font-medium text-blue-900">Estimated Completion</span>
-                  </div>
-                  <p className="text-blue-800 font-semibold">
-                    {formatDate(getOrderCompletionTime()!)}
-                  </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Drop-off: {formatDate(dropOffDate)}
-                  </p>
-                </div>
-              )}
-
-              <div className="space-y-2 mb-4 sm:mb-6">
-                <div className="flex justify-between text-sm sm:text-lg">
-                  <span>Subtotal:</span>
-                  <span>Rp{getTotalPrice().toLocaleString('id-ID')}</span>
-                </div>
-                <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
-                  <span>Tax (11%):</span>
-                  <span>Rp{(getTotalPrice() * 0.11).toLocaleString('id-ID')}</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between text-lg sm:text-xl font-bold">
-                  <span>Total:</span>
-                  <span>Rp{(getTotalPrice() * 1.11).toLocaleString('id-ID')}</span>
-                </div>
-              </div>
-
-              <div className="space-y-2 sm:space-y-3">
-                <Button 
-                  className="w-full bg-gradient-accent hover:opacity-90 text-accent-foreground font-semibold py-2 sm:py-3 text-sm sm:text-base" 
-                  onClick={processPayment}
-                  disabled={createOrderMutation.isPending || currentOrder.length === 0 || !customerName || !customerPhone}
-                >
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  {createOrderMutation.isPending ? "Processing..." : "Process Payment"}
-                </Button>
-                
-                <Button 
-                  variant="default" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 sm:py-3 text-sm sm:text-base"
-                  onClick={createDraftOrder}
-                  disabled={createOrderMutation.isPending || currentOrder.length === 0 || !customerName || !customerPhone}
-                >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  {createOrderMutation.isPending ? "Creating..." : "Create Order (Draft)"}
-                </Button>
-                
-                <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    variant="outline" 
-                    className="text-xs sm:text-sm py-2" 
-                    onClick={createDraftOrder}
-                    disabled={createOrderMutation.isPending || currentOrder.length === 0 || !customerName || !customerPhone}
-                  >
-                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    Save Draft
-                  </Button>
-                  
-                  <Button 
-                    variant="ghost" 
-                    className="text-destructive text-xs sm:text-sm py-2" 
-                    onClick={() => {
-                      setCurrentOrder([]);
-                      clearCustomerForm();
-                    }}
-                  >
-                    Clear All
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+      {/* Floating Order Summary */}
+      <FloatingOrderSummary
+        currentOrder={currentOrder}
+        getTotalPrice={getTotalPrice}
+        getOrderCompletionTime={getOrderCompletionTime}
+        formatDate={formatDate}
+        dropOffDate={dropOffDate}
+        onProcessPayment={processPayment}
+        onCreateDraft={createDraftOrder}
+        onOpenServicePopup={() => setIsServicePopupOpen(true)}
+        isProcessing={createOrderMutation.isPending}
+        customerName={customerName}
+        customerPhone={customerPhone}
+        calculateFinishDate={calculateFinishDate}
+        updateQuantity={updateQuantity}
+        removeFromOrder={removeFromOrder}
+      />
     </div>
   );
 };
