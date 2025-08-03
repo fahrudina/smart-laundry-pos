@@ -113,7 +113,7 @@ const OrderItem = memo(({ index, style, data }: {
                 <div>
                   <span className="font-medium">Total: </span>
                   <span className="font-bold text-primary text-lg">
-                    ${order.total_amount.toFixed(2)}
+                    Rp{order.total_amount.toLocaleString('id-ID')}
                   </span>
                 </div>
               </div>

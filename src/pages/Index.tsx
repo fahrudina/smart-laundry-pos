@@ -17,7 +17,7 @@ const Index = () => {
           <h1 className="text-2xl font-bold">New Order</h1>
           <p className="text-muted-foreground">Create a new laundry order</p>
         </div>
-        <div className="flex items-center space-x-2">
+        {/* <div className="flex items-center space-x-2">
           <Badge variant="outline">
             {useEnhancedPOS ? 'Enhanced POS' : 'Classic POS'}
           </Badge>
@@ -28,11 +28,11 @@ const Index = () => {
           >
             Switch to {useEnhancedPOS ? 'Classic' : 'Enhanced'}
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* POS Content */}
-      {useEnhancedPOS ? <EnhancedLaundryPOS /> : <LaundryPOS />}
+      { <LaundryPOS />}
     </div>
   );
 };

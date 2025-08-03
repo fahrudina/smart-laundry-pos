@@ -57,34 +57,34 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>Order Details</span>
+            <span className="text-lg sm:text-xl">Order Details</span>
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Order Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="flex-1">
+              <h2 className="text-xl sm:text-2xl font-bold">
                 Order #{order.id.slice(-8).toUpperCase()}
               </h2>
-              <p className="text-muted-foreground flex items-center mt-1">
+              <p className="text-muted-foreground flex items-center mt-1 text-sm">
                 <Calendar className="h-4 w-4 mr-2" />
                 {formatDateLong(order.created_at)}
               </p>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap gap-2">
               <Badge className={getExecutionStatusColor(order.execution_status)}>
-                Execution: {order.execution_status}
+                <span className="hidden sm:inline">Execution: </span>{order.execution_status}
               </Badge>
               <Badge className={getPaymentStatusColor(order.payment_status)}>
-                Payment: {order.payment_status}
+                <span className="hidden sm:inline">Payment: </span>{order.payment_status}
               </Badge>
               {isOrderOverdue(order) && (
                 <Badge variant="destructive" className="flex items-center gap-1">
@@ -98,33 +98,35 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
           <Separator />
 
           {/* Customer Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-semibold flex items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div className="space-y-3">
+              <h3 className="font-semibold flex items-center text-base sm:text-lg">
                 <User className="h-4 w-4 mr-2" />
                 Customer Information
               </h3>
-              <p className="text-muted-foreground">{order.customer_name}</p>
-              <p className="text-muted-foreground flex items-center">
-                <Phone className="h-4 w-4 mr-2" />
-                {order.customer_phone}
-              </p>
+              <div className="space-y-2">
+                <p className="text-muted-foreground text-sm sm:text-base">{order.customer_name}</p>
+                <p className="text-muted-foreground flex items-center text-sm sm:text-base">
+                  <Phone className="h-4 w-4 mr-2" />
+                  {order.customer_phone}
+                </p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold flex items-center">
+            <div className="space-y-3">
+              <h3 className="font-semibold flex items-center text-base sm:text-lg">
                 <Calendar className="h-4 w-4 mr-2" />
                 Timeline
               </h3>
-              <div className="space-y-1">
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Drop-off: </span>
-                  <span className="text-sm">
+              <div className="space-y-2">
+                <div className="text-sm sm:text-base">
+                  <span className="font-medium text-muted-foreground">Drop-off: </span>
+                  <span>
                     {order.order_date ? formatDateLong(order.order_date) : formatDateLong(order.created_at)}
                   </span>
                 </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Est. Completion: </span>
-                  <span className={`text-sm ${isOrderOverdue(order) ? 'text-red-600 font-medium' : ''}`}>
+                <div className="text-sm sm:text-base">
+                  <span className="font-medium text-muted-foreground">Est. Completion: </span>
+                  <span className={`${isOrderOverdue(order) ? 'text-red-600 font-medium' : ''}`}>
                     {order.estimated_completion ? formatDateLong(order.estimated_completion) : 'Not specified'}
                   </span>
                   {isOrderOverdue(order) && (
@@ -138,13 +140,13 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
           <Separator />
 
           {/* Payment Information */}
-          <div className="space-y-3">
-            <h3 className="font-semibold flex items-center">
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="font-semibold flex items-center text-base sm:text-lg">
               <CreditCard className="h-4 w-4 mr-2" />
               Payment Information
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <div className="space-y-3">
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Status: </span>
                   <Badge className={getPaymentStatusColor(order.payment_status)}>
@@ -153,30 +155,30 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                 </div>
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Method: </span>
-                  <span className="text-sm">{getPaymentMethodDisplay(order.payment_method)}</span>
+                  <span className="text-sm sm:text-base">{getPaymentMethodDisplay(order.payment_method)}</span>
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Total Amount: </span>
-                  <span className="text-lg font-bold text-primary">
+                  <div className="text-lg sm:text-xl font-bold text-primary">
                     Rp{order.total_amount.toLocaleString('id-ID')}
-                  </span>
+                  </div>
                 </div>
                 {order.payment_amount && order.payment_amount !== order.total_amount && (
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Amount Paid: </span>
-                    <span className="text-lg font-semibold text-green-600">
+                    <div className="text-lg sm:text-xl font-semibold text-green-600">
                       Rp{order.payment_amount.toLocaleString('id-ID')}
-                    </span>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
             {order.payment_notes && (
-              <div>
+              <div className="mt-3">
                 <span className="text-sm font-medium text-muted-foreground">Notes: </span>
-                <p className="text-sm">{order.payment_notes}</p>
+                <p className="text-sm sm:text-base mt-1">{order.payment_notes}</p>
               </div>
             )}
           </div>
@@ -185,21 +187,21 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
 
           {/* Order Items */}
           <div>
-            <h3 className="font-semibold mb-4">Order Items</h3>
-            <div className="space-y-3">
+            <h3 className="font-semibold mb-3 sm:mb-4 text-base sm:text-lg">Order Items</h3>
+            <div className="space-y-3 sm:space-y-4">
               {order.order_items?.map((item: any, index: number) => (
-                <div key={index} className="p-3 bg-secondary rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-medium">{item.service_name}</h4>
+                <div key={index} className="p-3 sm:p-4 bg-secondary rounded-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
+                        <h4 className="font-medium text-sm sm:text-base">{item.service_name}</h4>
                         {item.service_type && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs w-fit">
                             {item.service_type}
                           </Badge>
                         )}
                       </div>
-                      <div className="text-sm text-muted-foreground space-y-1">
+                      <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
                         {/* Basic pricing info */}
                         <p>Rp{item.service_price.toLocaleString('id-ID')} × {item.quantity}</p>
                         
@@ -209,16 +211,18 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                         )}
                         
                         {item.service_type === 'combined' && (
-                          <div>
+                          <div className="space-y-1">
                             {item.weight_kg && <p>Weight: {item.weight_kg} kg</p>}
                             {item.unit_items && item.unit_items.length > 0 && (
                               <div>
                                 <p className="font-medium">Unit Items:</p>
-                                {item.unit_items.map((unitItem: any, unitIndex: number) => (
-                                  <p key={unitIndex} className="ml-2 text-xs">
-                                    • {unitItem.item_name}: {unitItem.quantity} × Rp{unitItem.price_per_unit.toLocaleString('id-ID')}
-                                  </p>
-                                ))}
+                                <div className="ml-2 space-y-1">
+                                  {item.unit_items.map((unitItem: any, unitIndex: number) => (
+                                    <p key={unitIndex} className="text-xs">
+                                      • {unitItem.item_name}: {unitItem.quantity} × Rp{unitItem.price_per_unit.toLocaleString('id-ID')}
+                                    </p>
+                                  ))}
+                                </div>
                               </div>
                             )}
                           </div>
@@ -227,11 +231,13 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                         {item.service_type === 'unit' && item.unit_items && item.unit_items.length > 0 && (
                           <div>
                             <p className="font-medium">Unit Items:</p>
-                            {item.unit_items.map((unitItem: any, unitIndex: number) => (
-                              <p key={unitIndex} className="ml-2 text-xs">
-                                • {unitItem.item_name}: {unitItem.quantity} × Rp{unitItem.price_per_unit.toLocaleString('id-ID')}
-                              </p>
-                            ))}
+                            <div className="ml-2 space-y-1">
+                              {item.unit_items.map((unitItem: any, unitIndex: number) => (
+                                <p key={unitIndex} className="text-xs">
+                                  • {unitItem.item_name}: {unitItem.quantity} × Rp{unitItem.price_per_unit.toLocaleString('id-ID')}
+                                </p>
+                              ))}
+                            </div>
                           </div>
                         )}
 
@@ -242,8 +248,8 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                         )}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">Rp{item.line_total.toLocaleString('id-ID')}</p>
+                    <div className="text-right sm:text-left sm:min-w-0">
+                      <p className="font-semibold text-sm sm:text-base">Rp{item.line_total.toLocaleString('id-ID')}</p>
                     </div>
                   </div>
                 </div>
@@ -254,17 +260,17 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
           <Separator />
 
           {/* Order Summary */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-lg">
+          <div className="space-y-2 sm:space-y-3 bg-secondary/30 p-3 sm:p-4 rounded-lg">
+            <div className="flex justify-between text-sm sm:text-lg">
               <span>Subtotal:</span>
               <span>Rp{order.subtotal.toLocaleString('id-ID')}</span>
             </div>
-            <div className="flex justify-between text-sm text-muted-foreground">
+            <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
               <span>Tax:</span>
               <span>Rp{order.tax_amount.toLocaleString('id-ID')}</span>
             </div>
             <Separator />
-            <div className="flex justify-between text-xl font-bold">
+            <div className="flex justify-between text-lg sm:text-xl font-bold">
               <span>Total:</span>
               <span>Rp{order.total_amount.toLocaleString('id-ID')}</span>
             </div>

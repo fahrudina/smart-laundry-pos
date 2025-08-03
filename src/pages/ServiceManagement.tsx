@@ -266,13 +266,13 @@ const ServiceManagement = () => {
                 {service.supports_unit && (
                   <div className="flex justify-between text-sm">
                     <span>Per Unit:</span>
-                    <span className="font-semibold">${service.unit_price?.toFixed(2) || '0.00'}</span>
+                    <span className="font-semibold">Rp{service.unit_price?.toLocaleString('id-ID') || '0'}</span>
                   </div>
                 )}
                 {service.supports_kilo && (
                   <div className="flex justify-between text-sm">
                     <span>Per Kg:</span>
-                    <span className="font-semibold">${service.kilo_price?.toFixed(2) || '0.00'}</span>
+                    <span className="font-semibold">Rp{service.kilo_price?.toLocaleString('id-ID') || '0'}</span>
                   </div>
                 )}
               </div>

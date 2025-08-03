@@ -541,10 +541,10 @@ export const OrderHistory = () => {
                       Revenue
                     </p>
                     <p className="text-lg md:text-2xl font-bold">
-                      ${(hasActiveFilters ? filteredOrders : orders)
+                      Rp{(hasActiveFilters ? filteredOrders : orders)
                         .filter(order => hasActiveFilters || new Date(order.created_at).toDateString() === new Date().toDateString())
                         .reduce((sum, order) => sum + order.total_amount, 0)
-                        .toFixed(0)}
+                        .toLocaleString('id-ID')}
                     </p>
                   </div>
                   <div className="h-8 w-8 md:h-12 md:w-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -672,11 +672,11 @@ export const OrderHistory = () => {
                           </div>
                           <div className="text-right ml-3 flex-shrink-0">
                             <p className="text-xl md:text-2xl font-bold text-primary">
-                              ${order.total_amount.toFixed(2)}
+                              Rp{order.total_amount.toLocaleString('id-ID')}
                             </p>
                             {order.payment_amount && order.payment_amount !== order.total_amount && (
                               <p className="text-sm text-muted-foreground">
-                                Paid: ${order.payment_amount.toFixed(2)}
+                                Paid: Rp{order.payment_amount.toLocaleString('id-ID')}
                               </p>
                             )}
                           </div>

@@ -63,28 +63,28 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
   const completionTime = getOrderCompletionTime();
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 max-w-lg mx-auto">
+    <div className="fixed bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 z-50 max-w-lg mx-auto">
       <Card className="bg-white shadow-2xl border-2 border-blue-200 animate-slide-up">
-        <CardContent className="p-4">
+        <CardContent className="p-3 sm:p-4">
           {/* Order Count Badge */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
             <div className="flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5 text-blue-600" />
-              <span className="font-semibold text-gray-800">Current Order</span>
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+              <span className="font-semibold text-gray-800 text-sm sm:text-base">Current Order</span>
             </div>
-            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs sm:text-sm">
               {currentOrder.reduce((sum, item) => sum + item.quantity, 0)} items
             </Badge>
           </div>
 
           {/* Estimated Completion */}
           {completionTime && (
-            <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mb-2 sm:mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center gap-2 mb-1">
-                <Clock className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-900">Estimated Completion</span>
+                <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
+                <span className="text-xs sm:text-sm font-medium text-blue-900">Estimated Completion</span>
               </div>
-              <p className="text-sm text-blue-800 font-semibold">
+              <p className="text-xs sm:text-sm text-blue-800 font-semibold">
                 {formatDate(completionTime)}
               </p>
               <p className="text-xs text-blue-600">
@@ -137,7 +137,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                           const value = Math.max(3, parseInt(e.target.value) || 3);
                           updateQuantity(item.service.id, value, item.serviceType);
                         }}
-                        className="w-10 h-6 text-xs text-center"
+                        className="w-10 h-6 text-xs text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         min="3"
                       />
                     ) : (
@@ -192,7 +192,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
               disabled={isProcessing || !customerName || !customerPhone}
             >
               <CreditCard className="h-4 w-4 mr-2" />
-              {isProcessing ? "Processing..." : "Process Payment"}
+              {isProcessing ? "Processing..." : "Bayar Sekarang"}
             </Button>
             
             <Button 
@@ -202,7 +202,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
               disabled={isProcessing || !customerName || !customerPhone}
             >
               <Clock className="h-4 w-4 mr-2" />
-              Create Order (Draft)
+              Bayar Nanti
             </Button>
           </div>
         </CardContent>
