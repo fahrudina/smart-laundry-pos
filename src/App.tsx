@@ -9,6 +9,7 @@ import { OrderHistory } from "./pages/OrderHistoryOptimized";
 import { Login } from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { StoreManagementPage } from "./pages/StoreManagementPage";
+import ServiceManagement from "./pages/ServiceManagement";
 import { AuthProvider } from "./contexts/AuthContext";
 import { StoreProvider } from "./contexts/StoreContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -43,6 +44,18 @@ const App = () => (
                     <AppLayout>
                       <OrderHistory />
                     </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/services" 
+                element={
+                  <ProtectedRoute>
+                    <OwnerRoute>
+                      <AppLayout>
+                        <ServiceManagement />
+                      </AppLayout>
+                    </OwnerRoute>
                   </ProtectedRoute>
                 } 
               />

@@ -5,113 +5,50 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useCreateOrder, UnitItem } from '@/hooks/useOrdersOptimized';
 import { useToast } from '@/hooks/use-toast';
-import { ServiceSelectionPopup } from './ServiceSelectionPopup';
+import { useServices } from '@/hooks/useServices';
+import { EnhancedServiceSelector, Service, EnhancedOrderItem } from './EnhancedServiceSelector';
 
-interface Service {
-  id: string;
-  name: string;
-  price: number;
-  duration: string;
-  durationValue: number; // in hours
-  durationUnit: 'hours' | 'days';
-  category: 'wash' | 'dry' | 'special';
-  supportsKilo?: boolean; // Whether this service supports kilo pricing
-  kiloPrice?: number; // Price per kg if supports kilo
-}
-
-interface OrderItem {
-  service: Service;
-  quantity: number;
-  serviceType: 'unit' | 'kilo' | 'combined';
-  weight?: number;
-  unitItems?: UnitItem[];
-  totalPrice: number;
-}
-
-const services: Service[] = [
-  { 
-    id: '1', 
-    name: 'Regular Wash', 
-    price: 12.99, 
-    duration: '2 days', 
-    durationValue: 2, 
-    durationUnit: 'days', 
-    category: 'wash',
-    supportsKilo: true,
-    kiloPrice: 8.99
-  },
-  { 
-    id: '2', 
-    name: 'Express Wash', 
-    price: 19.99, 
-    duration: '1 day', 
-    durationValue: 1, 
-    durationUnit: 'days', 
-    category: 'wash',
-    supportsKilo: true,
-    kiloPrice: 14.99
-  },
-  { 
-    id: '3', 
-    name: 'Dry Clean', 
-    price: 24.99, 
-    duration: '2 days', 
-    durationValue: 2, 
-    durationUnit: 'days', 
-    category: 'dry',
-    supportsKilo: false
-  },
-  { 
-    id: '4', 
-    name: 'Express Dry Clean', 
-    price: 34.99, 
-    duration: '6 hours', 
-    durationValue: 6, 
-    durationUnit: 'hours', 
-    category: 'dry',
-    supportsKilo: false
-  },
-  { 
-    id: '5', 
-    name: 'Ironing Service', 
-    price: 8.99, 
-    duration: '2 hours', 
-    durationValue: 2, 
-    durationUnit: 'hours', 
-    category: 'special',
-    supportsKilo: true,
-    kiloPrice: 6.99
-  },
-  { 
-    id: '6', 
-    name: 'Stain Removal', 
-    price: 15.99, 
-    duration: '1 day', 
-    durationValue: 1, 
-    durationUnit: 'days', 
-    category: 'special',
-    supportsKilo: false
-  },
-];
-
-export const LaundryPOS = () => {
-  const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([]);
+export const EnhancedLaundryPOS = () => {
+  const [currentOrder, setCurrentOrder] = useState<EnhancedOrderItem[]>([]);
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSelectingCustomer, setIsSelectingCustomer] = useState(false);
   const [dropOffDate, setDropOffDate] = useState(new Date());
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [showServiceDialog, setShowServiceDialog] = useState(false);
   
   const navigate = useNavigate();
-  const { customers, searchCustomers, getCustomerByPhone, loading } = useCustomers();
+  const { customers, searchCustomers, getCustomerByPhone, loading: customersLoading } = useCustomers();
   const createOrderMutation = useCreateOrder();
   const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Load services from our service management system
+  const { data: servicesData, isLoading: servicesLoading, error: servicesError } = useServices();
+
+  // Convert ServiceData to Service format for compatibility
+  const services: Service[] = React.useMemo(() => {
+    if (!servicesData) return [];
+    
+    return servicesData.map(serviceData => ({
+      id: serviceData.id,
+      name: serviceData.name,
+      price: serviceData.unit_price || 0,
+      duration: `${serviceData.duration_value} ${serviceData.duration_unit}`,
+      durationValue: serviceData.duration_value,
+      durationUnit: serviceData.duration_unit,
+      category: serviceData.category,
+      supportsKilo: serviceData.supports_kilo,
+      kiloPrice: serviceData.kilo_price,
+    }));
+  }, [servicesData]);
 
   // Helper function to calculate finish date based on service duration
   const calculateFinishDate = (service: Service, startDate: Date = dropOffDate) => {
@@ -146,6 +83,23 @@ export const LaundryPOS = () => {
     }
   };
 
+  // Get category color
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'wash': return 'bg-blue-100 text-blue-800';
+      case 'dry': return 'bg-green-100 text-green-800';
+      case 'ironing': return 'bg-orange-100 text-orange-800';
+      case 'folding': return 'bg-yellow-100 text-yellow-800';
+      case 'special': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Get total price
+  const getTotalPrice = () => {
+    return currentOrder.reduce((sum, item) => sum + item.totalPrice, 0);
+  };
+
   // Get the estimated completion time for the entire order
   const getOrderCompletionTime = () => {
     if (currentOrder.length === 0) return null;
@@ -163,7 +117,6 @@ export const LaundryPOS = () => {
   // Search for customers when phone number changes
   useEffect(() => {
     const searchCustomer = async () => {
-      // Don't search if form is already filled (customer selected) or currently selecting
       const isFormFilled = customerPhone.length >= 3 && customerName.trim().length > 0;
       
       if (customerPhone.length >= 3 && !isSelectingCustomer && !isFormFilled) {
@@ -179,35 +132,28 @@ export const LaundryPOS = () => {
     return () => clearTimeout(debounceTimer);
   }, [customerPhone, customerName, searchCustomers, isSelectingCustomer]);
 
-  // Update search results when customers data changes, but only if we should show results
+  // Update search results when customers data changes
   useEffect(() => {
     const isFormFilled = customerPhone.length >= 3 && customerName.trim().length > 0;
     
     if (showResults && customerPhone.length >= 3 && !isSelectingCustomer && !isFormFilled && customers.length > 0) {
       setSearchResults(customers);
     } else if (isSelectingCustomer || isFormFilled) {
-      // Clear search results when selecting a customer or form is already filled
       setSearchResults([]);
     }
   }, [customers, showResults, customerPhone, customerName, isSelectingCustomer]);
 
   // Handle customer selection from search
   const handleCustomerSelect = (customer: any) => {
-    // Prevent any further searching while selecting
     setIsSelectingCustomer(true);
-    
-    // Immediately hide the dropdown and clear results
     setShowResults(false);
     setSearchResults([]);
-    
-    // Update the form fields
     setCustomerPhone(customer.phone);
     setCustomerName(customer.name);
     
-    // Reset the selection flag after state updates
     setTimeout(() => {
       setIsSelectingCustomer(false);
-    }, 500); // Increased timeout to ensure all updates complete
+    }, 500);
   };
 
   // Clear customer form
@@ -216,141 +162,52 @@ export const LaundryPOS = () => {
     setCustomerName('');
     setSearchResults([]);
     setShowResults(false);
-    setIsSelectingCustomer(false);
-    setDropOffDate(new Date());
   };
 
-  // Handle input blur to hide results
+  // Handle phone input blur
   const handlePhoneInputBlur = () => {
-    // Only hide if we haven't just selected a customer
-    if (!isSelectingCustomer) {
-      setTimeout(() => {
-        setShowResults(false);
-        setSearchResults([]);
-      }, 150); // Slight delay to allow click events to fire first
-    }
+    setTimeout(() => {
+      setShowResults(false);
+      setSearchResults([]);
+    }, 200);
   };
 
-  // Handle click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowResults(false);
-        setSearchResults([]);
-      }
-    };
+  // Handle service selection
+  const handleServiceSelect = (service: Service) => {
+    setSelectedService(service);
+    setShowServiceDialog(true);
+  };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  // Handle enhanced order item addition
+  const handleOrderItemAdd = (item: EnhancedOrderItem | null) => {
+    if (item) {
+      // Check if this service already exists in the order
+      const existingIndex = currentOrder.findIndex(orderItem => 
+        orderItem.service.id === item.service.id &&
+        orderItem.serviceType === item.serviceType
+      );
 
-    const addToOrder = (service: Service) => {
-    setCurrentOrder(prev => {
-      const existingItem = prev.find(item => item.service.id === service.id);
-      if (existingItem) {
-        return prev.map(item =>
-          item.service.id === service.id
-            ? { 
-                ...item, 
-                quantity: item.quantity + 1,
-                totalPrice: (item.quantity + 1) * service.price
-              }
-            : item
-        );
+      if (existingIndex >= 0) {
+        // Update existing item
+        const updatedOrder = [...currentOrder];
+        updatedOrder[existingIndex] = item;
+        setCurrentOrder(updatedOrder);
       } else {
-        return [...prev, { 
-          service, 
-          quantity: 1, 
-          serviceType: 'unit' as const,
-          totalPrice: service.price
-        }];
+        // Add new item
+        setCurrentOrder(prev => [...prev, item]);
       }
-    });
-  };
-
-  const removeFromOrder = (serviceId: string, serviceType: 'unit' | 'kilo' | 'combined' = 'unit') => {
-    setCurrentOrder(prev => prev.filter(item => !(item.service.id === serviceId && item.serviceType === serviceType)));
-  };
-
-  const updateQuantity = (serviceId: string, quantity: number, serviceType: 'unit' | 'kilo' | 'combined' = 'unit') => {
-    if (quantity <= 0) {
-      removeFromOrder(serviceId, serviceType);
-      return;
-    }
-    setCurrentOrder(prev =>
-      prev.map(item =>
-        item.service.id === serviceId && item.serviceType === serviceType
-          ? { 
-              ...item, 
-              quantity, 
-              weight: serviceType === 'kilo' ? quantity : item.weight,
-              totalPrice: quantity * item.service.price 
-            } 
-          : item
-      )
-    );
-  };
-
-  const getTotalPrice = () => {
-    return currentOrder.reduce((total, item) => total + item.totalPrice, 0);
-  };
-
-  const getCategoryColor = (category: Service['category']) => {
-    switch (category) {
-      case 'wash': return 'bg-blue-100 text-blue-800';
-      case 'dry': return 'bg-purple-100 text-purple-800';
-      case 'special': return 'bg-green-100 text-green-800';
+      
+      setShowServiceDialog(false);
+      setSelectedService(null);
     }
   };
 
-  // Handle services selected from popup
-  const handleServicesSelected = (selectedServices: any[]) => {
-    selectedServices.forEach(selectedService => {
-      const service: Service = {
-        id: selectedService.service.id,
-        name: selectedService.service.name,
-        price: selectedService.price,
-        duration: `${selectedService.service.duration_value} ${selectedService.service.duration_unit}`,
-        durationValue: selectedService.service.duration_value,
-        durationUnit: selectedService.service.duration_unit,
-        category: selectedService.service.category,
-        supportsKilo: selectedService.service.supports_kilo,
-        kiloPrice: selectedService.service.kilo_price,
-      };
-
-      // Add to order with the specified quantity
-      setCurrentOrder(prev => {
-        const existingItem = prev.find(item => 
-          item.service.id === service.id && 
-          item.serviceType === selectedService.type
-        );
-        
-        if (existingItem) {
-          return prev.map(item =>
-            item.service.id === service.id && item.serviceType === selectedService.type
-              ? { 
-                  ...item, 
-                  quantity: item.quantity + selectedService.quantity,
-                  totalPrice: (item.quantity + selectedService.quantity) * service.price,
-                  weight: selectedService.type === 'kilo' ? selectedService.quantity : undefined
-                }
-              : item
-          );
-        } else {
-          return [...prev, { 
-            service, 
-            quantity: selectedService.quantity, 
-            serviceType: selectedService.type as 'unit' | 'kilo',
-            weight: selectedService.type === 'kilo' ? selectedService.quantity : undefined,
-            totalPrice: selectedService.quantity * service.price
-          }];
-        }
-      });
-    });
+  // Remove item from order
+  const removeFromOrder = (index: number) => {
+    setCurrentOrder(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Process payment
   const processPayment = async () => {
     if (currentOrder.length === 0) {
       toast({
@@ -363,7 +220,7 @@ export const LaundryPOS = () => {
 
     if (!customerName || !customerPhone) {
       toast({
-        title: "Error",
+        title: "Error", 
         description: "Please provide customer information",
         variant: "destructive",
       });
@@ -372,7 +229,7 @@ export const LaundryPOS = () => {
 
     try {
       const subtotal = getTotalPrice();
-      const taxAmount = subtotal * 0.11;
+      const taxAmount = subtotal * 0.0825;
       const totalAmount = subtotal + taxAmount;
       const completionDate = getOrderCompletionTime();
 
@@ -384,7 +241,7 @@ export const LaundryPOS = () => {
           service_price: item.service.price,
           quantity: item.quantity,
           estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
-          service_type: item.serviceType || 'unit',
+          service_type: item.serviceType,
           weight_kg: item.weight,
           unit_items: item.unitItems,
         })),
@@ -393,7 +250,7 @@ export const LaundryPOS = () => {
         total_amount: totalAmount,
         execution_status: 'in_queue',
         payment_status: 'completed',
-        payment_method: 'cash', // Default to cash, will be configurable later
+        payment_method: 'cash',
         payment_amount: totalAmount,
         order_date: dropOffDate.toISOString(),
         estimated_completion: completionDate?.toISOString(),
@@ -401,7 +258,6 @@ export const LaundryPOS = () => {
 
       await createOrderMutation.mutateAsync(orderData);
 
-      // Clear the current order after successful payment
       setCurrentOrder([]);
       setCustomerName('');
       setCustomerPhone('');
@@ -415,6 +271,7 @@ export const LaundryPOS = () => {
     }
   };
 
+  // Create draft order
   const createDraftOrder = async () => {
     if (currentOrder.length === 0) {
       toast({
@@ -436,7 +293,7 @@ export const LaundryPOS = () => {
 
     try {
       const subtotal = getTotalPrice();
-      const taxAmount = subtotal * 0.11;
+      const taxAmount = subtotal * 0.0825;
       const totalAmount = subtotal + taxAmount;
       const completionDate = getOrderCompletionTime();
 
@@ -448,7 +305,7 @@ export const LaundryPOS = () => {
           service_price: item.service.price,
           quantity: item.quantity,
           estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
-          service_type: item.serviceType || 'unit',
+          service_type: item.serviceType,
           weight_kg: item.weight,
           unit_items: item.unitItems,
         })),
@@ -463,7 +320,6 @@ export const LaundryPOS = () => {
 
       await createOrderMutation.mutateAsync(orderData);
 
-      // Clear the current order after successful creation
       setCurrentOrder([]);
       setCustomerName('');
       setCustomerPhone('');
@@ -477,8 +333,64 @@ export const LaundryPOS = () => {
     }
   };
 
+  if (servicesLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading services...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (servicesError) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-medium text-red-800">Error loading services</h3>
+              <p className="text-sm text-red-600">
+                Please try refreshing the page or contact support.
+              </p>
+            </div>
+            <Button 
+              onClick={() => window.location.reload()}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Refresh
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Service Management Notice */}
+      {services.length === 0 && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium text-orange-800">No services configured</h3>
+                <p className="text-sm text-orange-600">
+                  You need to create services first before accepting orders.
+                </p>
+              </div>
+              <Button 
+                onClick={() => navigate('/services')}
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                Manage Services
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Customer Information */}
       <Card className="shadow-medium animate-fade-in">
         <CardHeader>
@@ -518,16 +430,12 @@ export const LaundryPOS = () => {
                     const newValue = e.target.value;
                     setCustomerPhone(newValue);
                     
-                    // If user is typing and the name field is filled, it means they want to search for a new customer
-                    // Clear the name field to allow new search
                     if (customerName.trim().length > 0 && newValue !== customerPhone) {
                       setCustomerName('');
                     }
                   }}
                   onBlur={handlePhoneInputBlur}
                   onFocus={() => {
-                    // Only show results if not currently selecting a customer, phone has enough characters,
-                    // form is not already filled, and there are search results
                     const isFormFilled = customerPhone.length >= 3 && customerName.trim().length > 0;
                     if (!isSelectingCustomer && customerPhone.length >= 3 && !isFormFilled && searchResults.length > 0) {
                       setShowResults(true);
@@ -541,10 +449,7 @@ export const LaundryPOS = () => {
                       <div
                         key={customer.id}
                         className="p-3 hover:bg-secondary cursor-pointer border-b last:border-b-0"
-                        onMouseDown={(e) => {
-                          // Prevent blur event from firing before click
-                          e.preventDefault();
-                        }}
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => handleCustomerSelect(customer)}
                       >
                         <div className="font-medium">{customer.name}</div>
@@ -583,15 +488,65 @@ export const LaundryPOS = () => {
         </CardContent>
       </Card>
 
-      {/* Add Service Section */}
-      <Card className="shadow-medium animate-scale-in">
-        <CardContent className="pt-6">
-          <ServiceSelectionPopup
-            onServicesSelected={handleServicesSelected}
-            disabled={!customerName || !customerPhone}
-          />
-        </CardContent>
-      </Card>
+      {/* Services Grid */}
+      {services.length > 0 && (
+        <Card className="shadow-medium animate-scale-in">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Available Services</CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate('/services')}
+              >
+                Manage Services
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {services.map((service) => (
+                <div
+                  key={service.id}
+                  className="p-3 sm:p-4 border rounded-lg hover:shadow-soft transition-smooth cursor-pointer bg-card"
+                  onClick={() => handleServiceSelect(service)}
+                >
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2">
+                    <h3 className="font-semibold text-foreground text-sm sm:text-base">{service.name}</h3>
+                    <div className="flex space-x-1 mt-1 sm:mt-0">
+                      <Badge className={`${getCategoryColor(service.category)} w-fit`}>
+                        {service.category}
+                      </Badge>
+                      {service.supportsKilo && (
+                        <Badge variant="outline" className="w-fit">
+                          Kilo
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-lg sm:text-xl font-bold text-primary">
+                      ${service.price}
+                    </p>
+                    {service.supportsKilo && service.kiloPrice && (
+                      <p className="text-sm text-gray-600">
+                        ${service.kiloPrice}/kg
+                      </p>
+                    )}
+                    <p className="text-xs sm:text-sm text-muted-foreground flex items-center">
+                      <Clock className="h-3 w-3 mr-1" />
+                      Duration: {service.duration}
+                    </p>
+                    <p className="text-xs text-green-600 font-medium">
+                      Ready: {formatDate(calculateFinishDate(service))}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Current Order */}
       <Card className="bg-card shadow-strong">
@@ -601,7 +556,7 @@ export const LaundryPOS = () => {
             Current Order
             {currentOrder.length > 0 && (
               <Badge variant="secondary" className="ml-2">
-                {currentOrder.reduce((sum, item) => sum + item.quantity, 0)} items
+                {currentOrder.length} services
               </Badge>
             )}
           </CardTitle>
@@ -615,58 +570,42 @@ export const LaundryPOS = () => {
             </div>
           ) : (
             <>
-              <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
+              <div className="space-y-3 mb-6">
                 {currentOrder.map((item, index) => (
-                  <div key={`${item.service.id}-${item.serviceType}-${index}`} className="flex items-center justify-between p-2 sm:p-3 bg-secondary rounded-lg">
+                  <div key={`${item.service.id}-${index}`} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{item.service.name}</h4>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        Rp{item.service.price.toLocaleString('id-ID')} × {item.quantity}
-                        {item.serviceType === 'kilo' ? ' kg' : ' unit'}
-                        {item.serviceType === 'kilo' && ' (Min. 3 kg)'}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-medium text-foreground text-sm sm:text-base">{item.service.name}</h4>
+                        <Badge variant="outline" className="text-xs">
+                          {item.serviceType}
+                        </Badge>
+                      </div>
+                      <div className="text-xs sm:text-sm text-muted-foreground mt-1">
+                        {item.serviceType === 'unit' && (
+                          <span>Quantity: {item.quantity}</span>
+                        )}
+                        {item.serviceType === 'kilo' && item.weight && (
+                          <span>Weight: {item.weight} kg</span>
+                        )}
+                        {item.serviceType === 'combined' && (
+                          <span>Weight: {item.weight} kg + {item.unitItems?.length || 0} unit items</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
                         Ready: {formatDate(calculateFinishDate(item.service))}
                       </p>
                     </div>
-                    <div className="flex items-center space-x-1 sm:space-x-2 ml-2">
+                    <div className="flex items-center space-x-2 ml-2">
+                      <span className="font-semibold text-primary">
+                        ${item.totalPrice.toFixed(2)}
+                      </span>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => updateQuantity(item.service.id, item.quantity - 1, item.serviceType)}
-                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                        onClick={() => removeFromOrder(index)}
+                        className="h-8 w-8 p-0"
                       >
-                        -
-                      </Button>
-                      {item.serviceType === 'kilo' ? (
-                        <Input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => {
-                            const value = Math.max(3, parseInt(e.target.value) || 3);
-                            updateQuantity(item.service.id, value, item.serviceType);
-                          }}
-                          className="w-12 sm:w-16 text-center text-sm"
-                          min="3"
-                        />
-                      ) : (
-                        <span className="w-6 sm:w-8 text-center text-sm">{item.quantity}</span>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => updateQuantity(item.service.id, item.quantity + 1, item.serviceType)}
-                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                      >
-                        +
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFromOrder(item.service.id, item.serviceType)}
-                        className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-red-600"
-                      >
-                        <X className="h-3 w-3" />
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -679,81 +618,71 @@ export const LaundryPOS = () => {
               {getOrderCompletionTime() && (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-center mb-2">
-                    <Clock className="h-4 w-4 mr-2 text-blue-600" />
-                    <span className="font-medium text-blue-900">Estimated Completion</span>
+                    <Clock className="h-4 w-4 text-blue-600 mr-2" />
+                    <span className="font-semibold text-blue-800">Estimated Completion</span>
                   </div>
-                  <p className="text-blue-800 font-semibold">
+                  <p className="text-blue-700">
                     {formatDate(getOrderCompletionTime()!)}
-                  </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Drop-off: {formatDate(dropOffDate)}
                   </p>
                 </div>
               )}
 
-              <div className="space-y-2 mb-4 sm:mb-6">
-                <div className="flex justify-between text-sm sm:text-lg">
+              {/* Order Summary */}
+              <div className="space-y-2 mb-6">
+                <div className="flex justify-between text-sm">
                   <span>Subtotal:</span>
-                  <span>Rp{getTotalPrice().toLocaleString('id-ID')}</span>
+                  <span>${getTotalPrice().toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
-                  <span>Tax (11%):</span>
-                  <span>Rp{(getTotalPrice() * 0.11).toLocaleString('id-ID')}</span>
+                <div className="flex justify-between text-sm">
+                  <span>Tax (8.25%):</span>
+                  <span>${(getTotalPrice() * 0.0825).toFixed(2)}</span>
                 </div>
                 <Separator />
-                <div className="flex justify-between text-lg sm:text-xl font-bold">
+                <div className="flex justify-between text-lg font-semibold">
                   <span>Total:</span>
-                  <span>Rp{(getTotalPrice() * 1.11).toLocaleString('id-ID')}</span>
+                  <span>${(getTotalPrice() * 1.0825).toFixed(2)}</span>
                 </div>
               </div>
 
-              <div className="space-y-2 sm:space-y-3">
-                <Button 
-                  className="w-full bg-gradient-accent hover:opacity-90 text-accent-foreground font-semibold py-2 sm:py-3 text-sm sm:text-base" 
+              {/* Action Buttons */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Button
+                  variant="outline"
+                  onClick={createDraftOrder}
+                  disabled={createOrderMutation.isPending}
+                  className="flex items-center"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Draft
+                </Button>
+                <Button
                   onClick={processPayment}
-                  disabled={createOrderMutation.isPending || currentOrder.length === 0 || !customerName || !customerPhone}
+                  disabled={createOrderMutation.isPending}
+                  className="flex items-center"
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
-                  {createOrderMutation.isPending ? "Processing..." : "Process Payment"}
+                  Process Payment
                 </Button>
-                
-                <Button 
-                  variant="default" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 sm:py-3 text-sm sm:text-base"
-                  onClick={createDraftOrder}
-                  disabled={createOrderMutation.isPending || currentOrder.length === 0 || !customerName || !customerPhone}
-                >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  {createOrderMutation.isPending ? "Creating..." : "Create Order (Draft)"}
-                </Button>
-                
-                <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    variant="outline" 
-                    className="text-xs sm:text-sm py-2" 
-                    onClick={createDraftOrder}
-                    disabled={createOrderMutation.isPending || currentOrder.length === 0 || !customerName || !customerPhone}
-                  >
-                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    Save Draft
-                  </Button>
-                  
-                  <Button 
-                    variant="ghost" 
-                    className="text-destructive text-xs sm:text-sm py-2" 
-                    onClick={() => {
-                      setCurrentOrder([]);
-                      clearCustomerForm();
-                    }}
-                  >
-                    Clear All
-                  </Button>
-                </div>
               </div>
             </>
           )}
         </CardContent>
       </Card>
+
+      {/* Service Selection Dialog */}
+      <Dialog open={showServiceDialog} onOpenChange={setShowServiceDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Configure Service: {selectedService?.name}</DialogTitle>
+          </DialogHeader>
+          {selectedService && (
+            <EnhancedServiceSelector
+              service={selectedService}
+              onItemChange={handleOrderItemAdd}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

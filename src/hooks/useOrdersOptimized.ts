@@ -3,12 +3,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/contexts/StoreContext';
 
+interface UnitItem {
+  item_name: string;
+  quantity: number;
+  price_per_unit: number;
+}
+
 interface OrderItem {
   service_name: string;
   service_price: number;
   quantity: number;
   line_total: number;
   estimated_completion?: string;
+  service_type: 'unit' | 'kilo' | 'combined';
+  weight_kg?: number;
+  unit_items?: UnitItem[];
 }
 
 interface Order {
@@ -39,6 +48,9 @@ interface CreateOrderData {
     service_price: number;
     quantity: number;
     estimated_completion?: string;
+    service_type: 'unit' | 'kilo' | 'combined';
+    weight_kg?: number;
+    unit_items?: UnitItem[];
   }[];
   subtotal: number;
   tax_amount: number;
@@ -106,7 +118,10 @@ export const useOrdersInfinite = (filters?: OrderFilters) => {
               service_price,
               quantity,
               line_total,
-              estimated_completion
+              estimated_completion,
+              service_type,
+              weight_kg,
+              unit_items
             )
           `, { count: 'exact' })
           .eq('store_id', currentStore.store_id)
@@ -278,6 +293,9 @@ export const useCreateOrder = () => {
         quantity: item.quantity,
         line_total: item.service_price * item.quantity,
         estimated_completion: item.estimated_completion,
+        service_type: item.service_type || 'unit',
+        weight_kg: item.weight_kg,
+        unit_items: item.unit_items,
       }));
 
       const { error: itemsError } = await supabase
@@ -419,7 +437,11 @@ export const useOrdersByCustomer = (customerPhone: string) => {
             service_name,
             service_price,
             quantity,
-            line_total
+            line_total,
+            estimated_completion,
+            service_type,
+            weight_kg,
+            unit_items
           )
         `)
         .eq('customer_phone', customerPhone)
@@ -434,4 +456,4 @@ export const useOrdersByCustomer = (customerPhone: string) => {
   });
 };
 
-export type { Order, OrderItem, CreateOrderData, OrderFilters };
+export type { Order, OrderItem, UnitItem, CreateOrderData, OrderFilters };

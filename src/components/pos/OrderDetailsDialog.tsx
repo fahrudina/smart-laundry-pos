@@ -188,20 +188,63 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
             <h3 className="font-semibold mb-4">Order Items</h3>
             <div className="space-y-3">
               {order.order_items?.map((item: any, index: number) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-medium">{item.service_name}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      ${item.service_price.toFixed(2)} × {item.quantity}
-                    </p>
-                    {item.estimated_completion && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Ready by: {formatDateLong(item.estimated_completion)}
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">${item.line_total.toFixed(2)}</p>
+                <div key={index} className="p-3 bg-secondary rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-medium">{item.service_name}</h4>
+                        {item.service_type && (
+                          <Badge variant="outline" className="text-xs">
+                            {item.service_type}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        {/* Basic pricing info */}
+                        <p>${item.service_price.toFixed(2)} × {item.quantity}</p>
+                        
+                        {/* Service type specific details */}
+                        {item.service_type === 'kilo' && item.weight_kg && (
+                          <p>Weight: {item.weight_kg} kg</p>
+                        )}
+                        
+                        {item.service_type === 'combined' && (
+                          <div>
+                            {item.weight_kg && <p>Weight: {item.weight_kg} kg</p>}
+                            {item.unit_items && item.unit_items.length > 0 && (
+                              <div>
+                                <p className="font-medium">Unit Items:</p>
+                                {item.unit_items.map((unitItem: any, unitIndex: number) => (
+                                  <p key={unitIndex} className="ml-2 text-xs">
+                                    • {unitItem.item_name}: {unitItem.quantity} × ${unitItem.price_per_unit.toFixed(2)}
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {item.service_type === 'unit' && item.unit_items && item.unit_items.length > 0 && (
+                          <div>
+                            <p className="font-medium">Unit Items:</p>
+                            {item.unit_items.map((unitItem: any, unitIndex: number) => (
+                              <p key={unitIndex} className="ml-2 text-xs">
+                                • {unitItem.item_name}: {unitItem.quantity} × ${unitItem.price_per_unit.toFixed(2)}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+
+                        {item.estimated_completion && (
+                          <p className="text-xs">
+                            Ready by: {formatDateLong(item.estimated_completion)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">${item.line_total.toFixed(2)}</p>
+                    </div>
                   </div>
                 </div>
               ))}

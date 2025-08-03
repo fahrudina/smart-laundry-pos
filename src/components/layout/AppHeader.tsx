@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, History, Home, Settings, Bell, UserPlus, Building2 } from 'lucide-react';
+import { LogOut, History, Home, Settings, Bell, UserPlus, Building2, Wrench } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,19 +79,34 @@ export const AppHeader: React.FC = () => {
               Order History
             </Button>
             {isOwner && (
-              <Button
-                variant={location.pathname === '/stores' ? "default" : "ghost"}
-                size="sm"
-                onClick={() => navigate('/stores')}
-                className={`flex items-center gap-2 h-9 px-4 ${
-                  location.pathname === '/stores'
-                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <Building2 className="h-4 w-4" />
-                Store Management
-              </Button>
+              <>
+                <Button
+                  variant={location.pathname === '/services' ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => navigate('/services')}
+                  className={`flex items-center gap-2 h-9 px-4 ${
+                    location.pathname === '/services'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  <Wrench className="h-4 w-4" />
+                  Services
+                </Button>
+                <Button
+                  variant={location.pathname === '/stores' ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => navigate('/stores')}
+                  className={`flex items-center gap-2 h-9 px-4 ${
+                    location.pathname === '/stores'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  <Building2 className="h-4 w-4" />
+                  Store Management
+                </Button>
+              </>
             )}
             <AddCustomerDialog 
               trigger={
