@@ -15,6 +15,7 @@ interface OrderData {
   execution_status: string;
   payment_status: string;
   payment_method: string;
+  cash_received?: number;
   order_date: string;
   estimated_completion: string;
   created_at: string;
@@ -300,6 +301,24 @@ export const PublicReceiptPage: React.FC = () => {
                   {order.payment_method?.toUpperCase() || 'CASH'}
                 </span>
               </div>
+
+              {/* Show cash details only for cash payments */}
+              {order.payment_method === 'cash' && order.cash_received && order.payment_status === 'completed' && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Uang Diterima</span>
+                    <span className="text-emerald-600 font-medium">
+                      Rp. {order.cash_received.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Kembalian</span>
+                    <span className="text-emerald-600 font-medium">
+                      Rp. {(order.cash_received - order.total_amount).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Service Items - Expandable */}
@@ -364,7 +383,7 @@ export const PublicReceiptPage: React.FC = () => {
                 <span className="text-gray-600">DiBayar</span>
                 <span className="text-gray-800">
                   Rp. {order.payment_status === 'completed' ? 
-                    (50000).toLocaleString('id-ID') : 
+                    (order.cash_received || order.total_amount).toLocaleString('id-ID') : 
                     '0'
                   }
                 </span>
@@ -374,8 +393,8 @@ export const PublicReceiptPage: React.FC = () => {
                 <div className="flex justify-between font-semibold text-lg">
                   <span className="text-gray-800">Kembalian</span>
                   <span className="text-emerald-600">
-                    Rp. {order.payment_status === 'completed' ? 
-                      (50000 - order.total_amount).toLocaleString('id-ID') : 
+                    Rp. {order.payment_status === 'completed' && order.cash_received ? 
+                      Math.max(0, order.cash_received - order.total_amount).toLocaleString('id-ID') : 
                       '0'
                     }
                   </span>

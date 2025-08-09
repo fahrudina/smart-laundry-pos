@@ -59,6 +59,7 @@ interface CreateOrderData {
   payment_status?: string;
   payment_method?: string;
   payment_amount?: number;
+  cash_received?: number;
   payment_notes?: string;
   order_date?: string;
   estimated_completion?: string;

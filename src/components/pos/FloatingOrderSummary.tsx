@@ -1,5 +1,5 @@
-import React from 'react';
-import { Clock, ShoppingCart, CreditCard, X, Minus, Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { Clock, ShoppingCart, CreditCard, X, Minus, Plus, Banknote, QrCode, Smartphone } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,7 +28,7 @@ interface FloatingOrderSummaryProps {
   getOrderCompletionTime: () => Date | null;
   formatDate: (date: Date) => string;
   dropOffDate: Date;
-  onProcessPayment: () => void;
+  onProcessPayment: (paymentMethod: string) => void;
   onCreateDraft: () => void;
   onOpenServicePopup?: () => void;
   isProcessing: boolean;
@@ -55,11 +55,20 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
   updateQuantity,
   removeFromOrder,
 }) => {
-  if (currentOrder.length === 0) return null;
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('cash');
+
+  const paymentMethods = [
+    { id: 'cash', name: 'Tunai', icon: Banknote, color: 'bg-green-500' },
+    { id: 'qris', name: 'QRIS', icon: QrCode, color: 'bg-blue-500' },
+    { id: 'transfer', name: 'Transfer', icon: Smartphone, color: 'bg-purple-500' },
+  ];
+
+  if (currentOrder.length === 0) {
+    return null;
+  }
 
   const subtotal = getTotalPrice();
-  // const taxAmount = subtotal * 0.11;
-  const totalAmount = subtotal; // + taxAmount;
+  const totalAmount = subtotal;
   const completionTime = getOrderCompletionTime();
 
   return (
@@ -173,10 +182,6 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
               <span className="text-gray-600">Subtotal:</span>
               <span className="font-medium">Rp{subtotal.toLocaleString('id-ID')}</span>
             </div>
-            {/* <div className="flex justify-between text-xs text-gray-500">
-              <span>Tax (11%):</span>
-              <span>Rp{taxAmount.toLocaleString('id-ID')}</span>
-            </div> */}
             <Separator />
             <div className="flex justify-between text-lg font-bold text-gray-900">
               <span>Total:</span>
@@ -184,11 +189,36 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
             </div>
           </div>
 
+          {/* Payment Method Selection */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Metode Pembayaran</label>
+            <div className="grid grid-cols-3 gap-2">
+              {paymentMethods.map((method) => {
+                const IconComponent = method.icon;
+                return (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => setSelectedPaymentMethod(method.id)}
+                    className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
+                      selectedPaymentMethod === method.id
+                        ? `border-blue-500 ${method.color} text-white`
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <IconComponent className="h-5 w-5 mb-1" />
+                    <span className="text-xs font-medium">{method.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Action Buttons */}
           <div className="space-y-2">
             <Button 
               className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 text-sm" 
-              onClick={onProcessPayment}
+              onClick={() => onProcessPayment(selectedPaymentMethod)}
               disabled={isProcessing || !customerName || !customerPhone}
             >
               <CreditCard className="h-4 w-4 mr-2" />

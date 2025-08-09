@@ -1,5 +1,5 @@
--- Create a public function to get receipt data
--- This function will be accessible without authentication and returns complete receipt information
+-- Update get_receipt_data function to include cash_received field
+-- This migration adds the cash_received field to the receipt data response
 
 CREATE OR REPLACE FUNCTION public.get_receipt_data(order_id_param UUID)
 RETURNS JSON
@@ -49,17 +49,14 @@ BEGIN
   )
   INTO receipt_data
   FROM orders o
-  LEFT JOIN stores s ON o.store_id = s.id
+  LEFT JOIN stores s ON s.id = o.store_id
   WHERE o.id = order_id_param;
-  
-  -- Return the receipt data or null if order not found
+
+  -- Check if order exists
+  IF receipt_data IS NULL THEN
+    RAISE EXCEPTION 'Order not found with id: %', order_id_param;
+  END IF;
+
   RETURN receipt_data;
 END;
 $$;
-
--- Grant execute permission to anonymous users (public access)
-GRANT EXECUTE ON FUNCTION public.get_receipt_data(UUID) TO anon;
-GRANT EXECUTE ON FUNCTION public.get_receipt_data(UUID) TO authenticated;
-
--- Add comment for documentation
-COMMENT ON FUNCTION public.get_receipt_data(UUID) IS 'Public function to retrieve complete receipt data for a given order ID. Accessible without authentication for receipt viewing.';

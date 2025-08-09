@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useServices } from '@/hooks/useServices';
 import { EnhancedServiceSelector, Service, EnhancedOrderItem } from './EnhancedServiceSelector';
 import { FloatingOrderSummary } from './FloatingOrderSummary';
+import { CashPaymentDialog } from './CashPaymentDialog';
 
 /**
  * Enhanced LaundryPOS with WhatsApp integration
@@ -40,6 +41,7 @@ const EnhancedLaundryPOS = () => {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [showServiceDialog, setShowServiceDialog] = useState(false);
   const [isServicePopupOpen, setIsServicePopupOpen] = useState(false);
+  const [showCashPaymentDialog, setShowCashPaymentDialog] = useState(false);
   
   const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading: customersLoading } = useCustomers();
@@ -280,8 +282,7 @@ const EnhancedLaundryPOS = () => {
 
     try {
       const subtotal = getTotalPrice();
-      const taxAmount = subtotal * 0.0825;
-      const totalAmount = subtotal + taxAmount;
+      const totalAmount = subtotal;
       const completionDate = getOrderCompletionTime();
 
       const orderData = {
@@ -297,7 +298,7 @@ const EnhancedLaundryPOS = () => {
           unit_items: item.unitItems,
         })),
         subtotal,
-        tax_amount: taxAmount,
+        tax_amount: 0,
         total_amount: totalAmount,
         execution_status: 'in_queue',
         payment_status: 'pending',
@@ -320,7 +321,7 @@ const EnhancedLaundryPOS = () => {
     }
   };
 
-  const processPayment = async () => {
+  const processPayment = async (paymentMethod: string = 'cash') => {
     if (currentOrder.length === 0) {
       toast({
         title: "Error",
@@ -339,10 +340,19 @@ const EnhancedLaundryPOS = () => {
       return;
     }
 
+    // Show cash payment dialog for cash payments, otherwise process directly
+    if (paymentMethod === 'cash') {
+      setShowCashPaymentDialog(true);
+    } else {
+      // For other payment methods, process directly without cash dialog
+      await processNonCashPayment(paymentMethod);
+    }
+  };
+
+  const processCashPayment = async (cashReceived: number) => {
     try {
       const subtotal = getTotalPrice();
-      const taxAmount = subtotal * 0.0825;
-      const totalAmount = subtotal + taxAmount;
+      const totalAmount = subtotal;
       const completionDate = getOrderCompletionTime();
 
       const orderData = {
@@ -358,11 +368,67 @@ const EnhancedLaundryPOS = () => {
           unit_items: item.unitItems,
         })),
         subtotal,
-        tax_amount: taxAmount,
+        tax_amount: 0,
         total_amount: totalAmount,
         execution_status: 'in_queue',
         payment_status: 'completed',
         payment_method: 'cash',
+        payment_amount: totalAmount,
+        cash_received: cashReceived, // Add the cash received amount
+        order_date: dropOffDate.toISOString(),
+        estimated_completion: completionDate?.toISOString(),
+      };
+
+      // This will automatically send WhatsApp notification for order creation
+      await createOrderMutation.mutateAsync(orderData);
+
+      // Close cash payment dialog and clear the current order
+      setShowCashPaymentDialog(false);
+      setCurrentOrder([]);
+      setCustomerName('');
+      setCustomerPhone('');
+      
+      // Enhanced success message with change information
+      const change = cashReceived - totalAmount;
+      const changeMessage = change > 0 ? ` Kembalian: Rp ${change.toLocaleString('id-ID')}.` : '';
+      const whatsappStatus = whatsappConfigured 
+        ? "WhatsApp notification sent to customer." 
+        : "WhatsApp not configured - customer was not notified.";
+      
+      toast({
+        title: "Success",
+        description: `Payment processed successfully!${changeMessage} ${whatsappStatus} Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
+      });
+    } catch (error) {
+      // Error is already handled in the hook
+      setShowCashPaymentDialog(false);
+    }
+  };
+
+  const processNonCashPayment = async (paymentMethod: string) => {
+    try {
+      const subtotal = getTotalPrice();
+      const totalAmount = subtotal;
+      const completionDate = getOrderCompletionTime();
+
+      const orderData = {
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        items: currentOrder.map(item => ({
+          service_name: item.service.name,
+          service_price: item.service.price,
+          quantity: item.quantity,
+          estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
+          service_type: item.serviceType,
+          weight_kg: item.weight,
+          unit_items: item.unitItems,
+        })),
+        subtotal,
+        tax_amount: 0,
+        total_amount: totalAmount,
+        execution_status: 'in_queue',
+        payment_status: 'completed',
+        payment_method: paymentMethod,
         payment_amount: totalAmount,
         order_date: dropOffDate.toISOString(),
         estimated_completion: completionDate?.toISOString(),
@@ -383,7 +449,7 @@ const EnhancedLaundryPOS = () => {
       
       toast({
         title: "Success",
-        description: `Payment processed successfully! ${whatsappStatus} Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
+        description: `Payment processed successfully via ${paymentMethod.toUpperCase()}! ${whatsappStatus} Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
       });
     } catch (error) {
       // Error is already handled in the hook
@@ -594,6 +660,14 @@ const EnhancedLaundryPOS = () => {
         calculateFinishDate={calculateFinishDate}
         updateQuantity={updateQuantity}
         removeFromOrder={removeFromOrder}
+      />
+
+      {/* Cash Payment Dialog */}
+      <CashPaymentDialog
+        isOpen={showCashPaymentDialog}
+        onClose={() => setShowCashPaymentDialog(false)}
+        totalAmount={getTotalPrice()} // No tax
+        onSubmit={processCashPayment}
       />
     </div>
   );

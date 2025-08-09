@@ -33,6 +33,7 @@ export const useCreateOrderWithNotifications = () => {
           payment_status: orderData.payment_status || 'pending',
           payment_method: orderData.payment_method,
           payment_amount: orderData.payment_amount,
+          cash_received: orderData.cash_received,
           payment_notes: orderData.payment_notes,
           order_date: orderData.order_date || new Date().toISOString(),
           estimated_completion: orderData.estimated_completion,

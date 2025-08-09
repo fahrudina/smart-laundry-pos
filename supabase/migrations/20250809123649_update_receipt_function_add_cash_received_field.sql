@@ -1,5 +1,5 @@
--- Create a public function to get receipt data
--- This function will be accessible without authentication and returns complete receipt information
+-- Update get_receipt_data function to include cash_received and updated_at fields
+-- This migration updates the existing function to include the new cash_received field
 
 CREATE OR REPLACE FUNCTION public.get_receipt_data(order_id_param UUID)
 RETURNS JSON
@@ -56,10 +56,3 @@ BEGIN
   RETURN receipt_data;
 END;
 $$;
-
--- Grant execute permission to anonymous users (public access)
-GRANT EXECUTE ON FUNCTION public.get_receipt_data(UUID) TO anon;
-GRANT EXECUTE ON FUNCTION public.get_receipt_data(UUID) TO authenticated;
-
--- Add comment for documentation
-COMMENT ON FUNCTION public.get_receipt_data(UUID) IS 'Public function to retrieve complete receipt data for a given order ID. Accessible without authentication for receipt viewing.';

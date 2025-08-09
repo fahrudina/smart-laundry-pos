@@ -238,8 +238,7 @@ export const EnhancedLaundryPOS = () => {
 
     try {
       const subtotal = getTotalPrice();
-      const taxAmount = subtotal * 0.0825;
-      const totalAmount = subtotal + taxAmount;
+      const totalAmount = subtotal;
       const completionDate = getOrderCompletionTime();
 
       const orderData = {
@@ -255,7 +254,7 @@ export const EnhancedLaundryPOS = () => {
           unit_items: item.unitItems,
         })),
         subtotal,
-        tax_amount: taxAmount,
+        tax_amount: 0,
         total_amount: totalAmount,
         execution_status: 'in_queue',
         payment_status: 'completed',
@@ -302,8 +301,7 @@ export const EnhancedLaundryPOS = () => {
 
     try {
       const subtotal = getTotalPrice();
-      const taxAmount = subtotal * 0.0825;
-      const totalAmount = subtotal + taxAmount;
+      const totalAmount = subtotal;
       const completionDate = getOrderCompletionTime();
 
       const orderData = {
@@ -319,7 +317,7 @@ export const EnhancedLaundryPOS = () => {
           unit_items: item.unitItems,
         })),
         subtotal,
-        tax_amount: taxAmount,
+        tax_amount: 0,
         total_amount: totalAmount,
         execution_status: 'in_queue',
         payment_status: 'pending',
@@ -638,18 +636,9 @@ export const EnhancedLaundryPOS = () => {
 
               {/* Order Summary */}
               <div className="space-y-2 mb-6">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal:</span>
-                  <span>Rp{getTotalPrice().toLocaleString('id-ID')}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Tax (8.25%):</span>
-                  <span>Rp{(getTotalPrice() * 0.0825).toLocaleString('id-ID')}</span>
-                </div>
-                <Separator />
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total:</span>
-                  <span>Rp{(getTotalPrice() * 1.0825).toLocaleString('id-ID')}</span>
+                  <span>Rp{getTotalPrice().toLocaleString('id-ID')}</span>
                 </div>
               </div>
 
