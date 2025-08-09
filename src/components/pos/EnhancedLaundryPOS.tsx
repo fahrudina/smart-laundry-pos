@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
 import { useCustomers } from '@/hooks/useCustomers';
-import { useCreateOrder, UnitItem } from '@/hooks/useOrdersOptimized';
+import { useCreateOrderWithNotifications as useCreateOrder, UnitItem } from '@/hooks/useOrdersWithNotifications';
 import { useToast } from '@/hooks/use-toast';
 import { useServices } from '@/hooks/useServices';
 import { EnhancedServiceSelector, Service, EnhancedOrderItem } from './EnhancedServiceSelector';

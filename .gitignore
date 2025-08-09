@@ -25,3 +25,7 @@ dist-ssr
 supabase/.temp/
 .vercel
 public/favicon-generator.html
+
+# environment variables
+.env
+.env.local
