@@ -10,7 +10,7 @@ export const SmartHomePage = () => {
   useEffect(() => {
     // If user is authenticated and not loading, redirect to POS
     if (!loading && user) {
-      navigate('/pos', { replace: true });
+      navigate('/home', { replace: true });
     }
   }, [user, loading, navigate]);
 

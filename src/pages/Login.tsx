@@ -33,7 +33,7 @@ export const Login: React.FC = () => {
 
   // Redirect if already authenticated
   if (user) {
-    const from = location.state?.from?.pathname || '/pos';
+    const from = location.state?.from?.pathname || '/home';
     return <Navigate to={from} replace />;
   }
 
