@@ -100,6 +100,24 @@ const services: Service[] = [
 ];
 
 export const LaundryPOS = () => {
+  // Utility function to get current Jakarta time
+  const getJakartaTime = () => {
+    const now = new Date();
+    // Create a new date that represents Jakarta time (UTC+7)
+    const jakartaOffset = 7 * 60; // Jakarta is UTC+7
+    const userOffset = now.getTimezoneOffset(); // User's timezone offset in minutes
+    const jakartaTime = new Date(now.getTime() + ((jakartaOffset + userOffset) * 60 * 1000));
+    return jakartaTime;
+  };
+
+  // Utility function to format date for datetime-local input
+  const formatForDateTimeLocal = (date: Date) => {
+    // Ensure we're working with the local representation
+    const offset = date.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(date.getTime() - offset).toISOString();
+    return localISOTime.slice(0, 16);
+  };
+
   const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([]);
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerName, setCustomerName] = useState('');
@@ -107,12 +125,7 @@ export const LaundryPOS = () => {
   const [showResults, setShowResults] = useState(false);
   const [isSelectingCustomer, setIsSelectingCustomer] = useState(false);
   const [isServicePopupOpen, setIsServicePopupOpen] = useState(false);
-  const [dropOffDate, setDropOffDate] = useState(() => {
-    // Set to current date/time in Asia/Jakarta timezone
-    const now = new Date();
-    const jakartaTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
-    return jakartaTime;
-  });
+  const [dropOffDate, setDropOffDate] = useState(() => getJakartaTime());
   
   const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading } = useCustomers();
@@ -225,9 +238,7 @@ export const LaundryPOS = () => {
     setShowResults(false);
     setIsSelectingCustomer(false);
     // Reset to current Jakarta time
-    const now = new Date();
-    const jakartaTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
-    setDropOffDate(jakartaTime);
+    setDropOffDate(getJakartaTime());
   };
 
   // Handle input blur to hide results
@@ -581,12 +592,16 @@ export const LaundryPOS = () => {
               </label>
               <Input
                 type="datetime-local"
-                value={dropOffDate.toISOString().slice(0, 16)}
-                onChange={(e) => setDropOffDate(new Date(e.target.value))}
+                value={formatForDateTimeLocal(dropOffDate)}
+                onChange={(e) => {
+                  // Convert the local input to a proper Date object
+                  const newDate = new Date(e.target.value);
+                  setDropOffDate(newDate);
+                }}
                 className="w-full"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                This affects the estimated completion time for all services
+                This affects the estimated completion time for all services (Jakarta Time: GMT+7)
               </p>
             </div>
           </div>

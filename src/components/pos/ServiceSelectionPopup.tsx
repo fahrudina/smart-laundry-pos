@@ -116,8 +116,8 @@ export const ServiceSelectionPopup: React.FC<ServiceSelectionPopupProps> = ({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button 
-          variant="outline" 
-          className="w-full" 
+          variant="default" 
+          className="w-full bg-blue-600 text-white hover:bg-blue-700" 
           disabled={disabled}
         >
           <Plus className="h-4 w-4 mr-2" />

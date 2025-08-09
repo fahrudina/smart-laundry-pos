@@ -73,8 +73,47 @@ export const AppHeader: React.FC = () => {
     <header className="bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo Section */}
-          <div className="flex items-center space-x-4">
+          {/* Left Section - Mobile Menu + Logo */}
+          <div className="flex items-center space-x-3">
+            {/* Mobile Navigation Menu */}
+            <div className="lg:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuItem onClick={handleHomeNavigation}>
+                    <Home className="h-4 w-4 mr-2" />
+                    Home
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handlePOSNavigation}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Order
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleHistoryNavigation}>
+                    <History className="h-4 w-4 mr-2" />
+                    Order History
+                  </DropdownMenuItem>
+                  {isOwner && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleServicesNavigation}>
+                        <Wrench className="h-4 w-4 mr-2" />
+                        Services
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleStoresNavigation}>
+                        <Building2 className="h-4 w-4 mr-2" />
+                        Store Management
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Logo Section */}
             <div className="flex-shrink-0 flex items-center">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
                 <span className="text-white font-bold text-sm">SL</span>
@@ -163,46 +202,8 @@ export const AppHeader: React.FC = () => {
             )}
           </nav>
 
-          {/* Mobile Navigation Menu */}
-          <div className="lg:hidden">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={handleHomeNavigation}>
-                  <Home className="h-4 w-4 mr-2" />
-                  Home
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handlePOSNavigation}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Order
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleHistoryNavigation}>
-                  <History className="h-4 w-4 mr-2" />
-                  Order History
-                </DropdownMenuItem>
-                {isOwner && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleServicesNavigation}>
-                      <Wrench className="h-4 w-4 mr-2" />
-                      Services
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleStoresNavigation}>
-                      <Building2 className="h-4 w-4 mr-2" />
-                      Store Management
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
           {/* Right Section */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             {/* Store Selector for Owners */}
             {isOwner && (
               <div className="hidden md:block">
@@ -211,10 +212,10 @@ export const AppHeader: React.FC = () => {
             )}
 
             {/* Quick Actions */}
-            <div className="hidden sm:flex items-center space-x-2">
+            <div className="hidden sm:flex items-center">
               <AddCustomerDialog
                 trigger={
-                  <Button variant="ghost" size="sm" className="h-9 px-3">
+                  <Button variant="default" size="sm" className="h-9 px-2 sm:px-3 bg-blue-600 text-white hover:bg-blue-700">
                     <UserPlus className="h-4 w-4" />
                     <span className="hidden lg:ml-2 lg:inline">Add Customer</span>
                   </Button>
@@ -264,10 +265,17 @@ export const AppHeader: React.FC = () => {
                   </div>
                 )}
                 <div className="sm:hidden">
-                  <DropdownMenuItem>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Add Customer
-                  </DropdownMenuItem>
+                  <AddCustomerDialog
+                    trigger={
+                      <DropdownMenuItem 
+                        className="text-blue-600"
+                        onSelect={(e) => e.preventDefault()}
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Add Customer
+                      </DropdownMenuItem>
+                    }
+                  />
                   <DropdownMenuSeparator />
                 </div>
                 <DropdownMenuItem>
