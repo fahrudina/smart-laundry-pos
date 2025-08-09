@@ -101,7 +101,7 @@ export const useDashboard = () => {
         .from('orders')
         .select('*')
         .eq('store_id', currentStore.store_id)
-        .in('execution_status', ['pending', 'processing']);
+        .in('execution_status', ['in_queue', 'in_progress']);
 
       if (pendingError) throw pendingError;
 
