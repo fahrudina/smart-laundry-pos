@@ -65,12 +65,8 @@ export const useCreateOrderWithNotifications = () => {
       // We don't await this to avoid blocking the order creation
       (async () => {
         try {
-          // Use store context data directly instead of querying by ID
-          const storeInfo = WhatsAppDataHelper.getStoreInfoFromContext(currentStore);
+          const storeInfo = await WhatsAppDataHelper.getStoreInfo(currentStore?.store_id);
           const orderItems = WhatsAppDataHelper.formatOrderItems(orderData.items);
-          
-          console.log('🏪 Current store context:', currentStore);
-          console.log('📋 Store info for notification:', storeInfo);
           
           const notificationData: OrderCreatedData = {
             orderId: order.id,
@@ -172,12 +168,8 @@ export const useUpdateOrderStatusWithNotifications = () => {
       if (executionStatus === 'completed' && orderData) {
         (async () => {
           try {
-            // Use store context data directly instead of querying by ID
-            const storeInfo = WhatsAppDataHelper.getStoreInfoFromContext(currentStore);
+            const storeInfo = await WhatsAppDataHelper.getStoreInfo(currentStore?.store_id);
             const orderItems = WhatsAppDataHelper.formatOrderItems(orderData.order_items || []);
-            
-            console.log('🏪 Current store context for completion:', currentStore);
-            console.log('📋 Store info for completion notification:', storeInfo);
             
             const notificationData: OrderCompletedData = {
               orderId: orderId,

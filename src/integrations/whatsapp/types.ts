@@ -23,12 +23,30 @@ export interface MessageTemplate {
   orderCompleted: (data: OrderCompletedData) => string;
 }
 
+export interface StoreInfo {
+  name: string;
+  address: string;
+  phone: string;
+}
+
+export interface OrderItem {
+  service_name: string;
+  service_type: string;
+  weight_kg?: number;
+  quantity: number;
+  service_price: number;
+  line_total: number;
+}
+
 export interface OrderCreatedData {
   orderId: string;
   customerName: string;
   totalAmount: number;
+  subtotal: number;
   estimatedCompletion: string;
-  services: string[];
+  paymentStatus: string;
+  orderItems: OrderItem[];
+  storeInfo: StoreInfo;
 }
 
 export interface OrderCompletedData {
@@ -36,7 +54,8 @@ export interface OrderCompletedData {
   customerName: string;
   totalAmount: number;
   completedAt: string;
-  services: string[];
+  orderItems: OrderItem[];
+  storeInfo: StoreInfo;
 }
 
 export interface NotificationResult {
