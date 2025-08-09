@@ -222,6 +222,16 @@ export const AppHeader: React.FC = () => {
               />
             </div>
 
+            {/* Notifications */}
+            <div className="relative">
+              {/* <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                <Bell className="h-4 w-4" />
+              </Button> */}
+              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                3
+              </div>
+            </div>
+
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

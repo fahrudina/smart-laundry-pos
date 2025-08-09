@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import { HomePage } from "./pages/HomePage";
 import { OrderHistory } from "./pages/OrderHistoryOptimized";
 import { Login } from "./pages/Login";
 import { SmartHomePage } from "./pages/SmartHomePage";
@@ -33,6 +34,16 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               
               {/* Protected Routes */}
+              <Route 
+                path="/home" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <HomePage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
               <Route 
                 path="/pos" 
                 element={

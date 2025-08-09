@@ -9,8 +9,8 @@ export const ProtectedRedirect = () => {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        // Redirect authenticated users to POS
-        navigate('/pos', { replace: true });
+        // Redirect authenticated users to Home page
+        navigate('/home', { replace: true });
       } else {
         // Redirect unauthenticated users to landing page
         navigate('/', { replace: true });
