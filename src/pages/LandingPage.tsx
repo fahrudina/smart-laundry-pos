@@ -100,6 +100,14 @@ export const LandingPage: React.FC = () => {
             <div className="flex items-center space-x-4">
               <PWAInstallButton />
               <Button 
+                variant="outline"
+                onClick={() => navigate('/install')}
+                className="hidden sm:flex"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Install Manual
+              </Button>
+              <Button 
                 onClick={() => navigate('/login')}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
@@ -276,6 +284,14 @@ export const LandingPage: React.FC = () => {
               </p>
               <div className="flex space-x-4 mb-4">
                 <PWAInstallButton variant="outline" />
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate('/install')}
+                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Install Guide
+                </Button>
               </div>
               <div className="text-gray-400">
                 <p className="mb-2">

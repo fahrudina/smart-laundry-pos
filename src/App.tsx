@@ -20,6 +20,7 @@ import { ProtectedRedirect } from "./components/auth/ProtectedRedirect";
 import { AppLayout } from "./components/layout/AppLayout";
 import { queryClient } from "./lib/queryClient";
 import { PublicReceiptPage } from "./pages/PublicReceiptPage";
+import { PWAManagementPage } from "./pages/PWAManagementPage";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/" element={<SmartHomePage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/receipt/:orderId" element={<PublicReceiptPage />} />
+              <Route path="/install" element={<PWAManagementPage />} />
               
               {/* Protected Routes */}
               <Route 
