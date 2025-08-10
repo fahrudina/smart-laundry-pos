@@ -41,6 +41,7 @@ export interface StoreContextType {
   currentStore: StoreWithOwnershipInfo | null;
   userStores: StoreWithOwnershipInfo[];
   isOwner: boolean;
+  loading: boolean;
   switchStore: (storeId: string) => void;
   refreshStores: () => Promise<void>;
 }
