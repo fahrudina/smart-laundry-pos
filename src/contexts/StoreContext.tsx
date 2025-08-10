@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authService } from '@/services/authService';
 import { StoreContextType, StoreWithOwnershipInfo } from '@/types/multi-tenant';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from './AuthContext';
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
@@ -19,15 +20,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth(); // Get user from AuthContext
 
   const refreshStores = async () => {
     try {
       if (!authService.isAuthenticated()) {
         console.log('User not authenticated, skipping store refresh');
+        setLoading(false);
         return;
       }
 
       console.log('Fetching user stores...');
+      setLoading(true);
       const stores = await authService.getUserStores();
       console.log('Stores fetched:', stores);
       
@@ -36,11 +40,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       // Auto-select first store if none selected
       if (stores.length > 0 && !currentStore) {
+        console.log('Auto-selecting first store:', stores[0]);
         setCurrentStore(stores[0]);
       }
 
       // If current store is no longer accessible, switch to first available
       if (currentStore && !stores.find(s => s.store_id === currentStore.store_id)) {
+        console.log('Current store no longer accessible, switching to first available');
         setCurrentStore(stores.length > 0 ? stores[0] : null);
       }
     } catch (error) {
@@ -81,7 +87,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
-  // Reset store context when user logs out
+  // Listen for user authentication changes
+  useEffect(() => {
+    if (user) {
+      // User just logged in, refresh stores
+      console.log('User authenticated, refreshing stores...');
+      refreshStores();
+    } else {
+      // User logged out, reset store context
+      console.log('User logged out, resetting store context...');
+      setCurrentStore(null);
+      setUserStores([]);
+      setIsOwner(false);
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Reset store context when user logs out (backup check)
   useEffect(() => {
     if (!authService.isAuthenticated()) {
       setCurrentStore(null);
@@ -94,6 +116,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     currentStore,
     userStores,
     isOwner,
+    loading,
     switchStore,
     refreshStores,
   };
