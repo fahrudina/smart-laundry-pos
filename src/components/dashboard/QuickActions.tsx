@@ -7,7 +7,8 @@ import {
   Search, 
   History, 
   UserPlus,
-  Settings
+  Settings,
+  Users
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AddCustomerDialog } from '@/components/pos/AddCustomerDialog';
@@ -43,6 +44,14 @@ export const QuickActions: React.FC = () => {
       icon: History,
       color: 'bg-purple-500 hover:bg-purple-600',
       onClick: () => navigate('/order-history')
+    },
+    {
+      id: 'customers',
+      title: 'Customers',
+      description: 'Manage customers',
+      icon: Users,
+      color: 'bg-orange-500 hover:bg-orange-600',
+      onClick: () => navigate('/customers')
     }
   ];
 

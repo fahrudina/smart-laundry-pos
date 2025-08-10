@@ -12,6 +12,7 @@ import { SmartHomePage } from "./pages/SmartHomePage";
 import NotFound from "./pages/NotFound";
 import { StoreManagementPage } from "./pages/StoreManagementPage";
 import ServiceManagement from "./pages/ServiceManagement";
+import { CustomersPage } from "./pages/CustomersPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import { StoreProvider } from "./contexts/StoreContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -64,6 +65,16 @@ const App = () => (
                   <ProtectedRoute>
                     <AppLayout>
                       <OrderHistory />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/customers" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <CustomersPage />
                     </AppLayout>
                   </ProtectedRoute>
                 } 
