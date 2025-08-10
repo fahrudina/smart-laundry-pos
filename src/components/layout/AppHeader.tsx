@@ -47,12 +47,6 @@ export const AppHeader: React.FC = () => {
     }
   };
 
-  const handleCustomersNavigation = () => {
-    if (location.pathname !== '/customers') {
-      navigate('/customers');
-    }
-  };
-
   const handleServicesNavigation = () => {
     if (location.pathname !== '/services') {
       navigate('/services');
@@ -62,6 +56,12 @@ export const AppHeader: React.FC = () => {
   const handleStoresNavigation = () => {
     if (location.pathname !== '/stores') {
       navigate('/stores');
+    }
+  };
+
+  const handleCustomersNavigation = () => {
+    if (location.pathname !== '/customers') {
+      navigate('/customers');
     }
   };
 
