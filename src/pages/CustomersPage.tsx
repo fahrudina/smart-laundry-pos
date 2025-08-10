@@ -99,9 +99,7 @@ export const CustomersPage: React.FC = () => {
     return () => {
       clearTimeout(handler);
     };
-  }, [searchQuery]);
-
-  // Memoized calculations for performance
+  }, [searchQuery]);  // Memoized calculations for performance
   const activeCustomersCount = useMemo(() => {
     return customers.filter(c => c._count && c._count.orders > 0).length;
   }, [customers]);
