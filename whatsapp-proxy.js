@@ -1,9 +1,29 @@
 import express from 'express';
 import cors from 'cors';
 import fetch from 'node-fetch';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.WHATSAPP_PROXY_PORT || 3001;
+
+// WhatsApp API configuration from environment variables
+const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL || 'http://34.229.217.97';
+const WHATSAPP_USERNAME = process.env.WHATSAPP_USERNAME || 'admin';
+const WHATSAPP_PASSWORD = process.env.WHATSAPP_PASSWORD || 'secretPaassword';
+
+// Validate required environment variables
+if (!process.env.WHATSAPP_API_URL) {
+  console.warn('⚠️  WHATSAPP_API_URL not set in environment, using default');
+}
+if (!process.env.WHATSAPP_USERNAME) {
+  console.warn('⚠️  WHATSAPP_USERNAME not set in environment, using default');
+}
+if (!process.env.WHATSAPP_PASSWORD) {
+  console.warn('⚠️  WHATSAPP_PASSWORD not set in environment, using default');
+}
 
 // Enable CORS for all routes
 app.use(cors({
@@ -32,11 +52,16 @@ app.post('/api/whatsapp/send-message', async (req, res) => {
     }
 
     // Forward the request to the actual WhatsApp API
-    const response = await fetch('http://34.229.217.97/api/send-message', {
+    const whatsappApiEndpoint = `${WHATSAPP_API_URL}/api/send-message`;
+    const credentials = Buffer.from(`${WHATSAPP_USERNAME}:${WHATSAPP_PASSWORD}`).toString('base64');
+    
+    console.log('🔗 Forwarding to:', whatsappApiEndpoint);
+    
+    const response = await fetch(whatsappApiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + Buffer.from('admin:secretPaassword').toString('base64'),
+        'Authorization': `Basic ${credentials}`,
       },
       body: JSON.stringify({ to, message }),
     });
@@ -92,6 +117,8 @@ app.listen(PORT, () => {
   console.log(`🚀 WhatsApp Proxy Server running on http://localhost:${PORT}`);
   console.log(`📱 WhatsApp endpoint: http://localhost:${PORT}/api/whatsapp/send-message`);
   console.log(`🔍 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔗 Target WhatsApp API: ${WHATSAPP_API_URL}`);
+  console.log(`👤 Using username: ${WHATSAPP_USERNAME}`);
 });
 
 export default app;
