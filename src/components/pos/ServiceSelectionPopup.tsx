@@ -85,8 +85,12 @@ export const ServiceSelectionPopup: React.FC<ServiceSelectionPopupProps> = ({
     setSelectedServices(prev => {
       const updated = prev.map(item => {
         if (item.service.id === serviceId && item.type === type) {
-          const newQuantity = Math.max(0, item.quantity + change);
-          return { ...item, quantity: newQuantity };
+          const increment = type === 'kilo' ? (change > 0 ? 0.1 : -0.1) : change;
+          const minValue = type === 'kilo' ? 0.1 : 1;
+          const newQuantity = Math.max(minValue, item.quantity + increment);
+          // Round to 1 decimal place to avoid floating point precision issues
+          const roundedQuantity = Math.round(newQuantity * 10) / 10;
+          return { ...item, quantity: roundedQuantity };
         }
         return item;
       }).filter(item => item.quantity > 0); // Remove items with 0 quantity
@@ -223,19 +227,25 @@ export const ServiceSelectionPopup: React.FC<ServiceSelectionPopupProps> = ({
                       {item.type === 'kilo' ? (
                         <Input
                           type="number"
+                          step="0.1"
                           value={item.quantity}
                           onChange={(e) => {
-                            const value = Math.max(3, parseInt(e.target.value) || 3);
-                            setSelectedServices(prev => 
-                              prev.map(s => 
-                                s.service.id === item.service.id && s.type === item.type
-                                  ? { ...s, quantity: value }
-                                  : s
-                              )
-                            );
+                            const inputValue = parseFloat(e.target.value);
+                            if (!isNaN(inputValue)) {
+                              // Round to 1 decimal place and ensure minimum 0.1
+                              const value = Math.max(0.1, Math.round(inputValue * 10) / 10);
+                              setSelectedServices(prev => 
+                                prev.map(s => 
+                                  s.service.id === item.service.id && s.type === item.type
+                                    ? { ...s, quantity: value }
+                                    : s
+                                )
+                              );
+                            }
                           }}
-                          className="w-16 text-center"
-                          min="3"
+                          className="w-20 text-center"
+                          min="0.1"
+                          placeholder="kg"
                         />
                       ) : (
                         <span className="w-8 text-center">{item.quantity}</span>

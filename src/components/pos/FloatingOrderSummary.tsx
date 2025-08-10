@@ -122,8 +122,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                   <div className="flex-1 min-w-0">
                     <h5 className="text-sm font-medium text-gray-900 truncate">{item.service.name}</h5>
                     <p className="text-xs text-gray-600">
-                      Rp{item.service.price.toLocaleString('id-ID')} × {item.quantity}
-                      {item.serviceType === 'kilo' ? ' kg' : ' unit'}
+                      Rp{item.service.price.toLocaleString('id-ID')} × {item.serviceType === 'kilo' ? `${item.quantity.toFixed(1)} kg` : `${item.quantity} unit${item.quantity !== 1 ? 's' : ''}`}
                     </p>
                     <p className="text-xs text-gray-500">
                       Ready: {formatDate(calculateFinishDate(item.service, dropOffDate))}
@@ -133,7 +132,13 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => updateQuantity(item.service.id, item.quantity - 1, item.serviceType)}
+                      onClick={() => {
+                        const decrement = item.serviceType === 'kilo' ? 0.1 : 1;
+                        const newValue = Math.max(item.serviceType === 'kilo' ? 0.1 : 1, item.quantity - decrement);
+                        // Round to 1 decimal place to avoid floating point precision issues
+                        const roundedValue = Math.round(newValue * 10) / 10;
+                        updateQuantity(item.service.id, roundedValue, item.serviceType);
+                      }}
                       className="h-6 w-6 p-0"
                     >
                       <Minus className="h-3 w-3" />
@@ -141,13 +146,18 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                     {item.serviceType === 'kilo' ? (
                       <Input
                         type="number"
+                        step="0.1"
                         value={item.quantity}
                         onChange={(e) => {
-                          const value = Math.max(3, parseInt(e.target.value) || 3);
-                          updateQuantity(item.service.id, value, item.serviceType);
+                          const inputValue = parseFloat(e.target.value);
+                          if (!isNaN(inputValue)) {
+                            // Round to 1 decimal place and ensure minimum 0.1
+                            const value = Math.max(0.1, Math.round(inputValue * 10) / 10);
+                            updateQuantity(item.service.id, value, item.serviceType);
+                          }
                         }}
-                        className="w-10 h-6 text-xs text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        min="3"
+                        className="w-14 h-6 text-xs text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        min="0.1"
                       />
                     ) : (
                       <span className="w-6 text-center text-xs">{item.quantity}</span>
@@ -155,7 +165,13 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => updateQuantity(item.service.id, item.quantity + 1, item.serviceType)}
+                      onClick={() => {
+                        const increment = item.serviceType === 'kilo' ? 0.1 : 1;
+                        const newValue = item.quantity + increment;
+                        // Round to 1 decimal place to avoid floating point precision issues
+                        const roundedValue = Math.round(newValue * 10) / 10;
+                        updateQuantity(item.service.id, roundedValue, item.serviceType);
+                      }}
                       className="h-6 w-6 p-0"
                     >
                       <Plus className="h-3 w-3" />
