@@ -14,6 +14,16 @@ export const whatsAppConfig: WhatsAppConfig = {
   timeout: parseInt(import.meta.env.VITE_WHATSAPP_API_TIMEOUT || '10000'),
 };
 
+// Debug logging for WhatsApp configuration
+console.log('🔧 WhatsApp Config Debug:', {
+  isDev: import.meta.env.DEV,
+  useProxy: import.meta.env.VITE_WHATSAPP_USE_PROXY,
+  baseUrl: whatsAppConfig.baseUrl,
+  username: whatsAppConfig.username,
+  hasPassword: !!whatsAppConfig.password,
+  enabled: import.meta.env.VITE_WHATSAPP_ENABLED
+});
+
 /**
  * Feature flags for WhatsApp integration
  */

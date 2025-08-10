@@ -12,7 +12,8 @@ export default defineConfig(({ mode }) => {
   console.log('🔧 Vite Config - Mode:', mode);
   console.log('🔧 Vite Config - WhatsApp API URL:', env.VITE_WHATSAPP_API_URL);
   console.log('🔧 Vite Config - WhatsApp Username:', env.VITE_WHATSAPP_API_USERNAME);
-  
+  console.log('🔧 Vite Config - WhatsApp Password:', env.VITE_WHATSAPP_API_PASSWORD);
+
   return {
     server: {
       host: "::",
@@ -20,14 +21,14 @@ export default defineConfig(({ mode }) => {
       proxy: {
         // Proxy WhatsApp API requests to avoid CORS issues in development
         '/api/whatsapp': {
-          target: env.VITE_WHATSAPP_API_URL || 'http://localhost:8080',
+          target: env.WHATSAPP_API_URL || 'http://localhost:8080',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/whatsapp/, '/api'),
           configure: (proxy, options) => {
             proxy.on('proxyReq', (proxyReq, req, res) => {
               // Add basic auth header from environment variables
-              const username = env.VITE_WHATSAPP_API_USERNAME || 'admin';
-              const password = env.VITE_WHATSAPP_API_PASSWORD || '';
+              const username = env.WHATSAPP_API_USERNAME || 'admin';
+              const password = env.WHATSAPP_API_PASSWORD || '';
               const auth = Buffer.from(`${username}:${password}`).toString('base64');
               proxyReq.setHeader('Authorization', `Basic ${auth}`);
             });
