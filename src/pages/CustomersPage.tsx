@@ -236,9 +236,7 @@ export const CustomersPage: React.FC = () => {
 
     // Add pages around current page
     for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
-      if (!pages.includes(i)) {
         pages.push(i);
-      }
     }
 
     // Add ellipsis if needed
