@@ -16,8 +16,20 @@ export const WeightInput: React.FC<WeightInputProps> = ({
   error,
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const numValue = parseFloat(e.target.value) || 0;
-    onChange(numValue);
+    const inputValue = e.target.value;
+    // Allow empty input for user convenience
+    if (inputValue === '') {
+      onChange(0);
+      return;
+    }
+    
+    const numValue = parseFloat(inputValue);
+    // Only update if it's a valid number
+    if (!isNaN(numValue) && numValue >= 0) {
+      // Round to 1 decimal place to avoid floating point precision issues
+      const roundedValue = Math.round(numValue * 10) / 10;
+      onChange(roundedValue);
+    }
   };
 
   return (
@@ -34,7 +46,7 @@ export const WeightInput: React.FC<WeightInputProps> = ({
           value={value || ''}
           onChange={handleChange}
           disabled={disabled}
-          placeholder="Enter weight in kg"
+          placeholder="Enter weight (e.g., 5.5)"
           className={error ? 'border-red-500' : ''}
         />
         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">

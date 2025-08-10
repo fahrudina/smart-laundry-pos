@@ -125,6 +125,8 @@ export const LaundryPOS = () => {
   const [customerName, setCustomerName] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [nameSearchResults, setNameSearchResults] = useState<any[]>([]);
+  const [showNameResults, setShowNameResults] = useState(false);
   const [isSelectingCustomer, setIsSelectingCustomer] = useState(false);
   const [isServicePopupOpen, setIsServicePopupOpen] = useState(false);
   const [dropOffDate, setDropOffDate] = useState(() => getJakartaTime());
@@ -135,6 +137,7 @@ export const LaundryPOS = () => {
   const createOrderMutation = useCreateOrder();
   const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const nameDropdownRef = useRef<HTMLDivElement>(null);
 
   // Helper function to calculate finish date based on service duration
   const calculateFinishDate = (service: Service, startDate: Date = dropOffDate) => {
@@ -202,6 +205,26 @@ export const LaundryPOS = () => {
     return () => clearTimeout(debounceTimer);
   }, [customerPhone, customerName, searchCustomers, isSelectingCustomer]);
 
+  // Search for customers when name changes
+  useEffect(() => {
+    const searchCustomerByName = async () => {
+      // Don't search if form is already filled (customer selected) or currently selecting
+      const isFormFilled = customerPhone.length >= 3 && customerName.trim().length > 0;
+      
+      if (customerName.trim().length >= 2 && !isSelectingCustomer && !isFormFilled) {
+        // Use the existing searchCustomers function which supports name search
+        await searchCustomers(customerName.trim());
+        setShowNameResults(true);
+      } else if (!isSelectingCustomer) {
+        setNameSearchResults([]);
+        setShowNameResults(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(searchCustomerByName, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [customerName, customerPhone, searchCustomers, isSelectingCustomer]);
+
   // Update search results when customers data changes, but only if we should show results
   useEffect(() => {
     const isFormFilled = customerPhone.length >= 3 && customerName.trim().length > 0;
@@ -211,17 +234,33 @@ export const LaundryPOS = () => {
     } else if (isSelectingCustomer || isFormFilled) {
       // Clear search results when selecting a customer or form is already filled
       setSearchResults([]);
+      setShowResults(false);
     }
   }, [customers, showResults, customerPhone, customerName, isSelectingCustomer]);
+
+  // Update name search results when customers data changes
+  useEffect(() => {
+    const isFormFilled = customerPhone.length >= 3 && customerName.trim().length > 0;
+    
+    if (showNameResults && customerName.trim().length >= 2 && !isSelectingCustomer && !isFormFilled && customers.length > 0) {
+      setNameSearchResults(customers);
+    } else if (isSelectingCustomer || isFormFilled) {
+      // Clear name search results when selecting a customer or form is already filled
+      setNameSearchResults([]);
+      setShowNameResults(false);
+    }
+  }, [customers, showNameResults, customerName, customerPhone, isSelectingCustomer]);
 
   // Handle customer selection from search
   const handleCustomerSelect = (customer: any) => {
     // Prevent any further searching while selecting
     setIsSelectingCustomer(true);
     
-    // Immediately hide the dropdown and clear results
+    // Immediately hide both dropdowns and clear results
     setShowResults(false);
     setSearchResults([]);
+    setShowNameResults(false);
+    setNameSearchResults([]);
     
     // Update the form fields
     setCustomerPhone(customer.phone);
@@ -239,6 +278,8 @@ export const LaundryPOS = () => {
     setCustomerName('');
     setSearchResults([]);
     setShowResults(false);
+    setNameSearchResults([]);
+    setShowNameResults(false);
     setIsSelectingCustomer(false);
     // Reset to current Jakarta time
     setDropOffDate(getJakartaTime());
@@ -255,12 +296,27 @@ export const LaundryPOS = () => {
     }
   };
 
+  // Handle name input blur to hide results
+  const handleNameInputBlur = () => {
+    // Only hide if we haven't just selected a customer
+    if (!isSelectingCustomer) {
+      setTimeout(() => {
+        setShowNameResults(false);
+        setNameSearchResults([]);
+      }, 150); // Slight delay to allow click events to fire first
+    }
+  };
+
   // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowResults(false);
         setSearchResults([]);
+      }
+      if (nameDropdownRef.current && !nameDropdownRef.current.contains(event.target as Node)) {
+        setShowNameResults(false);
+        setNameSearchResults([]);
       }
     };
 
@@ -602,9 +658,10 @@ export const LaundryPOS = () => {
                     const newValue = e.target.value;
                     setCustomerPhone(newValue);
                     
-                    // If user is typing and the name field is filled, it means they want to search for a new customer
-                    // Clear the name field to allow new search
-                    if (customerName.trim().length > 0 && newValue !== customerPhone) {
+                    // Only clear name field if user is actually typing a different value (not just editing)
+                    // and the current form state suggests they want to search for a new customer
+                    if (customerName.trim().length > 0 && newValue !== customerPhone && newValue.length <= customerPhone.length) {
+                      // Only clear if user is shortening the phone number (likely wanting to search again)
                       setCustomerName('');
                     }
                   }}
@@ -643,11 +700,54 @@ export const LaundryPOS = () => {
               <label className="text-sm font-medium text-muted-foreground mb-2 block">
                 Customer Name
               </label>
-              <Input
-                placeholder="Enter customer name..."
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-              />
+              <div className="relative">
+                <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
+                {customerPhone && customerName && (
+                  <CheckCircle className="h-4 w-4 absolute right-3 top-3 text-green-500" />
+                )}
+                <Input
+                  placeholder="Enter customer name..."
+                  value={customerName}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    setCustomerName(newValue);
+                    
+                    // Only clear phone field if user is actually typing a different value (not just editing)
+                    // and the current form state suggests they want to search for a new customer
+                    if (customerPhone.trim().length > 0 && newValue !== customerName && newValue.length <= customerName.length) {
+                      // Only clear if user is shortening the name (likely wanting to search again)
+                      setCustomerPhone('');
+                    }
+                  }}
+                  onBlur={handleNameInputBlur}
+                  onFocus={() => {
+                    // Show results if we have search results and not currently selecting a customer
+                    const isFormFilled = customerPhone.length >= 3 && customerName.trim().length > 0;
+                    if (!isSelectingCustomer && customerName.trim().length >= 2 && !isFormFilled && nameSearchResults.length > 0) {
+                      setShowNameResults(true);
+                    }
+                  }}
+                  className="pl-10 pr-10"
+                />
+                {showNameResults && nameSearchResults.length > 0 && (
+                  <div ref={nameDropdownRef} className="absolute z-10 w-full mt-1 bg-card border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {nameSearchResults.map((customer) => (
+                      <div
+                        key={customer.id}
+                        className="p-3 hover:bg-secondary cursor-pointer border-b last:border-b-0"
+                        onMouseDown={(e) => {
+                          // Prevent blur event from firing before click
+                          e.preventDefault();
+                        }}
+                        onClick={() => handleCustomerSelect(customer)}
+                      >
+                        <div className="font-medium">{customer.name}</div>
+                        <div className="text-sm text-muted-foreground">{customer.phone}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="md:col-span-2">
               <label className="text-sm font-medium text-muted-foreground mb-2 block">
