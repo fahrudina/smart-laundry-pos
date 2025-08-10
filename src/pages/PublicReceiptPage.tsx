@@ -80,6 +80,7 @@ export const PublicReceiptPage: React.FC = () => {
             name: receiptResponse.store.name || 'Smart Laundry POS',
             address: receiptResponse.store.address || 'Alamat belum diset',
             phone: receiptResponse.store.phone || 'Nomor telepon belum diset',
+            enable_qr: receiptResponse.store.enable_qr || false,
           });
           console.log('✅ Store info from receipt function:', receiptResponse.store);
         } else {
@@ -88,6 +89,7 @@ export const PublicReceiptPage: React.FC = () => {
             name: 'Smart Laundry POS',
             address: 'Alamat belum diset',
             phone: 'Nomor telepon belum diset',
+            enable_qr: false,
           });
           console.log('⚠️ No store data found, using fallback');
         }
@@ -143,6 +145,24 @@ export const PublicReceiptPage: React.FC = () => {
     return masked;
   };
 
+  // Helper function to calculate price per kg safely
+  const calculatePricePerKg = (order: OrderData): number | null => {
+    if (!order.order_items || order.order_items.length === 0) {
+      return null;
+    }
+    
+    const totalWeight = order.order_items.reduce(
+      (total, item) => total + (item.weight_kg || item.quantity || 0), 
+      0
+    );
+    
+    if (totalWeight === 0) {
+      return null;
+    }
+    
+    return Math.round(order.subtotal / totalWeight);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -191,17 +211,28 @@ export const PublicReceiptPage: React.FC = () => {
               No. HP {storeInfo?.phone || 'Nomor telepon belum diset'}
             </p>
 
-            {/* QR Code for Payment */}
-            <div className="mb-4">
-              <img 
-                src="/qrcode.png" 
-                alt="Payment QR Code" 
-                className="w-32 h-32 mx-auto border border-gray-200 rounded"
-              />
-              <p className="text-xs text-gray-500 mt-2">
-                Scan QR Code untuk pembayaran digital
-              </p>
-            </div>
+            {/* QR Code for Payment - Only show if enabled in store settings */}
+            {storeInfo?.enable_qr && (
+              <div className="mb-4">
+                <img 
+                  src="/qrcode.png" 
+                  alt="Payment QR Code" 
+                  className="w-32 h-32 mx-auto border border-gray-200 rounded"
+                  onError={(e) => {
+                    // Hide QR code if image fails to load
+                    const target = e.target as HTMLElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.style.display = 'none';
+                    }
+                  }}
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Scan QR Code untuk pembayaran digital
+                </p>
+              </div>
+            )}
 
             {/* Order ID */}
             <div className="bg-gray-50 px-3 py-2 rounded text-center mb-2">
@@ -349,7 +380,12 @@ export const PublicReceiptPage: React.FC = () => {
             <div className="mt-4 space-y-2 text-sm border-t border-dashed border-gray-300 pt-4">
               <div className="flex justify-between">
                 <span className="text-gray-600">Harga /kg</span>
-                <span className="text-gray-800">Rp. {Math.round(order.subtotal / order.order_items.reduce((total, item) => total + (item.weight_kg || item.quantity), 0)).toLocaleString('id-ID')}</span>
+                <span className="text-gray-800">
+                  {(() => {
+                    const pricePerKg = calculatePricePerKg(order);
+                    return pricePerKg !== null ? `Rp. ${pricePerKg.toLocaleString('id-ID')}` : '-';
+                  })()}
+                </span>
               </div>
               
               <div className="flex justify-between">

@@ -27,6 +27,7 @@ export interface StoreInfo {
   name: string;
   address: string;
   phone: string;
+  enable_qr?: boolean;
 }
 
 export interface OrderItem {

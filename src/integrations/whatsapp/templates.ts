@@ -1,6 +1,24 @@
 import { MessageTemplate, OrderCreatedData, OrderCompletedData } from './types';
 
 /**
+ * Configuration for receipt URLs
+ */
+const getReceiptBaseUrl = (): string => {
+  // Use environment variable if available, otherwise detect from current location
+  if (import.meta.env.VITE_RECEIPT_BASE_URL) {
+    return import.meta.env.VITE_RECEIPT_BASE_URL;
+  }
+  
+  // In production, use the current domain
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  
+  // Fallback for server-side rendering or build time
+  return 'https://smart-laundry-pos.vercel.app';
+};
+
+/**
  * WhatsApp Message Templates
  * Contains pre-defined message templates for different scenarios
  */
@@ -80,7 +98,7 @@ Terimakasih atas kunjungan anda
 
 ====================
 Klik link dibawah ini untuk melihat nota digital
-https://smart-laundry-pos.vercel.app/receipt/${data.orderId}`;
+${getReceiptBaseUrl()}/receipt/${data.orderId}`;
   },
 
   /**
@@ -134,7 +152,7 @@ Silakan datang ke toko dengan membawa nota ini.
 
 ====================
 Klik link dibawah ini untuk melihat nota digital
-https://smart-laundry-pos.vercel.app/receipt/${data.orderId}`;
+${getReceiptBaseUrl()}/receipt/${data.orderId}`;
   },
 };
 

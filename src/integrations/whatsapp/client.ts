@@ -31,25 +31,12 @@ export class WhatsAppClient {
         throw new Error('Invalid phone number format. Use international format like +1234567890');
       }
 
-      console.log('🔧 WhatsApp Client Debug:', {
-        baseUrl: this.config.baseUrl,
-        to: message.to,
-        messageLength: message.message.length,
-        timeout: this.config.timeout
-      });
-
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
       // Determine if we're using local proxy, Vercel serverless function, or direct API
       const isUsingLocalProxy = this.config.baseUrl.includes('localhost') && this.config.baseUrl.includes('/api/whatsapp');
       const isUsingVercelFunction = this.config.baseUrl.startsWith('/api/');
-      
-      console.log('🔧 Endpoint Detection:', {
-        isUsingLocalProxy,
-        isUsingVercelFunction,
-        baseUrl: this.config.baseUrl
-      });
       
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -58,9 +45,6 @@ export class WhatsAppClient {
       // Only add authorization header if not using proxy or Vercel function (they handle auth)
       if (!isUsingLocalProxy && !isUsingVercelFunction) {
         headers['Authorization'] = `Basic ${btoa(`${this.config.username}:${this.config.password}`)}`;
-        console.log('🔧 Adding auth header for direct API call');
-      } else {
-        console.log('🔧 No auth header - using proxy/serverless function');
       }
 
       // Determine the correct endpoint
@@ -68,8 +52,6 @@ export class WhatsAppClient {
       if (isUsingVercelFunction) {
         endpoint = this.config.baseUrl; // Vercel function URL is complete
       }
-
-      console.log('🔧 Final endpoint:', endpoint);
 
       // Create request exactly like Postman example
       const response = await fetch(endpoint, {
@@ -84,24 +66,18 @@ export class WhatsAppClient {
 
       clearTimeout(timeoutId);
 
-      console.log('🔧 Response status:', response.status, response.statusText);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('🔧 Response error:', errorText);
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const responseText = await response.text();
-      console.log('🔧 Response text:', responseText);
       
       // Try to parse as JSON, if it fails, return a generic success response
       let result: WhatsAppResponse;
       try {
         result = JSON.parse(responseText);
-        console.log('🔧 Parsed response:', result);
       } catch (parseError) {
-        console.log('🔧 Failed to parse JSON, using fallback response');
         // If response is not JSON, assume success based on HTTP status
         result = {
           success: true,

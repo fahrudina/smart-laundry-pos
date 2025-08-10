@@ -12,7 +12,7 @@ const PORT = process.env.WHATSAPP_PROXY_PORT || 3001;
 // WhatsApp API configuration from environment variables
 const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL || 'http://34.229.217.97';
 const WHATSAPP_USERNAME = process.env.WHATSAPP_USERNAME || 'admin';
-const WHATSAPP_PASSWORD = process.env.WHATSAPP_PASSWORD || 'secretPaassword';
+const WHATSAPP_PASSWORD = process.env.WHATSAPP_PASSWORD;
 
 // Validate required environment variables
 if (!process.env.WHATSAPP_API_URL) {
@@ -22,7 +22,7 @@ if (!process.env.WHATSAPP_USERNAME) {
   console.warn('⚠️  WHATSAPP_USERNAME not set in environment, using default');
 }
 if (!process.env.WHATSAPP_PASSWORD) {
-  console.warn('⚠️  WHATSAPP_PASSWORD not set in environment, using default');
+  console.error('❌ WHATSAPP_PASSWORD not set in environment - proxy will not work');
 }
 
 // Enable CORS for all routes
