@@ -98,7 +98,9 @@ const App = () => (
           </StoreProvider>
         </AuthProvider>
       </BrowserRouter>
-      <ReactQueryDevtools initialIsOpen={false} />
+      {process.env.NODE_ENV === 'development' && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
     </TooltipProvider>
   </QueryClientProvider>
 );
