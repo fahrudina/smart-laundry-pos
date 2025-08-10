@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useStore } from '@/contexts/StoreContext';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -16,24 +16,24 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Users, 
+  Plus, 
   Search, 
   Filter, 
-  Plus, 
-  MoreHorizontal, 
+  MoreHorizontal,
   Edit, 
   Trash2, 
   Phone, 
@@ -43,9 +43,11 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  ArrowLeft
 } from 'lucide-react';
 import { AddCustomerDialog } from '@/components/pos/AddCustomerDialog';
+import { useNavigate } from 'react-router-dom';
 
 interface Customer {
   id: string;
@@ -73,6 +75,7 @@ const ITEMS_PER_PAGE = 10;
 export const CustomersPage: React.FC = () => {
   const { currentStore } = useStore();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,34 +89,49 @@ export const CustomersPage: React.FC = () => {
     pageSize: ITEMS_PER_PAGE
   });
 
-  // Debounced search
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  // Debounced search query
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+  
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const handler = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
     }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);  // Memoized calculations for performance
+  const activeCustomersCount = useMemo(() => {
+    return customers.filter(c => c._count && c._count.orders > 0).length;
+  }, [customers]);
 
-  // Reset to first page when search changes
-  useEffect(() => {
-    setPagination(prev => ({ ...prev, currentPage: 1 }));
-  }, [debouncedSearchQuery]);
+  const newThisMonthCount = useMemo(() => {
+    return customers.filter(c => {
+      const customerDate = new Date(c.created_at);
+      const now = new Date();
+      return customerDate.getMonth() === now.getMonth() && 
+             customerDate.getFullYear() === now.getFullYear();
+    }).length;
+  }, [customers]);
 
   const fetchCustomers = async (page: number = 1, search: string = '') => {
-    if (!currentStore) return;
+    if (!currentStore) {
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     try {
-      const startIndex = (page - 1) * ITEMS_PER_PAGE;
-      const endIndex = startIndex + ITEMS_PER_PAGE - 1;
-
       let query = supabase
         .from('customers')
-        .select('*, orders(count)', { count: 'exact' })
+        .select(`
+          *,
+          orders!left (
+            id
+          )
+        `, { count: 'exact' })
         .eq('store_id', currentStore.store_id)
-        .order('created_at', { ascending: false })
-        .range(startIndex, endIndex);
+        .range((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE - 1)
+        .order('created_at', { ascending: false });
 
       if (search.trim()) {
         query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%,email.ilike.%${search}%`);
@@ -123,7 +141,15 @@ export const CustomersPage: React.FC = () => {
 
       if (error) throw error;
 
-      setCustomers(data || []);
+      // Transform data to include order count
+      const customersWithCount = (data || []).map(customer => ({
+        ...customer,
+        _count: {
+          orders: customer.orders?.length || 0
+        }
+      }));
+
+      setCustomers(customersWithCount);
       setPagination(prev => ({
         ...prev,
         currentPage: page,
@@ -185,44 +211,52 @@ export const CustomersPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
+    const locale = typeof navigator !== "undefined" && navigator.language ? navigator.language : 'en-US';
+    return new Date(dateString).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     });
   };
 
+  // Pagination component
   const renderPagination = () => {
+    if (pagination.totalPages <= 1) return null;
+
     const { currentPage, totalPages } = pagination;
     const pages = [];
-    
-    // Show first page
+
+    // Always show first page
+    pages.push(1);
+
+    // Add ellipsis if needed
     if (currentPage > 3) {
-      pages.push(1);
-      if (currentPage > 4) pages.push('...');
+      pages.push('...');
     }
 
-    // Show pages around current page
-    for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
-      pages.push(i);
+    // Add pages around current page
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+        pages.push(i);
     }
 
-    // Show last page
+    // Add ellipsis if needed
     if (currentPage < totalPages - 2) {
-      if (currentPage < totalPages - 3) pages.push('...');
+      pages.push('...');
+    }
+
+    // Always show last page
+    if (totalPages > 1 && !pages.includes(totalPages)) {
       pages.push(totalPages);
     }
 
     return (
-      <div className="flex items-center justify-between px-2">
-        <div className="flex items-center space-x-2">
-          <p className="text-sm text-gray-700">
-            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to{' '}
-            {Math.min(currentPage * ITEMS_PER_PAGE, pagination.totalCount)} of{' '}
-            {pagination.totalCount} results
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-gray-500">
+          Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to{' '}
+          {Math.min(currentPage * ITEMS_PER_PAGE, pagination.totalCount)} of{' '}
+          {pagination.totalCount} customers
         </div>
-
+        
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
@@ -246,8 +280,8 @@ export const CustomersPage: React.FC = () => {
               key={index}
               variant={page === currentPage ? "default" : "outline"}
               size="sm"
-              onClick={() => typeof page === 'number' && handlePageChange(page)}
-              disabled={page === '...'}
+              onClick={() => typeof page === 'number' ? handlePageChange(page) : undefined}
+              disabled={typeof page !== 'number'}
               className="min-w-[40px]"
             >
               {page}
@@ -287,9 +321,19 @@ export const CustomersPage: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
-          <p className="text-gray-600">Manage your customer database</p>
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/home')}
+            className="p-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
+            <p className="text-gray-600">Manage your customer database</p>
+          </div>
         </div>
         <AddCustomerDialog
           trigger={
@@ -319,7 +363,7 @@ export const CustomersPage: React.FC = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{customers.filter(c => c._count && c._count.orders > 0).length}</div>
+            <div className="text-2xl font-bold">{activeCustomersCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -328,14 +372,7 @@ export const CustomersPage: React.FC = () => {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {customers.filter(c => {
-                const customerDate = new Date(c.created_at);
-                const now = new Date();
-                return customerDate.getMonth() === now.getMonth() && 
-                       customerDate.getFullYear() === now.getFullYear();
-              }).length}
-            </div>
+            <div className="text-2xl font-bold">{newThisMonthCount}</div>
           </CardContent>
         </Card>
       </div>
