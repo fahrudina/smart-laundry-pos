@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useNavigate } from 'react-router-dom';
 import { useOrders, useUpdatePaymentStatus, useUpdateExecutionStatus, OrderFilters, Order } from '@/hooks/useOrdersOptimized';
 import { OrderDetailsDialog } from '@/components/pos/OrderDetailsDialog';
+import { CashPaymentDialog } from '@/components/pos/CashPaymentDialog';
 import { VirtualizedOrderList } from '@/components/orders/VirtualizedOrderList';
 import { formatDate, isDateOverdue } from '@/lib/utils';
 import { usePageTitle, updatePageTitleWithCount } from '@/hooks/usePageTitle';
@@ -34,6 +35,8 @@ export const OrderHistory = () => {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [showCashPaymentDialog, setShowCashPaymentDialog] = useState(false);
+  const [cashPaymentOrder, setCashPaymentOrder] = useState<Order | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     executionStatus: 'all',
@@ -243,6 +246,15 @@ export const OrderHistory = () => {
 
   const handleUpdatePaymentStatus = useCallback(async (orderId: string, status: string, method?: string) => {
     const order = orders.find(o => o.id === orderId);
+    
+    // If payment method is cash and status is completed, show cash payment dialog
+    if (method === 'cash' && status === 'completed') {
+      setCashPaymentOrder(order || null);
+      setShowCashPaymentDialog(true);
+      return;
+    }
+    
+    // For other payment methods, process directly
     updatePaymentMutation.mutate({
       orderId,
       paymentStatus: status,
@@ -250,6 +262,22 @@ export const OrderHistory = () => {
       paymentAmount: order?.total_amount,
     });
   }, [updatePaymentMutation, orders]);
+
+  const handleCashPaymentSubmit = useCallback(async (cashReceived: number) => {
+    if (!cashPaymentOrder) return;
+    
+    updatePaymentMutation.mutate({
+      orderId: cashPaymentOrder.id,
+      paymentStatus: 'completed',
+      paymentMethod: 'cash',
+      paymentAmount: cashPaymentOrder.total_amount,
+      cashReceived: cashReceived,
+    });
+    
+    // Close the dialog and clear state
+    setShowCashPaymentDialog(false);
+    setCashPaymentOrder(null);
+  }, [updatePaymentMutation, cashPaymentOrder]);
 
   const handleViewOrder = useCallback((order: Order) => {
     setSelectedOrder(order);
@@ -562,6 +590,19 @@ export const OrderHistory = () => {
             order={selectedOrder}
             isOpen={showOrderDetails}
             onClose={() => setShowOrderDetails(false)}
+          />
+        )}
+
+        {/* Cash Payment Dialog */}
+        {cashPaymentOrder && (
+          <CashPaymentDialog
+            isOpen={showCashPaymentDialog}
+            onClose={() => {
+              setShowCashPaymentDialog(false);
+              setCashPaymentOrder(null);
+            }}
+            totalAmount={cashPaymentOrder.total_amount}
+            onSubmit={handleCashPaymentSubmit}
           />
         )}
       </div>

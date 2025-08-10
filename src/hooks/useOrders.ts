@@ -39,6 +39,9 @@ interface CreateOrderData {
     service_price: number;
     quantity: number;
     estimated_completion?: string;
+    service_type?: 'unit' | 'kilo' | 'combined';
+    weight_kg?: number;
+    unit_items?: any[];
   }[];
   subtotal: number;
   tax_amount: number;
@@ -104,6 +107,9 @@ export const useOrders = () => {
         quantity: item.quantity,
         line_total: item.service_price * item.quantity,
         estimated_completion: item.estimated_completion,
+        service_type: item.service_type || 'unit',
+        weight_kg: item.weight_kg,
+        unit_items: item.unit_items,
       }));
 
       const { error: itemsError } = await supabase
