@@ -90,17 +90,30 @@ export const CustomersPage: React.FC = () => {
   });
 
   // Debounced search query
-  const debouncedSearchQuery = useMemo(() => {
-    const handler = setTimeout(() => searchQuery, 300);
-    return searchQuery;
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+  
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => {
+      clearTimeout(handler);
+    };
   }, [searchQuery]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      // This will trigger the search when searchQuery changes
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  // Memoized calculations for performance
+  const activeCustomersCount = useMemo(() => {
+    return customers.filter(c => c._count && c._count.orders > 0).length;
+  }, [customers]);
+
+  const newThisMonthCount = useMemo(() => {
+    return customers.filter(c => {
+      const customerDate = new Date(c.created_at);
+      const now = new Date();
+      return customerDate.getMonth() === now.getMonth() && 
+             customerDate.getFullYear() === now.getFullYear();
+    }).length;
+  }, [customers]);
 
   const fetchCustomers = async (page: number = 1, search: string = '') => {
     if (!currentStore) {
@@ -200,7 +213,8 @@ export const CustomersPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
+    const locale = typeof navigator !== "undefined" && navigator.language ? navigator.language : 'en-US';
+    return new Date(dateString).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -353,7 +367,7 @@ export const CustomersPage: React.FC = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{customers.filter(c => c._count && c._count.orders > 0).length}</div>
+            <div className="text-2xl font-bold">{activeCustomersCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -362,14 +376,7 @@ export const CustomersPage: React.FC = () => {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {customers.filter(c => {
-                const customerDate = new Date(c.created_at);
-                const now = new Date();
-                return customerDate.getMonth() === now.getMonth() && 
-                       customerDate.getFullYear() === now.getFullYear();
-              }).length}
-            </div>
+            <div className="text-2xl font-bold">{newThisMonthCount}</div>
           </CardContent>
         </Card>
       </div>
