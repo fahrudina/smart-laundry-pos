@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu } from 'lucide-react';
+import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -278,6 +278,10 @@ export const AppHeader: React.FC = () => {
                   />
                   <DropdownMenuSeparator />
                 </div>
+                <DropdownMenuItem onClick={() => navigate('/install')}>
+                  <Smartphone className="h-4 w-4 mr-2" />
+                  Install App
+                </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
