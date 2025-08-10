@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.WHATSAPP_PROXY_PORT || 3001;
 
 // WhatsApp API configuration from environment variables
-const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL || 'http://34.229.217.97';
+const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL ;
 const WHATSAPP_USERNAME = process.env.WHATSAPP_USERNAME || 'admin';
 const WHATSAPP_PASSWORD = process.env.WHATSAPP_PASSWORD;
 

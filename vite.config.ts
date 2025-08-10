@@ -7,12 +7,6 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
-  
-  // Debug logging
-  console.log('🔧 Vite Config - Mode:', mode);
-  console.log('🔧 Vite Config - WhatsApp API URL:', env.VITE_WHATSAPP_API_URL);
-  console.log('🔧 Vite Config - WhatsApp Username:', env.VITE_WHATSAPP_API_USERNAME);
-  console.log('🔧 Vite Config - WhatsApp Password:', env.VITE_WHATSAPP_API_PASSWORD);
 
   return {
     server: {
@@ -21,7 +15,7 @@ export default defineConfig(({ mode }) => {
       proxy: {
         // Proxy WhatsApp API requests to avoid CORS issues in development
         '/api/whatsapp': {
-          target: env.WHATSAPP_API_URL || 'http://localhost:8080',
+          target: env.WHATSAPP_API_URL,
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/whatsapp/, '/api'),
           configure: (proxy, options) => {
