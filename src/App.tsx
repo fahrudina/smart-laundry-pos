@@ -22,6 +22,7 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { queryClient } from "./lib/queryClient";
 import { PublicReceiptPage } from "./pages/PublicReceiptPage";
 import { PWAManagementPage } from "./pages/PWAManagementPage";
+import { CustomersPage } from "./pages/CustomersPage";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -109,9 +110,10 @@ const App = () => (
           </StoreProvider>
         </AuthProvider>
       </BrowserRouter>
-      {process.env.NODE_ENV === 'development' && (
+      {/* ReactQueryDevtools disabled - uncomment for development debugging */}
+      {/* {process.env.NODE_ENV === 'development' && (
         <ReactQueryDevtools initialIsOpen={false} />
-      )}
+      )} */}
     </TooltipProvider>
   </QueryClientProvider>
 );
