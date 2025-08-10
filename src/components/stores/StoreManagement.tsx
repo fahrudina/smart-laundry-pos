@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useStore } from '@/contexts/StoreContext';
 import { CreateStoreDialog } from './CreateStoreDialog';
 import { StoreStaffManagement } from './StoreStaffManagement';
+import { StoreSettingsCard } from './StoreSettingsCard';
 import { Building2, Users, TrendingUp, Package } from 'lucide-react';
 import { StoreWithOwnershipInfo } from '@/types/multi-tenant';
 
@@ -117,7 +118,10 @@ export const StoreManagement: React.FC = () => {
       </div>
 
       {selectedStore && (
-        <StoreStaffManagement store={selectedStore} />
+        <div className="space-y-6">
+          <StoreStaffManagement store={selectedStore} />
+          <StoreSettingsCard />
+        </div>
       )}
 
       {userStores.length === 0 && (

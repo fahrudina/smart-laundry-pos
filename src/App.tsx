@@ -19,6 +19,7 @@ import { OwnerRoute } from "./components/auth/OwnerRoute";
 import { ProtectedRedirect } from "./components/auth/ProtectedRedirect";
 import { AppLayout } from "./components/layout/AppLayout";
 import { queryClient } from "./lib/queryClient";
+import { PublicReceiptPage } from "./pages/PublicReceiptPage";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -32,6 +33,7 @@ const App = () => (
               {/* Public Routes */}
               <Route path="/" element={<SmartHomePage />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/receipt/:orderId" element={<PublicReceiptPage />} />
               
               {/* Protected Routes */}
               <Route 

@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useNavigate } from 'react-router-dom';
 import { useOrders, useUpdatePaymentStatus, useUpdateExecutionStatus, OrderFilters } from '@/hooks/useOrdersOptimized';
 import { OrderDetailsDialog } from '@/components/pos/OrderDetailsDialog';
+import { CashPaymentDialog } from '@/components/pos/CashPaymentDialog';
 import { VirtualizedOrderList } from '@/components/orders/VirtualizedOrderList';
 import { formatDate, isDateOverdue } from '@/lib/utils';
 
@@ -30,6 +31,8 @@ export const OrderHistory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [showCashPaymentDialog, setShowCashPaymentDialog] = useState(false);
+  const [cashPaymentOrder, setCashPaymentOrder] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
@@ -218,6 +221,15 @@ export const OrderHistory = () => {
 
   const handleUpdatePaymentStatus = useCallback(async (orderId: string, status: string, method?: string) => {
     const order = orders.find(o => o.id === orderId);
+    
+    // If payment method is cash and status is completed, show cash payment dialog
+    if (method === 'cash' && status === 'completed') {
+      setCashPaymentOrder(order);
+      setShowCashPaymentDialog(true);
+      return;
+    }
+    
+    // For other payment methods, process directly
     updatePaymentMutation.mutate({
       orderId,
       paymentStatus: status,
@@ -225,6 +237,22 @@ export const OrderHistory = () => {
       paymentAmount: order?.total_amount,
     });
   }, [updatePaymentMutation, orders]);
+
+  const handleCashPaymentSubmit = useCallback(async (cashReceived: number) => {
+    if (!cashPaymentOrder) return;
+    
+    updatePaymentMutation.mutate({
+      orderId: cashPaymentOrder.id,
+      paymentStatus: 'completed',
+      paymentMethod: 'cash',
+      paymentAmount: cashPaymentOrder.total_amount,
+      cashReceived: cashReceived,
+    });
+    
+    // Close the dialog and clear state
+    setShowCashPaymentDialog(false);
+    setCashPaymentOrder(null);
+  }, [updatePaymentMutation, cashPaymentOrder]);
 
   const handleViewOrder = useCallback((order: any) => {
     console.log('Viewing order:', order.id);
@@ -733,148 +761,86 @@ export const OrderHistory = () => {
                           </div>
                         </div>
 
-                        {/* ALWAYS VISIBLE TEST SECTION */}
-                        <div className="w-full bg-red-100 border-2 border-red-500 p-4 text-center">
-                          <p className="text-red-800 font-bold">TEST: This should ALWAYS be visible!</p>
-                          <p className="text-sm">Order: {order.id.slice(-8)} | Status: {order.execution_status}</p>
-                          
-                          {/* Simple Test Button */}
-                          <button 
-                            onClick={() => alert(`Test button clicked for order ${order.id}`)}
-                            style={{
-                              display: 'block',
-                              width: '100%',
-                              height: '50px',
-                              backgroundColor: 'blue',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '8px',
-                              fontSize: '16px',
-                              fontWeight: 'bold',
-                              marginTop: '10px',
-                              cursor: 'pointer'
-                            }}
+                        {/* Mobile-Optimized Action Buttons */}
+                        <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2 pt-3 border-t border-gray-200">
+                          <Button
+                            onClick={() => handleViewOrder(order)}
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center justify-center"
                           >
-                            🔴 TEST BUTTON - CLICK ME!
-                          </button>
-                          
-                          <button 
-                            onClick={() => {
-                              console.log('View order clicked:', order.id);
-                              handleViewOrder(order);
-                            }}
-                            style={{
-                              display: 'block',
-                              width: '100%',
-                              height: '50px',
-                              backgroundColor: 'green',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '8px',
-                              fontSize: '16px',
-                              fontWeight: 'bold',
-                              marginTop: '10px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            👀 VIEW ORDER DETAILS
-                          </button>
-                        </div>
-
-                        {/* Mobile-Optimized Action Buttons - Force Visible */}
-                        <div className="button-container-mobile block w-full mt-4 space-y-3 border-t border-gray-200 pt-3 bg-gray-50 p-3 rounded-lg">
-                          {/* View Details Button - Force Visible on Mobile */}
-                          <div className="text-xs text-blue-600 mb-2 block md:hidden">
-                            DEBUG: Mobile buttons section for Order #{order.id.slice(-8)}
-                          </div>
-                          <button
-                            onClick={() => {
-                              console.log(`Viewing order ${order.id} for ${order.customer_name}`);
-                              handleViewOrder(order);
-                            }}
-                            className="mobile-button-fix !block !visible w-full h-12 px-4 py-2 bg-white border-2 border-blue-300 rounded-md text-sm font-medium text-gray-900 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                          >
-                            <div className="flex items-center justify-center">
-                              <Eye className="h-4 w-4 mr-2" />
-                              👀 View Order Details
-                            </div>
-                          </button>
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </Button>
 
                           {/* Status Action Buttons */}
-                          <div className="button-container-mobile block w-full space-y-2">
-                            {order.execution_status === 'in_queue' && (
-                              <button
-                                onClick={() => {
-                                  console.log(`Starting processing for order ${order.id}`);
-                                  handleUpdateExecutionStatus(order.id, 'in_progress');
-                                }}
-                                className="mobile-button-fix !block !visible w-full h-10 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                              >
-                                🚀 Start Processing
-                              </button>
-                            )}
-                            
-                            {order.execution_status === 'in_progress' && (
-                              <button
-                                onClick={() => {
-                                  console.log(`Marking complete for order ${order.id}`);
-                                  handleUpdateExecutionStatus(order.id, 'completed');
-                                }}
-                                className="mobile-button-fix !block !visible w-full h-10 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
-                              >
-                                ✅ Mark Complete
-                              </button>
-                            )}
-                            
-                            {order.execution_status === 'completed' && (
-                              <div className="block w-full h-10 px-4 py-2 bg-green-100 text-green-800 rounded-md text-sm font-medium flex items-center justify-center">
-                                ✅ Order Completed
-                              </div>
-                            )}
-                          </div>
+                          {order.execution_status === 'in_queue' && (
+                            <Button
+                              onClick={() => handleUpdateExecutionStatus(order.id, 'in_progress')}
+                              variant="default"
+                              size="sm"
+                              className="flex items-center justify-center"
+                            >
+                              🚀 Start Processing
+                            </Button>
+                          )}
+                          
+                          {order.execution_status === 'in_progress' && (
+                            <Button
+                              onClick={() => handleUpdateExecutionStatus(order.id, 'completed')}
+                              variant="default"
+                              size="sm"
+                              className="flex items-center justify-center bg-green-600 hover:bg-green-700"
+                            >
+                              ✅ Mark Complete
+                            </Button>
+                          )}
+                          
+                          {order.execution_status === 'completed' && (
+                            <div className="px-4 py-2 bg-green-100 text-green-800 rounded-md text-sm font-medium text-center">
+                              ✅ Order Completed
+                            </div>
+                          )}
                         </div>
 
-                        {/* Payment Actions - Force Visible on Mobile */}
+                        {/* Payment Actions */}
                         {order.payment_status === 'pending' && (
-                          <div className="button-container-mobile block w-full mt-3 space-y-3 border-t border-yellow-200 pt-3 bg-yellow-50 p-3 rounded-lg">
-                            <div className="text-sm font-medium text-yellow-800 flex items-center">
+                          <div className="mt-3 space-y-2 pt-3 border-t border-yellow-200 bg-yellow-50 p-3 rounded-lg">
+                            <div className="text-sm font-medium text-yellow-800 mb-2">
                               💳 Payment Required - Choose Payment Method:
                             </div>
-                            <div className="button-container-mobile block w-full space-y-2">
-                              <button
-                                onClick={() => {
-                                  console.log(`Processing cash payment for order ${order.id}`);
-                                  handleUpdatePaymentStatus(order.id, 'completed', 'cash');
-                                }}
-                                className="mobile-button-fix !block !visible w-full h-10 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+                            <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
+                              <Button
+                                onClick={() => handleUpdatePaymentStatus(order.id, 'completed', 'cash')}
+                                variant="default"
+                                size="sm"
+                                className="flex items-center justify-center bg-green-600 hover:bg-green-700"
                               >
                                 💵 Pay with Cash
-                              </button>
-                              <button
-                                onClick={() => {
-                                  console.log(`Processing QRIS payment for order ${order.id}`);
-                                  handleUpdatePaymentStatus(order.id, 'completed', 'qris');
-                                }}
-                                className="mobile-button-fix !block !visible w-full h-10 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                              </Button>
+                              <Button
+                                onClick={() => handleUpdatePaymentStatus(order.id, 'completed', 'qris')}
+                                variant="default"
+                                size="sm"
+                                className="flex items-center justify-center bg-blue-600 hover:bg-blue-700"
                               >
                                 📱 Pay with QRIS
-                              </button>
-                              <button
-                                onClick={() => {
-                                  console.log(`Processing down payment for order ${order.id}`);
-                                  handleUpdatePaymentStatus(order.id, 'down_payment', 'cash');
-                                }}
-                                className="mobile-button-fix !block !visible w-full h-10 px-4 py-2 bg-white border-2 border-orange-400 text-orange-700 rounded-md text-sm font-medium hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+                              </Button>
+                              <Button
+                                onClick={() => handleUpdatePaymentStatus(order.id, 'down_payment', 'cash')}
+                                variant="outline"
+                                size="sm"
+                                className="flex items-center justify-center border-orange-400 text-orange-700 hover:bg-orange-50"
                               >
                                 💰 Down Payment
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         )}
                         
                         {order.payment_status === 'completed' && (
-                          <div className="block w-full mt-3 p-3 bg-green-50 rounded-lg">
-                            <div className="text-sm font-medium text-green-800 flex items-center">
+                          <div className="mt-3 p-3 bg-green-50 rounded-lg">
+                            <div className="text-sm font-medium text-green-800 text-center">
                               ✅ Payment Completed via {order.payment_method?.toUpperCase() || 'Unknown'}
                             </div>
                           </div>
@@ -922,6 +888,19 @@ export const OrderHistory = () => {
             order={selectedOrder}
             isOpen={showOrderDetails}
             onClose={() => setShowOrderDetails(false)}
+          />
+        )}
+
+        {/* Cash Payment Dialog */}
+        {cashPaymentOrder && (
+          <CashPaymentDialog
+            isOpen={showCashPaymentDialog}
+            onClose={() => {
+              setShowCashPaymentDialog(false);
+              setCashPaymentOrder(null);
+            }}
+            totalAmount={cashPaymentOrder.total_amount}
+            onSubmit={handleCashPaymentSubmit}
           />
         )}
       </div>

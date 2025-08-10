@@ -7,10 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useNavigate } from 'react-router-dom';
 import { useCustomers } from '@/hooks/useCustomers';
-import { useCreateOrder, UnitItem } from '@/hooks/useOrdersOptimized';
+//import { useCreateOrder, UnitItem } from '@/hooks/useOrdersOptimized';
+import { useCreateOrderWithNotifications as useCreateOrder, UnitItem } from '@/hooks/useOrdersWithNotifications';
 import { useToast } from '@/hooks/use-toast';
 import { ServiceSelectionPopup } from './ServiceSelectionPopup';
 import { FloatingOrderSummary } from './FloatingOrderSummary';
+import { CashPaymentDialog } from './CashPaymentDialog';
 
 interface Service {
   id: string;
@@ -126,6 +128,7 @@ export const LaundryPOS = () => {
   const [isSelectingCustomer, setIsSelectingCustomer] = useState(false);
   const [isServicePopupOpen, setIsServicePopupOpen] = useState(false);
   const [dropOffDate, setDropOffDate] = useState(() => getJakartaTime());
+  const [showCashPaymentDialog, setShowCashPaymentDialog] = useState(false);
   
   const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading } = useCustomers();
@@ -372,7 +375,7 @@ export const LaundryPOS = () => {
     });
   };
 
-  const processPayment = async () => {
+  const processPayment = async (paymentMethod: string = 'cash') => {
     if (currentOrder.length === 0) {
       toast({
         title: "Error",
@@ -391,10 +394,19 @@ export const LaundryPOS = () => {
       return;
     }
 
+    // Show cash payment dialog for cash payments, otherwise process directly
+    if (paymentMethod === 'cash') {
+      setShowCashPaymentDialog(true);
+    } else {
+      // For other payment methods, process directly without cash dialog
+      await processNonCashPayment(paymentMethod);
+    }
+  };
+
+  const processCashPayment = async (cashReceived: number) => {
     try {
       const subtotal = getTotalPrice();
-      const taxAmount = subtotal * 0.11;
-      const totalAmount = subtotal + taxAmount;
+      const totalAmount = subtotal;
       const completionDate = getOrderCompletionTime();
 
       const orderData = {
@@ -410,11 +422,63 @@ export const LaundryPOS = () => {
           unit_items: item.unitItems,
         })),
         subtotal,
-        tax_amount: taxAmount,
+        tax_amount: 0,
         total_amount: totalAmount,
         execution_status: 'in_queue',
         payment_status: 'completed',
-        payment_method: 'cash', // Default to cash, will be configurable later
+        payment_method: 'cash',
+        payment_amount: totalAmount,
+        cash_received: cashReceived, // Add the cash received amount
+        order_date: dropOffDate.toISOString(),
+        estimated_completion: completionDate?.toISOString(),
+      };
+
+      await createOrderMutation.mutateAsync(orderData);
+
+      // Close cash payment dialog and clear the current order
+      setShowCashPaymentDialog(false);
+      setCurrentOrder([]);
+      setCustomerName('');
+      setCustomerPhone('');
+      
+      // Enhanced success message with change information
+      const change = cashReceived - totalAmount;
+      const changeMessage = change > 0 ? ` Kembalian: Rp ${change.toLocaleString('id-ID')}.` : '';
+      
+      toast({
+        title: "Success",
+        description: `Payment processed successfully!${changeMessage} Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
+      });
+    } catch (error) {
+      // Error is already handled in the hook
+      setShowCashPaymentDialog(false);
+    }
+  };
+
+  const processNonCashPayment = async (paymentMethod: string) => {
+    try {
+      const subtotal = getTotalPrice();
+      const totalAmount = subtotal;
+      const completionDate = getOrderCompletionTime();
+
+      const orderData = {
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        items: currentOrder.map(item => ({
+          service_name: item.service.name,
+          service_price: item.service.price,
+          quantity: item.quantity,
+          estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
+          service_type: item.serviceType || 'unit',
+          weight_kg: item.weight,
+          unit_items: item.unitItems,
+        })),
+        subtotal,
+        tax_amount: 0,
+        total_amount: totalAmount,
+        execution_status: 'in_queue',
+        payment_status: 'completed',
+        payment_method: paymentMethod,
         payment_amount: totalAmount,
         order_date: dropOffDate.toISOString(),
         estimated_completion: completionDate?.toISOString(),
@@ -429,7 +493,7 @@ export const LaundryPOS = () => {
       
       toast({
         title: "Success",
-        description: `Payment processed successfully! Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
+        description: `Payment processed successfully via ${paymentMethod.toUpperCase()}! Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
       });
     } catch (error) {
       // Error is already handled in the hook
@@ -457,8 +521,7 @@ export const LaundryPOS = () => {
 
     try {
       const subtotal = getTotalPrice();
-      const taxAmount = subtotal * 0.11;
-      const totalAmount = subtotal + taxAmount;
+      const totalAmount = subtotal;
       const completionDate = getOrderCompletionTime();
 
       const orderData = {
@@ -474,7 +537,7 @@ export const LaundryPOS = () => {
           unit_items: item.unitItems,
         })),
         subtotal,
-        tax_amount: taxAmount,
+        tax_amount: 0,
         total_amount: totalAmount,
         execution_status: 'in_queue',
         payment_status: 'pending',
@@ -642,6 +705,14 @@ export const LaundryPOS = () => {
         calculateFinishDate={calculateFinishDate}
         updateQuantity={updateQuantity}
         removeFromOrder={removeFromOrder}
+      />
+
+      {/* Cash Payment Dialog */}
+      <CashPaymentDialog
+        isOpen={showCashPaymentDialog}
+        onClose={() => setShowCashPaymentDialog(false)}
+        totalAmount={getTotalPrice()} // No tax
+        onSubmit={processCashPayment}
       />
     </div>
   );

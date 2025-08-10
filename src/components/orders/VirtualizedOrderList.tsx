@@ -34,6 +34,7 @@ const OrderItem = memo(({ index, style, data }: {
   const getExecutionStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'bg-green-100 text-green-800';
+      case 'ready_for_pickup': return 'bg-emerald-100 text-emerald-800';
       case 'in_progress': return 'bg-blue-100 text-blue-800';
       case 'in_queue': return 'bg-yellow-100 text-yellow-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
@@ -75,6 +76,7 @@ const OrderItem = memo(({ index, style, data }: {
                     <span className="sm:hidden">
                       {order.execution_status === 'in_queue' ? '⏳' : 
                        order.execution_status === 'in_progress' ? '🔄' : 
+                       order.execution_status === 'ready_for_pickup' ? '📦' : 
                        order.execution_status === 'completed' ? '✅' : 
                        order.execution_status === 'cancelled' ? '❌' : ''}
                     </span>
@@ -146,11 +148,22 @@ const OrderItem = memo(({ index, style, data }: {
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => onUpdateExecution(order.id, 'ready_for_pickup')}
+                    className="w-full sm:w-auto text-xs sm:text-sm"
+                  >
+                    <span className="hidden sm:inline">Ready for Pickup</span>
+                    <span className="sm:hidden">📦 Ready</span>
+                  </Button>
+                )}
+                {order.execution_status === 'ready_for_pickup' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => onUpdateExecution(order.id, 'completed')}
                     className="w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    <span className="hidden sm:inline">Mark Complete</span>
-                    <span className="sm:hidden">✅ Complete</span>
+                    <span className="hidden sm:inline">Mark as Picked Up</span>
+                    <span className="sm:hidden">✅ Picked Up</span>
                   </Button>
                 )}
 
