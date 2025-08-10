@@ -68,34 +68,20 @@ ${data.storeInfo.address}
 No. HP ${data.storeInfo.phone}
 ====================
 Tanggal : ${currentDate} - ${currentTime}
-No Nota : ${data.orderId.slice(-8).toUpperCase()}
-Kasir : Admin
 Nama : ${data.customerName}
 ===================
 
 ${servicesList}
-Tipe Layanan : Cuci + Setrika
-Jenis Pewangi : REGULAR
 
 Subtotal = Rp. ${data.subtotal.toLocaleString('id-ID')},-
-Diskon = Rp. 0,-
-Bayar = Rp. ${data.totalAmount.toLocaleString('id-ID')},-
 
 ====================
 Perkiraan Selesai : 
 ${estimatedDate}
 ====================
 Status : ${getPaymentStatusIndonesian(data.paymentStatus)}
-Dilunasi : ${data.paymentStatus === 'completed' ? `${currentDate} - ${currentTime}` : '-'}
-Diambil : -
-====================
-KETENTUAN :
-1. Pakaian Luntur bukan menjadi tanggung jawab laundry.
-2. Komplain pakaian kami layani 1x24 jam, sejak pakaian diambil.
-3. Pengambilan laundry wajib menggunakan nota asli.
-4. Laundry yang tidak diambil jangka waktu 1 bulan, jika terjadi kerusakan menjadi tanggung jawab pemilik.
-Terimakasih atas kunjungan anda
 
+Terima kasih telah menggunakan layanan kami! 🙏
 ====================
 Klik link dibawah ini untuk melihat nota digital
 ${getReceiptBaseUrl()}/receipt/${data.orderId}`;
