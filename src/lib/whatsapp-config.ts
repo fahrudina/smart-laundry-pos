@@ -5,10 +5,10 @@ import { WhatsAppConfig } from '../integrations/whatsapp/types';
  * Configure these settings according to your WhatsApp API setup
  */
 export const whatsAppConfig: WhatsAppConfig = {
-  // Use proxy in development to avoid CORS issues, direct API in production
+  // Use proxy in development and Vercel serverless function in production
   baseUrl: import.meta.env.DEV && import.meta.env.VITE_WHATSAPP_USE_PROXY === 'true' 
     ? 'http://localhost:8080/api/whatsapp'  // Vite proxy endpoint
-    : import.meta.env.VITE_WHATSAPP_API_URL || 'http://localhost:8080',
+    : '/api/whatsapp-send',  // Vercel serverless function
   username: import.meta.env.VITE_WHATSAPP_API_USERNAME || 'admin',
   password: import.meta.env.VITE_WHATSAPP_API_PASSWORD || 'your_secure_password',
   timeout: parseInt(import.meta.env.VITE_WHATSAPP_API_TIMEOUT || '10000'),

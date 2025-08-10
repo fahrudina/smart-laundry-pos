@@ -34,20 +34,27 @@ export class WhatsAppClient {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
-      // Determine if we're using proxy (development) or direct API (production)
-      const isUsingProxy = this.config.baseUrl.includes('localhost') && this.config.baseUrl.includes('/api/whatsapp');
+      // Determine if we're using local proxy, Vercel serverless function, or direct API
+      const isUsingLocalProxy = this.config.baseUrl.includes('localhost') && this.config.baseUrl.includes('/api/whatsapp');
+      const isUsingVercelFunction = this.config.baseUrl.startsWith('/api/');
       
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
 
-      // Only add authorization header if not using proxy (proxy handles auth)
-      if (!isUsingProxy) {
+      // Only add authorization header if not using proxy or Vercel function (they handle auth)
+      if (!isUsingLocalProxy && !isUsingVercelFunction) {
         headers['Authorization'] = `Basic ${btoa(`${this.config.username}:${this.config.password}`)}`;
       }
 
+      // Determine the correct endpoint
+      let endpoint = `${this.config.baseUrl}/send-message`;
+      if (isUsingVercelFunction) {
+        endpoint = this.config.baseUrl; // Vercel function URL is complete
+      }
+
       // Create request exactly like Postman example
-      const response = await fetch(`${this.config.baseUrl}/send-message`, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -122,12 +129,28 @@ export class WhatsAppClient {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`${this.config.baseUrl}/api/send-message`, {
+      // Determine if we're using local proxy, Vercel serverless function, or direct API
+      const isUsingLocalProxy = this.config.baseUrl.includes('localhost') && this.config.baseUrl.includes('/api/whatsapp');
+      const isUsingVercelFunction = this.config.baseUrl.startsWith('/api/');
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Only add authorization header if not using proxy or Vercel function
+      if (!isUsingLocalProxy && !isUsingVercelFunction) {
+        headers['Authorization'] = `Basic ${btoa(`${this.config.username}:${this.config.password}`)}`;
+      }
+
+      // Determine the correct endpoint
+      let endpoint = `${this.config.baseUrl}/api/send-message`;
+      if (isUsingVercelFunction) {
+        endpoint = this.config.baseUrl; // Vercel function URL is complete
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${btoa(`${this.config.username}:${this.config.password}`)}`,
-        },
+        headers,
         body: JSON.stringify({ ...testMessage, message: '' }), // Empty message to test auth
         signal: controller.signal,
       });
