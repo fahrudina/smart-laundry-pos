@@ -8,6 +8,7 @@ export interface Store {
   email?: string;
   owner_id: string;
   is_active: boolean;
+  enable_qr: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -33,6 +34,7 @@ export interface StoreWithOwnershipInfo {
   store_email: string;
   is_owner: boolean;
   is_active: boolean;
+  enable_qr: boolean;
 }
 
 export interface StoreContextType {

@@ -261,15 +261,6 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
 
           {/* Order Summary */}
           <div className="space-y-2 sm:space-y-3 bg-secondary/30 p-3 sm:p-4 rounded-lg">
-            <div className="flex justify-between text-sm sm:text-lg">
-              <span>Subtotal:</span>
-              <span>Rp{order.subtotal.toLocaleString('id-ID')}</span>
-            </div>
-            <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
-              <span>Tax:</span>
-              <span>Rp{order.tax_amount.toLocaleString('id-ID')}</span>
-            </div>
-            <Separator />
             <div className="flex justify-between text-lg sm:text-xl font-bold">
               <span>Total:</span>
               <span>Rp{order.total_amount.toLocaleString('id-ID')}</span>

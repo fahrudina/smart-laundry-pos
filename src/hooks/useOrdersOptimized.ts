@@ -59,6 +59,7 @@ interface CreateOrderData {
   payment_status?: string;
   payment_method?: string;
   payment_amount?: number;
+  cash_received?: number;
   payment_notes?: string;
   order_date?: string;
   estimated_completion?: string;
@@ -336,13 +337,15 @@ export const useUpdatePaymentStatus = () => {
       paymentStatus, 
       paymentMethod, 
       paymentAmount, 
-      paymentNotes 
+      paymentNotes,
+      cashReceived
     }: {
       orderId: string;
       paymentStatus: string;
       paymentMethod?: string;
       paymentAmount?: number;
       paymentNotes?: string;
+      cashReceived?: number;
     }) => {
       const { error } = await supabase
         .from('orders')
@@ -351,6 +354,7 @@ export const useUpdatePaymentStatus = () => {
           payment_method: paymentMethod,
           payment_amount: paymentAmount,
           payment_notes: paymentNotes,
+          cash_received: cashReceived,
         })
         .eq('id', orderId);
 
