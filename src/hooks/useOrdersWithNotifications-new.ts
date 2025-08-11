@@ -48,11 +48,11 @@ export const useCreateOrderWithNotifications = () => {
         order_id: order.id,
         service_name: item.service_name,
         service_price: item.service_price,
-        quantity: item.quantity,
+        quantity: Math.ceil(item.quantity),
         line_total: item.service_price * item.quantity,
         service_type: item.service_type,
         weight_kg: item.weight_kg,
-        unit_items: item.unit_items,
+        unit_items: item.service_type === 'kilo' ? 0 : item.unit_items,
         estimated_completion: item.estimated_completion,
       }));
 
