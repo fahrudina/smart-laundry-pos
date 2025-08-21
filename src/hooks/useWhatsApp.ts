@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { whatsAppService } from '@/integrations/whatsapp';
 import { whatsAppConfig, whatsAppFeatures, validateWhatsAppConfig } from '@/lib/whatsapp-config';
 import { useToast } from '@/hooks/use-toast';
-import type { NotificationResult, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData } from '@/integrations/whatsapp';
+import type { NotificationResult, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData } from '@/integrations/whatsapp/types';
 
 /**
  * Custom hook for WhatsApp integration
@@ -164,6 +164,10 @@ export const useWhatsApp = () => {
     phoneNumber: string,
     orderData: OrderReadyForPickupData
   ): Promise<NotificationResult> => {
+    if (!whatsAppFeatures.notifyOnOrderReadyForPickup) {
+      return { success: true, messageId: 'feature-disabled' };
+    }
+
     if (whatsAppFeatures.developmentMode) {
       console.log('DEV MODE - Order ready for pickup notification:', { phoneNumber, orderData });
       return { success: true, messageId: 'dev-mode-id' };

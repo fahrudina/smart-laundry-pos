@@ -67,6 +67,7 @@ export interface OrderReadyForPickupData {
   readyAt: string;
   orderItems: OrderItem[];
   storeInfo: StoreInfo;
+  paymentStatus: string;
 }
 
 export interface NotificationResult {
