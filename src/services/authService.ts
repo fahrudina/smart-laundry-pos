@@ -64,14 +64,21 @@ class AuthService {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
   }
 
-  async signUp(email: string, password: string, fullName?: string, phone?: string): Promise<User> {
+  async signUp(
+    email: string, 
+    password: string, 
+    fullName?: string, 
+    phone?: string, 
+    role: 'staff' | 'laundry_owner' = 'staff',
+    storeData?: { name: string; address?: string; phone?: string }
+  ): Promise<User> {
     try {
       const { data, error } = await supabase.rpc('create_user', {
         user_email: email,
         user_password: password,
         user_full_name: fullName || null,
         user_phone: phone || null,
-        user_role: 'staff'
+        user_role: role
       });
 
       if (error) {
@@ -98,6 +105,32 @@ class AuthService {
         store_id: userData.store_id,
         is_active: userData.is_active
       };
+
+      // If user is a laundry owner and store data is provided, create a store
+      if (role === 'laundry_owner' && storeData) {
+        // Temporarily set the session to allow store creation
+        const tempSession: AuthSession = {
+          user,
+          token: this.generateToken(),
+          expires_at: Date.now() + (24 * 60 * 60 * 1000)
+        };
+        this.session = tempSession;
+
+        try {
+          const storeId = await this.createStore({
+            name: storeData.name,
+            address: storeData.address,
+            phone: storeData.phone || phone // Use store phone or user phone as fallback
+          });
+          
+          // Update user with the created store_id
+          user.store_id = storeId;
+        } catch (storeError) {
+          console.error('Store creation error:', storeError);
+          // Don't fail user creation if store creation fails
+          // The user can create a store later
+        }
+      }
 
       // Create session
       const session: AuthSession = {

@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
@@ -19,6 +20,9 @@ interface SignUpForm extends LoginForm {
   confirmPassword: string;
   fullName: string;
   phone: string;
+  role: 'staff' | 'laundry_owner';
+  storeName?: string;
+  storeAddress?: string;
 }
 
 export const Login: React.FC = () => {
@@ -29,7 +33,14 @@ export const Login: React.FC = () => {
   usePageTitle('Login');
 
   const loginForm = useForm<LoginForm>();
-  const signUpForm = useForm<SignUpForm>();
+  const signUpForm = useForm<SignUpForm>({
+    defaultValues: {
+      role: 'staff'
+    }
+  });
+  
+  // Watch role to show/hide store fields
+  const watchedRole = signUpForm.watch('role');
 
   // Redirect if already authenticated
   if (user) {
@@ -57,9 +68,26 @@ export const Login: React.FC = () => {
       return;
     }
 
+    // Validate store data for laundry owners
+    if (data.role === 'laundry_owner' && !data.storeName) {
+      signUpForm.setError('storeName', {
+        type: 'manual',
+        message: 'Store name is required for laundry owners',
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
-      await signUp(data.email, data.password, data.fullName, data.phone);
+      
+      // Prepare store data if user is signing up as laundry owner
+      const storeData = data.role === 'laundry_owner' && data.storeName ? {
+        name: data.storeName,
+        address: data.storeAddress,
+        phone: data.phone // Use user's phone as store phone
+      } : undefined;
+      
+      await signUp(data.email, data.password, data.fullName, data.phone, data.role, storeData);
     } catch (error) {
       // Error is handled in the auth context
     } finally {
@@ -156,6 +184,63 @@ export const Login: React.FC = () => {
                     <p className="text-sm text-red-500">{signUpForm.formState.errors.fullName.message}</p>
                   )}
                 </div>
+                
+                <div className="space-y-2">
+                  <Label>Account Type</Label>
+                  <RadioGroup
+                    defaultValue="staff"
+                    onValueChange={(value) => signUpForm.setValue('role', value as 'staff' | 'laundry_owner')}
+                    className="flex flex-col space-y-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="staff" id="role-staff" />
+                      <Label htmlFor="role-staff" className="text-sm font-normal">
+                        Staff Member
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="laundry_owner" id="role-owner" />
+                      <Label htmlFor="role-owner" className="text-sm font-normal">
+                        Laundry Owner
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                  {signUpForm.formState.errors.role && (
+                    <p className="text-sm text-red-500">{signUpForm.formState.errors.role.message}</p>
+                  )}
+                </div>
+                
+                {watchedRole === 'laundry_owner' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-storename">Store Name</Label>
+                      <Input
+                        id="signup-storename"
+                        type="text"
+                        placeholder="Enter your store name"
+                        {...signUpForm.register('storeName', { 
+                          required: watchedRole === 'laundry_owner' ? 'Store name is required' : false
+                        })}
+                      />
+                      {signUpForm.formState.errors.storeName && (
+                        <p className="text-sm text-red-500">{signUpForm.formState.errors.storeName.message}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-storeaddress">Store Address</Label>
+                      <Input
+                        id="signup-storeaddress"
+                        type="text"
+                        placeholder="Enter your store address (optional)"
+                        {...signUpForm.register('storeAddress')}
+                      />
+                      {signUpForm.formState.errors.storeAddress && (
+                        <p className="text-sm text-red-500">{signUpForm.formState.errors.storeAddress.message}</p>
+                      )}
+                    </div>
+                  </>
+                )}
                 
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
