@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useNavigate } from 'react-router-dom';
-import { useOrders, useUpdatePaymentStatus, useUpdateExecutionStatus, OrderFilters, Order } from '@/hooks/useOrdersOptimized';
+import { useOrders, useUpdatePaymentStatus, OrderFilters, Order } from '@/hooks/useOrdersOptimized';
+import { useUpdateOrderStatusWithNotifications } from '@/hooks/useOrdersWithNotifications';
 import { OrderDetailsDialog } from '@/components/pos/OrderDetailsDialog';
 import { CashPaymentDialog } from '@/components/pos/CashPaymentDialog';
 import { VirtualizedOrderList } from '@/components/orders/VirtualizedOrderList';
@@ -82,7 +83,7 @@ export const OrderHistory = () => {
   } = useOrders(queryFilters);
 
   const updatePaymentMutation = useUpdatePaymentStatus();
-  const updateExecutionMutation = useUpdateExecutionStatus();
+  const updateExecutionMutation = useUpdateOrderStatusWithNotifications();
 
   // Enhanced filtering function with sorting (client-side for complex filters)
   const filteredOrders = useMemo(() => {
