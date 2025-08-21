@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { authService } from '@/services/authService';
 import { StoreContextType, StoreWithOwnershipInfo } from '@/types/multi-tenant';
 import { useToast } from '@/hooks/use-toast';
@@ -44,7 +44,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const refreshStores = async () => {
+  const refreshStores = useCallback(async () => {
     try {
       if (!authService.isAuthenticated()) {
         console.log('User not authenticated, skipping store refresh');
@@ -80,24 +80,27 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // 2. Persisted store if accessible
       // 3. First available store
       if (stores.length > 0) {
-        if (currentStore && stores.find(s => s.store_id === currentStore.store_id)) {
-          // Current store is still accessible, keep it
-          console.log('Keeping current store:', currentStore);
-        } else if (targetStore) {
-          // Use restored persisted store
-          console.log('Setting restored store:', targetStore);
-          setCurrentStore(targetStore);
-        } else if (!currentStore) {
-          // No current store, select first available
-          console.log('Auto-selecting first store:', stores[0]);
-          setCurrentStore(stores[0]);
-          persistStoreId(stores[0].store_id);
-        } else {
-          // Current store no longer accessible, switch to first available
-          console.log('Current store no longer accessible, switching to first available');
-          setCurrentStore(stores[0]);
-          persistStoreId(stores[0].store_id);
-        }
+        setCurrentStore(currentStoreState => {
+          if (currentStoreState && stores.find(s => s.store_id === currentStoreState.store_id)) {
+            // Current store is still accessible, keep it
+            console.log('Keeping current store:', currentStoreState);
+            return currentStoreState;
+          } else if (targetStore) {
+            // Use restored persisted store
+            console.log('Setting restored store:', targetStore);
+            return targetStore;
+          } else if (!currentStoreState) {
+            // No current store, select first available
+            console.log('Auto-selecting first store:', stores[0]);
+            persistStoreId(stores[0].store_id);
+            return stores[0];
+          } else {
+            // Current store no longer accessible, switch to first available
+            console.log('Current store no longer accessible, switching to first available');
+            persistStoreId(stores[0].store_id);
+            return stores[0];
+          }
+        });
       } else {
         // No stores available
         setCurrentStore(null);
@@ -120,7 +123,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const switchStore = (storeId: string) => {
     const store = userStores.find(s => s.store_id === storeId);
@@ -157,7 +160,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setLoading(false);
       persistStoreId(null); // Clear persisted store on logout
     }
-  }, [user]);
+  }, [user, refreshStores]);
 
   // Reset store context when user logs out (backup check)
   useEffect(() => {
