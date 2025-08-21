@@ -192,22 +192,26 @@ export const PublicReceiptPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 py-4">
       <div className="max-w-md mx-auto px-4">
         {/* Receipt Card */}
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+        <div id="receipt-content" className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm receipt-print thermal-receipt">
           {/* Store Header */}
-          <div className="bg-white p-4 text-center border-b border-gray-200">
+          <div className="bg-white p-4 text-center border-b border-gray-200 receipt-section">
             {/* Logo placeholder */}
-            <div className="w-16 h-16 bg-emerald-100 rounded-full mx-auto mb-3 flex items-center justify-center">
+            <div 
+              className="w-16 h-16 bg-emerald-100 rounded-full mx-auto mb-3 flex items-center justify-center no-print"
+              aria-label={storeInfo?.name ? `${storeInfo.name} logo` : "Store logo"}
+              role="img"
+            >
               <Receipt className="h-8 w-8 text-emerald-600" />
             </div>
             
             {/* Store Information */}
-            <h1 className="text-xl font-bold text-gray-800 mb-1">
+            <h1 className="text-xl font-bold text-gray-800 mb-1 print-text bold center">
               {storeInfo?.name || 'Smart Laundry POS'}
             </h1>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="text-sm text-gray-600 mb-1 print-text center">
               {storeInfo?.address || 'Alamat belum diset'}
             </p>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 mb-4 print-text center">
               No. HP {storeInfo?.phone || 'Nomor telepon belum diset'}
             </p>
 
@@ -217,7 +221,7 @@ export const PublicReceiptPage: React.FC = () => {
                 <img 
                   src="/qrcode.png" 
                   alt="Payment QR Code" 
-                  className="w-32 h-32 mx-auto border border-gray-200 rounded"
+                  className="w-32 h-32 mx-auto border border-gray-200 rounded qr-print center"
                   onError={(e) => {
                     // Hide QR code if image fails to load
                     const target = e.target as HTMLElement;
@@ -228,7 +232,7 @@ export const PublicReceiptPage: React.FC = () => {
                     }
                   }}
                 />
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 mt-2 print-text center">
                   Scan QR Code untuk pembayaran digital
                 </p>
               </div>

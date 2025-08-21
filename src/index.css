@@ -202,4 +202,100 @@ All colors MUST be HSL.
       font-size: 16px !important; /* Prevents zoom on iOS */
     }
   }
+
+  /* Print-specific styles for receipts */
+  @media print {
+    /* Hide unnecessary elements when printing */
+    .no-print {
+      display: none !important;
+    }
+
+    /* Optimize receipt for printing */
+    .receipt-print {
+      width: 80mm !important; /* Thermal printer width */
+      margin: 0 !important;
+      padding: 0 !important;
+      background: white !important;
+      color: black !important;
+      font-size: 12px !important;
+      line-height: 1.4 !important;
+    }
+
+    /* Page break optimization */
+    .receipt-section {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    /* Remove shadows and borders for print */
+    * {
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+    }
+
+    /* Ensure black text for printing */
+    .print-text {
+      color: black !important;
+    }
+
+    /* Optimize spacing for thermal printers */
+    .thermal-spacing {
+      margin: 2mm 0 !important;
+      padding: 1mm 0 !important;
+    }
+
+    /* Hide background colors and gradients */
+    .bg-gray-50,
+    .bg-gray-100,
+    .bg-white,
+    .bg-emerald-100,
+    .bg-emerald-500 {
+      background: white !important;
+    }
+
+    /* Ensure important text is bold for thermal printing */
+    .print-bold {
+      font-weight: bold !important;
+    }
+
+    /* Optimize QR codes for printing */
+    .qr-print {
+      width: 20mm !important;
+      height: 20mm !important;
+      margin: 2mm auto !important;
+    }
+  }
+
+  /* Receipt preview mode styles */
+  .receipt-preview {
+    max-width: 80mm;
+    margin: 0 auto;
+    background: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border: 1px solid #ddd;
+  }
+
+  /* Thermal printer specific styles */
+  .thermal-receipt {
+    font-family: 'Courier New', monospace;
+    width: 80mm;
+    font-size: 11px;
+    line-height: 1.3;
+    color: black;
+    background: white;
+  }
+
+  .thermal-receipt .center {
+    text-align: center;
+  }
+
+  .thermal-receipt .bold {
+    font-weight: bold;
+  }
+
+  .thermal-receipt .separator {
+    border-bottom: 1px dashed #000;
+    margin: 2mm 0;
+  }
 }
