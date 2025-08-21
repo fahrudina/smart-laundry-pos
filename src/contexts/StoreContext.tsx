@@ -22,6 +22,28 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const { toast } = useToast();
   const { user } = useAuth(); // Get user from AuthContext
 
+  // Helper functions for localStorage persistence
+  const getPersistedStoreId = (): string | null => {
+    try {
+      return localStorage.getItem('selected_store_id');
+    } catch (error) {
+      console.error('Error reading persisted store ID:', error);
+      return null;
+    }
+  };
+
+  const persistStoreId = (storeId: string | null): void => {
+    try {
+      if (storeId) {
+        localStorage.setItem('selected_store_id', storeId);
+      } else {
+        localStorage.removeItem('selected_store_id');
+      }
+    } catch (error) {
+      console.error('Error persisting store ID:', error);
+    }
+  };
+
   const refreshStores = async () => {
     try {
       if (!authService.isAuthenticated()) {
@@ -38,16 +60,48 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setUserStores(stores);
       setIsOwner(authService.isOwner());
 
-      // Auto-select first store if none selected
-      if (stores.length > 0 && !currentStore) {
-        console.log('Auto-selecting first store:', stores[0]);
-        setCurrentStore(stores[0]);
+      // Try to restore previously selected store
+      const persistedStoreId = getPersistedStoreId();
+      let targetStore: StoreWithOwnershipInfo | null = null;
+
+      if (persistedStoreId) {
+        // Check if persisted store is still accessible
+        targetStore = stores.find(s => s.store_id === persistedStoreId) || null;
+        if (targetStore) {
+          console.log('Restoring persisted store:', targetStore);
+        } else {
+          console.log('Persisted store no longer accessible, clearing persistence');
+          persistStoreId(null);
+        }
       }
 
-      // If current store is no longer accessible, switch to first available
-      if (currentStore && !stores.find(s => s.store_id === currentStore.store_id)) {
-        console.log('Current store no longer accessible, switching to first available');
-        setCurrentStore(stores.length > 0 ? stores[0] : null);
+      // Auto-select store based on priority:
+      // 1. Current store if still accessible
+      // 2. Persisted store if accessible
+      // 3. First available store
+      if (stores.length > 0) {
+        if (currentStore && stores.find(s => s.store_id === currentStore.store_id)) {
+          // Current store is still accessible, keep it
+          console.log('Keeping current store:', currentStore);
+        } else if (targetStore) {
+          // Use restored persisted store
+          console.log('Setting restored store:', targetStore);
+          setCurrentStore(targetStore);
+        } else if (!currentStore) {
+          // No current store, select first available
+          console.log('Auto-selecting first store:', stores[0]);
+          setCurrentStore(stores[0]);
+          persistStoreId(stores[0].store_id);
+        } else {
+          // Current store no longer accessible, switch to first available
+          console.log('Current store no longer accessible, switching to first available');
+          setCurrentStore(stores[0]);
+          persistStoreId(stores[0].store_id);
+        }
+      } else {
+        // No stores available
+        setCurrentStore(null);
+        persistStoreId(null);
       }
     } catch (error) {
       console.error('Error fetching stores:', error);
@@ -72,6 +126,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const store = userStores.find(s => s.store_id === storeId);
     if (store) {
       setCurrentStore(store);
+      persistStoreId(store.store_id);
       toast({
         title: "Store Switched",
         description: `Now working in: ${store.store_name}`,
@@ -100,6 +155,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setUserStores([]);
       setIsOwner(false);
       setLoading(false);
+      persistStoreId(null); // Clear persisted store on logout
     }
   }, [user]);
 
@@ -109,6 +165,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setCurrentStore(null);
       setUserStores([]);
       setIsOwner(false);
+      persistStoreId(null); // Clear persisted store on logout
     }
   }, []);
 

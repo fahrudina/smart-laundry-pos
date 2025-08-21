@@ -17,6 +17,13 @@ export const StoreManagement: React.FC = () => {
     refreshStores();
   }, []);
 
+  // Initialize selectedStore with currentStore when component mounts or currentStore changes
+  useEffect(() => {
+    if (currentStore && !selectedStore) {
+      setSelectedStore(currentStore);
+    }
+  }, [currentStore, selectedStore]);
+
   const handleStoreCreated = () => {
     refreshStores();
   };
