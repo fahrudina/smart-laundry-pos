@@ -77,7 +77,7 @@ export const AppHeader: React.FC = () => {
   const isOnCustomers = location.pathname === '/customers';
 
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Left Section - Mobile Menu + Logo */}
@@ -136,7 +136,7 @@ export const AppHeader: React.FC = () => {
           </div>
 
           {/* Primary Navigation - Desktop */}
-          <nav className="hidden lg:flex items-center space-x-1">
+          <nav className="hidden lg:flex items-center space-x-3">
             <Button
               variant={isOnHome ? "default" : "ghost"}
               size="sm"
@@ -148,7 +148,7 @@ export const AppHeader: React.FC = () => {
               }`}
             >
               <Home className="h-4 w-4" />
-              <span className="hidden xl:inline">Home</span>
+              <span className="hidden lg:inline">Home</span>
             </Button>
             
             <Button
@@ -162,7 +162,7 @@ export const AppHeader: React.FC = () => {
               }`}
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden xl:inline">New Order</span>
+              <span className="hidden lg:inline">New Order</span>
             </Button>
             
             <Button
@@ -176,7 +176,7 @@ export const AppHeader: React.FC = () => {
               }`}
             >
               <History className="h-4 w-4" />
-              <span className="hidden xl:inline">History</span>
+              <span className="hidden lg:inline">History</span>
             </Button>
 
             <Button
@@ -190,7 +190,7 @@ export const AppHeader: React.FC = () => {
               }`}
             >
               <Users className="h-4 w-4" />
-              <span className="hidden xl:inline">Customers</span>
+              <span className="hidden lg:inline">Customers</span>
             </Button>
 
             {/* Owner-only Navigation */}
@@ -207,7 +207,7 @@ export const AppHeader: React.FC = () => {
                   }`}
                 >
                   <Wrench className="h-4 w-4" />
-                  <span className="hidden xl:inline">Services</span>
+                  <span className="hidden lg:inline">Services</span>
                 </Button>
                 
                 <Button
@@ -221,7 +221,7 @@ export const AppHeader: React.FC = () => {
                   }`}
                 >
                   <Building2 className="h-4 w-4" />
-                  <span className="hidden xl:inline">Stores</span>
+                  <span className="hidden lg:inline">Stores</span>
                 </Button>
               </>
             )}
