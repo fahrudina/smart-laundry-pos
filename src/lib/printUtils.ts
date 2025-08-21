@@ -1,5 +1,39 @@
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+// Type declarations for Web Bluetooth API
+declare global {
+  interface Navigator {
+    bluetooth?: {
+      requestDevice(options?: RequestDeviceOptions): Promise<BluetoothDevice>;
+    };
+  }
+  
+  interface BluetoothDevice {
+    id: string;
+    name?: string;
+    gatt?: BluetoothRemoteGATTServer;
+    addEventListener(type: string, listener: EventListener): void;
+    removeEventListener(type: string, listener: EventListener): void;
+  }
+  
+  interface BluetoothRemoteGATTServer {
+    connected: boolean;
+    connect(): Promise<BluetoothRemoteGATTServer>;
+    disconnect(): void;
+  }
+  
+  interface RequestDeviceOptions {
+    filters?: BluetoothLEScanFilter[];
+    acceptAllDevices?: boolean;
+    optionalServices?: BluetoothServiceUUID[];
+  }
+  
+  interface BluetoothLEScanFilter {
+    services?: BluetoothServiceUUID[];
+    name?: string;
+    namePrefix?: string;
+  }
+  
+  type BluetoothServiceUUID = string | number;
+}
 
 interface PrintOptions {
   filename?: string;
@@ -48,6 +82,12 @@ export const generateReceiptPDF = async (
   } = options;
 
   try {
+    // Dynamic imports to reduce bundle size
+    const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+      import('jspdf'),
+      import('html2canvas')
+    ]);
+
     const element = document.getElementById(elementId);
     if (!element) {
       throw new Error(`Element with ID ${elementId} not found`);
@@ -55,7 +95,6 @@ export const generateReceiptPDF = async (
 
     // Generate canvas from the element
     const canvas = await html2canvas(element, {
-      quality,
       scale,
       useCORS: true,
       allowTaint: false,
@@ -124,6 +163,12 @@ export const generateReceiptPDFFromUrl = async (
 
     iframe.onload = async () => {
       try {
+        // Dynamic imports to reduce bundle size
+        const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+          import('jspdf'),
+          import('html2canvas')
+        ]);
+
         const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
         if (!iframeDoc) {
           throw new Error('Failed to access iframe content');
@@ -136,7 +181,6 @@ export const generateReceiptPDFFromUrl = async (
         
         // Generate canvas from the iframe content
         const canvas = await html2canvas(receiptElement, {
-          quality,
           scale,
           useCORS: true,
           allowTaint: false,
