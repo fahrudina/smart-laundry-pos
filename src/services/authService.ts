@@ -64,14 +64,14 @@ class AuthService {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
   }
 
-  async signUp(email: string, password: string, fullName?: string, phone?: string): Promise<User> {
+  async signUp(email: string, password: string, fullName?: string, phone?: string, role: 'staff' | 'laundry_owner' = 'staff'): Promise<User> {
     try {
       const { data, error } = await supabase.rpc('create_user', {
         user_email: email,
         user_password: password,
         user_full_name: fullName || null,
         user_phone: phone || null,
-        user_role: 'staff'
+        user_role: role
       });
 
       if (error) {

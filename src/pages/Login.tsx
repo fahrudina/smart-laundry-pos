@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
@@ -19,6 +20,7 @@ interface SignUpForm extends LoginForm {
   confirmPassword: string;
   fullName: string;
   phone: string;
+  isOwner: boolean;
 }
 
 export const Login: React.FC = () => {
@@ -59,7 +61,8 @@ export const Login: React.FC = () => {
 
     try {
       setIsLoading(true);
-      await signUp(data.email, data.password, data.fullName, data.phone);
+      const role = data.isOwner ? 'laundry_owner' : 'staff';
+      await signUp(data.email, data.password, data.fullName, data.phone, role);
     } catch (error) {
       // Error is handled in the auth context
     } finally {
@@ -223,6 +226,16 @@ export const Login: React.FC = () => {
                   {signUpForm.formState.errors.confirmPassword && (
                     <p className="text-sm text-red-500">{signUpForm.formState.errors.confirmPassword.message}</p>
                   )}
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="signup-owner"
+                    {...signUpForm.register('isOwner')}
+                  />
+                  <Label htmlFor="signup-owner" className="text-sm">
+                    Create as Laundry Owner (can manage multiple stores)
+                  </Label>
                 </div>
                 
                 <Button 
