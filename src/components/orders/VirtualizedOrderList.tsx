@@ -280,7 +280,7 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
   };
 
   // Responsive item size - much larger for mobile to prevent overlap
-  const itemSize = isMobile ? 400 : 320;
+  const itemSize = isMobile ? 320 : 250;
 
   return (
     <List
