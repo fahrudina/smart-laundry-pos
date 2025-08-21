@@ -13,7 +13,7 @@ import { OrderDetailsDialog } from '@/components/pos/OrderDetailsDialog';
 import { CashPaymentDialog } from '@/components/pos/CashPaymentDialog';
 import { VirtualizedOrderList } from '@/components/orders/VirtualizedOrderList';
 import { formatDate, isDateOverdue } from '@/lib/utils';
-import { openReceiptForView, openReceiptForPrint, generateReceiptPDFFromUrl } from '@/lib/printUtils';
+import { openReceiptForView, openReceiptForPrint, generateReceiptPDFFromUrl, sanitizeFilename } from '@/lib/printUtils';
 import { usePageTitle, updatePageTitleWithCount } from '@/hooks/usePageTitle';
 import { toast } from 'sonner';
 
@@ -301,7 +301,7 @@ export const OrderHistory = () => {
     try {
       toast.loading('Generating PDF...', { id: `pdf-${orderId}` });
       await generateReceiptPDFFromUrl(orderId, {
-        filename: `receipt-${customerName.replace(/\s+/g, '-')}-${orderId.slice(-6)}.pdf`
+        filename: `receipt-${sanitizeFilename(customerName)}-${orderId.slice(-6)}.pdf`
       });
       toast.success('PDF exported successfully!', { id: `pdf-${orderId}` });
     } catch (error) {

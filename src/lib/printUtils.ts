@@ -35,6 +35,10 @@ declare global {
   type BluetoothServiceUUID = string | number;
 }
 
+// Constants
+const IFRAME_RENDER_WAIT_MS = 1000;
+const PRINT_WINDOW_CHECK_INTERVAL_MS = 100;
+
 interface PrintOptions {
   filename?: string;
   quality?: number;
@@ -46,6 +50,14 @@ interface PrintOptions {
  */
 
 /**
+ * Sanitizes a string for use in filenames by replacing invalid characters
+ */
+export const sanitizeFilename = (name: string): string => {
+  // Replace any character that is not a-z, A-Z, 0-9, hyphen, or underscore with a hyphen
+  return name.replace(/[^a-zA-Z0-9-_]/g, '-');
+};
+
+/**
  * Opens a receipt page in a new window for printing
  */
 export const openReceiptForPrint = (orderId: string): void => {
@@ -53,10 +65,25 @@ export const openReceiptForPrint = (orderId: string): void => {
   const printWindow = window.open(receiptUrl, '_blank', 'width=800,height=1000,scrollbars=yes');
   
   if (printWindow) {
-    // Wait for the page to load before triggering print
-    printWindow.onload = () => {
-      printWindow.print();
-    };
+    // Wait for the page and all resources to load before triggering print
+    const interval = setInterval(() => {
+      try {
+        if (printWindow.document.readyState === 'complete') {
+          clearInterval(interval);
+          printWindow.print();
+        }
+      } catch (e) {
+        // Ignore cross-origin errors until the page is ready
+      }
+    }, PRINT_WINDOW_CHECK_INTERVAL_MS);
+
+    // Fallback timeout to prevent infinite checking
+    setTimeout(() => {
+      clearInterval(interval);
+      if (printWindow && !printWindow.closed) {
+        printWindow.print();
+      }
+    }, 5000);
   }
 };
 
@@ -175,7 +202,7 @@ export const generateReceiptPDFFromUrl = async (
         }
 
         // Wait a bit for content to render
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, IFRAME_RENDER_WAIT_MS));
 
         const receiptElement = iframeDoc.body;
         
@@ -247,7 +274,7 @@ export const connectThermalPrinter = async (): Promise<BluetoothDevice | null> =
 
   try {
     // Request thermal printer device
-    const device = await (navigator as any).bluetooth.requestDevice({
+    const device = await navigator.bluetooth!.requestDevice({
       filters: [
         { services: ['000018f0-0000-1000-8000-00805f9b34fb'] }, // Generic thermal printer
       ],
