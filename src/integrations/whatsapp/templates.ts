@@ -1,4 +1,4 @@
-import { MessageTemplate, OrderCreatedData, OrderCompletedData } from './types';
+import { MessageTemplate, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData } from './types';
 
 /**
  * Configuration for receipt URLs
@@ -136,6 +136,64 @@ Siap diambil : YA
 Laundry Anda sudah selesai dan siap diambil!
 Silakan datang ke toko dengan membawa nota ini.
 
+====================
+Klik link dibawah ini untuk melihat nota digital
+${getReceiptBaseUrl()}/receipt/${data.orderId}`;
+  },
+
+  /**
+   * Template for order ready for pickup notification
+   */
+  orderReadyForPickup: (data: OrderReadyForPickupData): string => {
+    const readyDate = new Date().toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    const readyTime = new Date().toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+
+    // Build services list from order items
+    const servicesList = data.orderItems.length > 0 
+      ? data.orderItems.map(item => {
+          let serviceInfo = `Tipe Laundry : ${item.service_name}`;
+          if (item.service_type === 'kilo' && item.weight_kg) {
+            serviceInfo += `\nBerat (kg) = ${item.weight_kg}`;
+          }
+          return serviceInfo;
+        }).join('\n\n')
+      : 'Tipe Laundry : Regular';
+
+    return `📦 *LAUNDRY SIAP DIAMBIL* 📦
+
+${data.storeInfo.name}
+${data.storeInfo.address}
+No. HP ${data.storeInfo.phone}
+====================
+Tanggal Siap : ${readyDate} - ${readyTime}
+No Nota : ${data.orderId.slice(-8).toUpperCase()}
+Nama : ${data.customerName}
+===================
+
+${servicesList}
+Total Bayar = Rp. ${data.totalAmount.toLocaleString('id-ID')},-
+
+====================
+Status : SIAP DIAMBIL 📦
+Siap diambil pada : ${data.readyAt}
+====================
+
+Laundry Anda sudah selesai dan siap diambil!
+Silakan datang ke toko untuk mengambil laundry Anda.
+
+Jam Operasional:
+- Senin - Jumat: 08:00 - 20:00
+- Sabtu - Minggu: 09:00 - 18:00
+
+Terima kasih telah menggunakan layanan kami! 🙏
 ====================
 Klik link dibawah ini untuk melihat nota digital
 ${getReceiptBaseUrl()}/receipt/${data.orderId}`;
