@@ -318,9 +318,9 @@ export const OrderHistory = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 -mx-4 sm:-mx-6 lg:-mx-8 -my-8">
-      <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+      <div className="space-y-2 sm:space-y-6 lg:space-y-8">
         {/* Mobile-First Page Header */}
-        <div className="bg-white border-b px-4 py-3 sm:px-6 lg:px-8 sm:bg-transparent sm:border-0">
+        <div className="bg-white border-b px-2 py-2 sm:px-6 sm:py-3 lg:px-8 sm:bg-transparent sm:border-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 sm:space-x-4">
               <Button
@@ -376,10 +376,10 @@ export const OrderHistory = () => {
           </div>
         </div>
 
-        <div className="px-4 sm:px-6 lg:px-8">
+        <div className="px-2 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             {/* Mobile-Optimized Search and Filters */}
-            <div className="space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between mb-6">
+            <div className="space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between mb-4 sm:mb-6">
               {/* Search Bar - Full Width on Mobile */}
               <div className="relative order-2 sm:order-1">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
@@ -536,15 +536,15 @@ export const OrderHistory = () => {
 
             {/* Mobile-Optimized Orders List */}
             <Card>
-              <CardHeader className="pb-3 sm:pb-6">
+              {/* <CardHeader className="pb-3 sm:pb-6">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center space-x-2">
                     <Clock className="h-5 w-5" />
                     <span className="text-lg sm:text-xl">Order History ({totalCount} total)</span>
                   </CardTitle>
                 </div>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6">
+              </CardHeader> */}
+              <CardContent className="p-2 sm:p-6">
                 {loading && filteredOrders.length === 0 ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -566,7 +566,7 @@ export const OrderHistory = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-2 sm:space-y-4">
                     {/* Use Virtualized List for better performance with responsive height */}
                     <VirtualizedOrderList
                       orders={filteredOrders}
@@ -583,7 +583,7 @@ export const OrderHistory = () => {
 
                 {/* Load More Button */}
                 {filteredOrders.length > 0 && hasMore && (
-                  <div className="flex justify-center mt-6 mb-4">
+                  <div className="flex justify-center mt-4 sm:mt-6 mb-2 sm:mb-4">
                     <Button 
                       variant="outline" 
                       onClick={handleLoadMore}

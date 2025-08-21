@@ -72,9 +72,9 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
   const completionTime = getOrderCompletionTime();
 
   return (
-    <div className="fixed bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 z-50 max-w-lg mx-auto">
+    <div className="fixed bottom-1 sm:bottom-4 left-1 sm:left-4 right-1 sm:right-4 z-50 max-w-lg mx-auto">
       <Card className="bg-white shadow-2xl border-2 border-blue-200 animate-slide-up">
-        <CardContent className="p-3 sm:p-4">
+        <CardContent className="p-2 sm:p-4">
           {/* Order Count Badge */}
           <div className="flex items-center justify-between mb-2 sm:mb-3">
             <div className="flex items-center gap-2">
@@ -103,8 +103,8 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
           )}
 
           {/* Order Items List */}
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-2">
+          <div className="mb-2 sm:mb-3">
+            <div className="flex items-center justify-between mb-1 sm:mb-2">
               <h4 className="text-sm font-medium text-gray-800">Order Items</h4>
               <Button
                 variant="outline"
@@ -116,9 +116,9 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                 <Plus className="h-3 w-3" />
               </Button>
             </div>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
+            <div className="space-y-1 sm:space-y-2 max-h-40 overflow-y-auto">
               {currentOrder.map((item, index) => (
-                <div key={`${item.service.id}-${item.serviceType}-${index}`} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                <div key={`${item.service.id}-${item.serviceType}-${index}`} className="flex items-center justify-between p-1.5 sm:p-2 bg-gray-50 rounded-lg">
                   <div className="flex-1 min-w-0">
                     <h5 className="text-sm font-medium text-gray-900 truncate">{item.service.name}</h5>
                     <p className="text-xs text-gray-600">
@@ -190,10 +190,10 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
             </div>
           </div>
 
-          <Separator className="mb-3" />
+          <Separator className="mb-2 sm:mb-3" />
 
           {/* Price Summary */}
-          <div className="space-y-2 mb-4">
+          <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Subtotal:</span>
               <span className="font-medium">Rp{subtotal.toLocaleString('id-ID')}</span>
@@ -206,9 +206,9 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
           </div>
 
           {/* Payment Method Selection */}
-          <div className="space-y-2">
+          <div className="space-y-1 sm:space-y-2">
             <label className="text-sm font-medium text-gray-700">Metode Pembayaran</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1 sm:gap-2">
               {paymentMethods.map((method) => {
                 const IconComponent = method.icon;
                 return (
@@ -216,13 +216,13 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                     key={method.id}
                     type="button"
                     onClick={() => setSelectedPaymentMethod(method.id)}
-                    className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
+                    className={`flex flex-col items-center p-2 sm:p-3 rounded-lg border-2 transition-all ${
                       selectedPaymentMethod === method.id
                         ? `border-blue-500 ${method.color} text-white`
                         : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <IconComponent className="h-5 w-5 mb-1" />
+                    <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 mb-1" />
                     <span className="text-xs font-medium">{method.name}</span>
                   </button>
                 );
@@ -231,9 +231,9 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="space-y-2">
+          <div className="space-y-1 sm:space-y-2">
             <Button 
-              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 text-sm" 
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 sm:py-3 text-sm" 
               onClick={() => onProcessPayment(selectedPaymentMethod)}
               disabled={isProcessing || !customerName || !customerPhone}
             >
@@ -243,7 +243,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
             
             <Button 
               variant="outline" 
-              className="w-full text-blue-600 border-blue-300 hover:bg-blue-50 py-2 text-sm" 
+              className="w-full text-blue-600 border-blue-300 hover:bg-blue-50 py-1.5 sm:py-2 text-sm" 
               onClick={onCreateDraft}
               disabled={isProcessing || !customerName || !customerPhone}
             >
