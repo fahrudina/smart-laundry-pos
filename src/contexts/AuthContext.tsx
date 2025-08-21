@@ -7,7 +7,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  signUp: (email: string, password: string, fullName?: string, phone?: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName?: string, phone?: string, role?: 'staff' | 'laundry_owner') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,10 +57,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string, fullName?: string, phone?: string) => {
+  const signUp = async (email: string, password: string, fullName?: string, phone?: string, role?: 'staff' | 'laundry_owner') => {
     try {
       setLoading(true);
-      const user = await authService.signUp(email, password, fullName, phone);
+      const user = await authService.signUp(email, password, fullName, phone, role);
       setUser(user);
       
       toast({
