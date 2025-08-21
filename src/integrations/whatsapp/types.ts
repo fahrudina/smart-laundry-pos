@@ -21,6 +21,7 @@ export interface WhatsAppResponse {
 export interface MessageTemplate {
   orderCreated: (data: OrderCreatedData) => string;
   orderCompleted: (data: OrderCompletedData) => string;
+  orderReadyForPickup: (data: OrderReadyForPickupData) => string;
 }
 
 export interface StoreInfo {
@@ -55,6 +56,15 @@ export interface OrderCompletedData {
   customerName: string;
   totalAmount: number;
   completedAt: string;
+  orderItems: OrderItem[];
+  storeInfo: StoreInfo;
+}
+
+export interface OrderReadyForPickupData {
+  orderId: string;
+  customerName: string;
+  totalAmount: number;
+  readyAt: string;
   orderItems: OrderItem[];
   storeInfo: StoreInfo;
 }
