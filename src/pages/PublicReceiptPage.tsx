@@ -196,7 +196,11 @@ export const PublicReceiptPage: React.FC = () => {
           {/* Store Header */}
           <div className="bg-white p-4 text-center border-b border-gray-200 receipt-section">
             {/* Logo placeholder */}
-            <div className="w-16 h-16 bg-emerald-100 rounded-full mx-auto mb-3 flex items-center justify-center no-print">
+            <div 
+              className="w-16 h-16 bg-emerald-100 rounded-full mx-auto mb-3 flex items-center justify-center no-print"
+              aria-label={storeInfo?.name ? `${storeInfo.name} logo` : "Store logo"}
+              role="img"
+            >
               <Receipt className="h-8 w-8 text-emerald-600" />
             </div>
             
