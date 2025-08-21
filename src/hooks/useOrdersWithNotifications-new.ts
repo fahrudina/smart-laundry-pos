@@ -203,6 +203,7 @@ export const useUpdateOrderStatusWithNotifications = () => {
               readyAt: WhatsAppDataHelper.formatCompletionDate(new Date().toISOString()),
               orderItems,
               storeInfo,
+              paymentStatus: orderData.payment_status,
             };
 
             await notifyOrderReadyForPickup(orderData.customer_phone, notificationData);

@@ -29,6 +29,7 @@ export const whatsAppFeatures = {
   // Enable/disable specific notification types
   notifyOnOrderCreated: import.meta.env.VITE_WHATSAPP_NOTIFY_ORDER_CREATED !== 'false',
   notifyOnOrderCompleted: import.meta.env.VITE_WHATSAPP_NOTIFY_ORDER_COMPLETED !== 'false',
+  notifyOnOrderReadyForPickup: import.meta.env.VITE_WHATSAPP_NOTIFY_ORDER_READY_FOR_PICKUP !== 'false',
   
   // Development mode (set to true to only log messages, false to send real messages)
   developmentMode: import.meta.env.VITE_WHATSAPP_DEVELOPMENT_MODE === 'true',

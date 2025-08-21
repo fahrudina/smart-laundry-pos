@@ -19,6 +19,19 @@ const getReceiptBaseUrl = (): string => {
 };
 
 /**
+ * Get payment status in Indonesian
+ */
+const getPaymentStatusIndonesian = (status: string): string => {
+  const statusMap: { [key: string]: string } = {
+    'pending': 'Belum Lunas',
+    'completed': 'Lunas',
+    'down_payment': 'DP',
+    'refunded': 'Dikembalikan'
+  };
+  return statusMap[status] || status;
+};
+
+/**
  * WhatsApp Message Templates
  * Contains pre-defined message templates for different scenarios
  */
@@ -51,17 +64,6 @@ export const messageTemplates: MessageTemplate = {
           return serviceInfo;
         }).join('\n\n')
       : 'Tipe Laundry : Regular';
-
-    // Get payment status in Indonesian
-    const getPaymentStatusIndonesian = (status: string) => {
-      const statusMap: { [key: string]: string } = {
-        'pending': 'Belum Lunas',
-        'completed': 'Lunas',
-        'down_payment': 'DP',
-        'refunded': 'Dikembalikan'
-      };
-      return statusMap[status] || status;
-    };
 
     return `${data.storeInfo.name}
 ${data.storeInfo.address}
@@ -169,29 +171,14 @@ ${getReceiptBaseUrl()}/receipt/${data.orderId}`;
 
     return `📦 *LAUNDRY SIAP DIAMBIL* 📦
 
-${data.storeInfo.name}
-${data.storeInfo.address}
-No. HP ${data.storeInfo.phone}
+Hai ${data.customerName},
+Cucian anda sudah selesai, silahkan ambil di ${data.storeInfo.name}
+
 ====================
-Tanggal Siap : ${readyDate} - ${readyTime}
 No Nota : ${data.orderId.slice(-8).toUpperCase()}
-Nama : ${data.customerName}
-===================
 
-${servicesList}
-Total Bayar = Rp. ${data.totalAmount.toLocaleString('id-ID')},-
-
-====================
-Status : SIAP DIAMBIL 📦
-Siap diambil pada : ${data.readyAt}
-====================
-
-Laundry Anda sudah selesai dan siap diambil!
-Silakan datang ke toko untuk mengambil laundry Anda.
-
-Jam Operasional:
-- Senin - Jumat: 08:00 - 20:00
-- Sabtu - Minggu: 09:00 - 18:00
+Total Bayar : Rp. ${data.totalAmount.toLocaleString('id-ID')},-
+Status Bayar: ${getPaymentStatusIndonesian(data.paymentStatus)}
 
 Terima kasih telah menggunakan layanan kami! 🙏
 ====================
