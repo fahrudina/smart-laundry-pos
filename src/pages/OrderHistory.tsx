@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { Clock, Search, Eye, Filter, Calendar, AlertTriangle, Edit, X, ChevronDown, ArrowLeft, Home, RefreshCw, Menu } from 'lucide-react';
+import { Clock, Search, Eye, Filter, Calendar, AlertTriangle, Edit, X, ChevronDown, ArrowLeft, Home, RefreshCw, Menu, Printer, Download, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,8 @@ import { OrderDetailsDialog } from '@/components/pos/OrderDetailsDialog';
 import { CashPaymentDialog } from '@/components/pos/CashPaymentDialog';
 import { VirtualizedOrderList } from '@/components/orders/VirtualizedOrderList';
 import { formatDate, isDateOverdue } from '@/lib/utils';
+import { openReceiptForView, openReceiptForPrint, generateReceiptPDFFromUrl } from '@/lib/printUtils';
+import { toast } from 'sonner';
 
 interface FilterState {
   executionStatus: string;
@@ -258,6 +260,29 @@ export const OrderHistory = () => {
     console.log('Viewing order:', order.id);
     setSelectedOrder(order);
     setShowOrderDetails(true);
+  }, []);
+
+  const handleViewReceipt = useCallback((orderId: string) => {
+    console.log('Opening receipt for viewing:', orderId);
+    openReceiptForView(orderId);
+  }, []);
+
+  const handlePrintReceipt = useCallback((orderId: string) => {
+    console.log('Opening receipt for printing:', orderId);
+    openReceiptForPrint(orderId);
+  }, []);
+
+  const handleExportReceiptPDF = useCallback(async (orderId: string, customerName: string) => {
+    try {
+      toast.loading('Generating PDF...', { id: `pdf-${orderId}` });
+      await generateReceiptPDFFromUrl(orderId, {
+        filename: `receipt-${customerName.replace(/\s+/g, '-')}-${orderId.slice(-6)}.pdf`
+      });
+      toast.success('PDF exported successfully!', { id: `pdf-${orderId}` });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast.error('Failed to export PDF. Please try again.', { id: `pdf-${orderId}` });
+    }
   }, []);
 
   const handleLoadMore = useCallback(() => {
@@ -771,6 +796,37 @@ export const OrderHistory = () => {
                           >
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
+                          </Button>
+
+                          {/* Receipt Actions */}
+                          <Button
+                            onClick={() => handleViewReceipt(order.id)}
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center justify-center border-blue-200 text-blue-700 hover:bg-blue-50"
+                          >
+                            <Receipt className="h-4 w-4 mr-2" />
+                            View Receipt
+                          </Button>
+
+                          <Button
+                            onClick={() => handlePrintReceipt(order.id)}
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center justify-center border-green-200 text-green-700 hover:bg-green-50"
+                          >
+                            <Printer className="h-4 w-4 mr-2" />
+                            Print
+                          </Button>
+
+                          <Button
+                            onClick={() => handleExportReceiptPDF(order.id, order.customer_name)}
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center justify-center border-purple-200 text-purple-700 hover:bg-purple-50"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Export PDF
                           </Button>
 
                           {/* Status Action Buttons */}
