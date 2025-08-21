@@ -69,9 +69,9 @@ const OrderItem = memo(({ index, style, data }: {
   };
 
   return (
-    <div style={style} className="px-2 sm:px-4">
+    <div style={style} className="px-1 sm:px-4">
       <Card className="mb-2 hover:shadow-md transition-shadow">
-        <CardContent className="p-3 sm:p-4">
+        <CardContent className="p-2 sm:p-4">
           <div className="flex justify-between items-start">
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-2">
@@ -127,9 +127,9 @@ const OrderItem = memo(({ index, style, data }: {
               </div>
 
               {/* Mobile-optimized Action Buttons */}
-              <div className="space-y-2 mt-4">
+              <div className="space-y-1 sm:space-y-2 mt-3 sm:mt-4">
                 {/* Row 1: Main Actions in grid */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-1 sm:gap-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -155,7 +155,7 @@ const OrderItem = memo(({ index, style, data }: {
 
                 {/* Row 2: Print Actions */}
                 {(data.onPrintReceipt || data.onExportReceiptPDF) && (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-1 sm:gap-2">
                     {data.onPrintReceipt && (
                       <Button
                         variant="outline"
@@ -216,7 +216,7 @@ const OrderItem = memo(({ index, style, data }: {
 
                 {/* Row 4: Payment Actions */}
                 {order.payment_status === 'pending' && (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-1 sm:gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -280,7 +280,7 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
   };
 
   // Responsive item size - much larger for mobile to prevent overlap
-  const itemSize = isMobile ? 320 : 250;
+  const itemSize = isMobile ? 420 : 380;
 
   return (
     <List
