@@ -119,43 +119,43 @@ export const useWhatsApp = () => {
   /**
    * Send order completed notification
    */
-  const notifyOrderCompleted = async (
-    phoneNumber: string,
-    orderData: OrderCompletedData
-  ): Promise<NotificationResult> => {
-    if (!whatsAppFeatures.notifyOnOrderCompleted) {
-      console.log('Order completed notifications disabled');
-      return { success: false, error: 'Feature disabled' };
-    }
+  // const notifyOrderCompleted = async (
+  //   phoneNumber: string,
+  //   orderData: OrderCompletedData
+  // ): Promise<NotificationResult> => {
+  //   if (!whatsAppFeatures.notifyOnOrderCompleted) {
+  //     console.log('Order completed notifications disabled');
+  //     return { success: false, error: 'Feature disabled' };
+  //   }
 
-    if (whatsAppFeatures.developmentMode) {
-      console.log('DEV MODE - Order completed notification:', { phoneNumber, orderData });
-      return { success: true, messageId: 'dev-mode-id' };
-    }
+  //   if (whatsAppFeatures.developmentMode) {
+  //     console.log('DEV MODE - Order completed notification:', { phoneNumber, orderData });
+  //     return { success: true, messageId: 'dev-mode-id' };
+  //   }
 
-    if (!isConfigured) {
-      console.warn('WhatsApp not configured, skipping order completed notification');
-      return { success: false, error: 'Service not configured' };
-    }
+  //   if (!isConfigured) {
+  //     console.warn('WhatsApp not configured, skipping order completed notification');
+  //     return { success: false, error: 'Service not configured' };
+  //   }
 
-    try {
-      const result = await whatsAppService.notifyOrderCompleted(phoneNumber, orderData);
+  //   try {
+  //     const result = await whatsAppService.notifyOrderCompleted(phoneNumber, orderData);
       
-      if (result.success) {
-        console.log('Order completed notification sent successfully');
-      } else {
-        console.error('Failed to send order completed notification:', result.error);
-      }
+  //     if (result.success) {
+  //       console.log('Order completed notification sent successfully');
+  //     } else {
+  //       console.error('Failed to send order completed notification:', result.error);
+  //     }
       
-      return result;
-    } catch (error) {
-      console.error('Error sending order completed notification:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-    }
-  };
+  //     return result;
+  //   } catch (error) {
+  //     console.error('Error sending order completed notification:', error);
+  //     return {
+  //       success: false,
+  //       error: error instanceof Error ? error.message : 'Unknown error'
+  //     };
+  //   }
+  // };
 
   /**
    * Send order ready for pickup notification
@@ -253,7 +253,7 @@ export const useWhatsApp = () => {
     isTestingConnection,
     testConnection,
     notifyOrderCreated,
-    notifyOrderCompleted,
+   // notifyOrderCompleted,
     notifyOrderReadyForPickup,
     sendCustomMessage,
     features: whatsAppFeatures,
