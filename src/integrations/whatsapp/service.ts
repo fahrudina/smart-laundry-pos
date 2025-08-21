@@ -85,37 +85,37 @@ export class WhatsAppNotificationService {
   /**
    * Send order completion notification
    */
-  async notifyOrderCompleted(
-    phoneNumber: string,
-    orderData: OrderCompletedData
-  ): Promise<NotificationResult> {
-    if (!this.isConfigured()) {
-      console.warn('WhatsApp service not configured, skipping notification');
-      return { success: false, error: 'Service not configured' };
-    }
+  // async notifyOrderCompleted(
+  //   phoneNumber: string,
+  //   orderData: OrderCompletedData
+  // ): Promise<NotificationResult> {
+  //   if (!this.isConfigured()) {
+  //     console.warn('WhatsApp service not configured, skipping notification');
+  //     return { success: false, error: 'Service not configured' };
+  //   }
 
-    try {
-      const formattedPhone = WhatsAppClient.formatPhoneNumber(phoneNumber);
-      const message = messageTemplates.orderCompleted(orderData);
+  //   try {
+  //     const formattedPhone = WhatsAppClient.formatPhoneNumber(phoneNumber);
+  //     const message = messageTemplates.orderCompleted(orderData);
 
-      const response = await this.client.sendMessage({
-        to: formattedPhone,
-        message,
-      });
+  //     const response = await this.client.sendMessage({
+  //       to: formattedPhone,
+  //       message,
+  //     });
 
-      return {
-        success: response.success,
-        messageId: response.id,
-        error: response.error,
-      };
-    } catch (error) {
-      console.error('Failed to send order completed notification:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
-    }
-  }
+  //     return {
+  //       success: response.success,
+  //       messageId: response.id,
+  //       error: response.error,
+  //     };
+  //   } catch (error) {
+  //     console.error('Failed to send order completed notification:', error);
+  //     return {
+  //       success: false,
+  //       error: error instanceof Error ? error.message : 'Unknown error',
+  //     };
+  //   }
+  // }
 
   /**
    * Send order ready for pickup notification
