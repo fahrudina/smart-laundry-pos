@@ -22,6 +22,7 @@ import { queryClient } from "./lib/queryClient";
 import { PublicReceiptPage } from "./pages/PublicReceiptPage";
 import { PWAManagementPage } from "./pages/PWAManagementPage";
 import { CustomersPage } from "./pages/CustomersPage";
+import { ReportsPage } from "./pages/ReportsPage";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -75,6 +76,16 @@ const App = () => (
                   <ProtectedRoute>
                     <AppLayout>
                       <CustomersPage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/reports" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ReportsPage />
                     </AppLayout>
                   </ProtectedRoute>
                 } 

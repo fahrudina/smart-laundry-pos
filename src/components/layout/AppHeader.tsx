@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users } from 'lucide-react';
+import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users, BarChart3 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,6 +65,12 @@ export const AppHeader: React.FC = () => {
     }
   };
 
+  const handleReportsNavigation = () => {
+    if (location.pathname !== '/reports') {
+      navigate('/reports');
+    }
+  };
+
   if (!user) return null;
 
   const userInitials = user.full_name 
@@ -75,6 +81,7 @@ export const AppHeader: React.FC = () => {
   const isOnPOS = location.pathname === '/pos';
   const isOnHistory = location.pathname === '/order-history';
   const isOnCustomers = location.pathname === '/customers';
+  const isOnReports = location.pathname === '/reports';
 
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm">
@@ -106,6 +113,10 @@ export const AppHeader: React.FC = () => {
                   <DropdownMenuItem onClick={handleCustomersNavigation}>
                     <Users className="h-4 w-4 mr-2" />
                     Customers
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleReportsNavigation}>
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Reports
                   </DropdownMenuItem>
                   {isOwner && (
                     <>
@@ -191,6 +202,20 @@ export const AppHeader: React.FC = () => {
             >
               <Users className="h-4 w-4" />
               <span className="hidden xl:inline">Customers</span>
+            </Button>
+
+            <Button
+              variant={isOnReports ? "default" : "ghost"}
+              size="sm"
+              onClick={handleReportsNavigation}
+              className={`flex items-center gap-2 ${
+                isOnReports 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden xl:inline">Reports</span>
             </Button>
 
             {/* Owner-only Navigation */}
