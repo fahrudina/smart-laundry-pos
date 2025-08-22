@@ -18,6 +18,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [currentStore, setCurrentStore] = useState<StoreWithOwnershipInfo | null>(null);
   const [userStores, setUserStores] = useState<StoreWithOwnershipInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSwitching, setIsSwitching] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth(); // Get user from AuthContext
 
@@ -51,6 +52,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (!authService.isAuthenticated()) {
         console.log('User not authenticated, skipping store refresh');
         setLoading(false);
+        return;
+      }
+
+      if (isSwitching) {
+        console.log('Currently switching stores, skipping refresh');
         return;
       }
 
@@ -125,22 +131,50 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isSwitching]);
 
   const switchStore = (storeId: string) => {
     console.log('switchStore called with storeId:', storeId);
     console.log('Available stores:', userStores.map(s => ({ id: s.store_id, name: s.store_name })));
+    console.log('Current store before switch:', currentStore?.store_id);
+    
+    if (isSwitching) {
+      console.log('Already switching stores, ignoring request');
+      return;
+    }
     
     const store = userStores.find(s => s.store_id === storeId);
     if (store) {
       console.log('Switching to store:', store);
-      setCurrentStore(store);
-      persistStoreId(store.store_id);
+      setIsSwitching(true);
       
-      toast({
-        title: "Store Switched",
-        description: `Now working in: ${store.store_name}`,
-      });
+      // Update current store first
+      setCurrentStore(store);
+      
+      // Then persist to localStorage
+      try {
+        persistStoreId(store.store_id);
+        console.log('Store ID persisted successfully');
+      } catch (error) {
+        console.error('Error persisting store ID:', error);
+      }
+      
+      // Show toast notification last (and make it optional)
+      try {
+        toast({
+          title: "Store Switched",
+          description: `Now working in: ${store.store_name}`,
+        });
+        console.log('Toast notification shown');
+      } catch (error) {
+        console.error('Error showing toast:', error);
+      }
+      
+      // Reset switching flag after a short delay
+      setTimeout(() => {
+        setIsSwitching(false);
+        console.log('Store switching completed');
+      }, 500);
     } else {
       console.error('Store not found with ID:', storeId);
     }
@@ -190,7 +224,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     refreshStores,
   };
 
-  if (loading) {
+  // Only show loading screen on initial load, not during store operations
+  if (loading && userStores.length === 0 && !currentStore) {
     return <div>Loading stores...</div>;
   }
 
