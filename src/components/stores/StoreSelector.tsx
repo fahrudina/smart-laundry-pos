@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -14,6 +14,20 @@ import { useStore } from '@/contexts/StoreContext';
 
 export const StoreSelector: React.FC = () => {
   const { currentStore, userStores, switchStore } = useStore();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleStoreSwitch = useCallback((storeId: string, storeName: string) => {
+    console.log('StoreSelector: handleStoreSwitch called with:', storeId, storeName);
+    
+    // Close the dropdown first
+    setIsOpen(false);
+    
+    // Use requestAnimationFrame to ensure the dropdown close animation completes
+    requestAnimationFrame(() => {
+      console.log('StoreSelector: Executing switchStore after frame');
+      switchStore(storeId);
+    });
+  }, [switchStore]);
 
   if (userStores.length === 0) {
     return null;
@@ -29,7 +43,7 @@ export const StoreSelector: React.FC = () => {
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="flex items-center gap-2">
           <Building2 className="h-4 w-4" />
@@ -45,7 +59,10 @@ export const StoreSelector: React.FC = () => {
         {userStores.map((store) => (
           <DropdownMenuItem
             key={store.store_id}
-            onClick={() => switchStore(store.store_id)}
+            onSelect={() => {
+              console.log('StoreSelector: onSelect called for store:', store.store_name, store.store_id);
+              handleStoreSwitch(store.store_id, store.store_name);
+            }}
             className="flex items-center justify-between cursor-pointer"
           >
             <div className="flex-1">
