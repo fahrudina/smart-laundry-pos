@@ -259,7 +259,7 @@ export const AppHeader: React.FC = () => {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuContent className="w-72" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
@@ -291,17 +291,17 @@ export const AppHeader: React.FC = () => {
                           console.log('AppHeader: Mobile store switch to:', store.store_name, store.store_id);
                           switchStore(store.store_id);
                         }}
-                        className="flex items-center justify-between cursor-pointer"
+                        className="flex items-start gap-3 cursor-pointer p-3"
                       >
-                        <div className="flex-1">
-                          <div className="font-medium">{store.store_name}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate pr-2">{store.store_name}</div>
                           {store.store_description && (
-                            <div className="text-xs text-muted-foreground truncate">
+                            <div className="text-xs text-muted-foreground truncate pr-2 mt-1">
                               {store.store_description}
                             </div>
                           )}
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
                           {store.is_owner && (
                             <Badge variant="secondary" className="text-xs">Owner</Badge>
                           )}
