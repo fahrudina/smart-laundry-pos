@@ -17,10 +17,12 @@ export const useStore = () => {
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentStore, setCurrentStore] = useState<StoreWithOwnershipInfo | null>(null);
   const [userStores, setUserStores] = useState<StoreWithOwnershipInfo[]>([]);
-  const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth(); // Get user from AuthContext
+
+  // Determine isOwner based on current store's ownership, not global user role
+  const isOwner = currentStore?.is_owner ?? false;
 
   // Helper functions for localStorage persistence
   const getPersistedStoreId = (): string | null => {
@@ -58,7 +60,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.log('Stores fetched:', stores);
       
       setUserStores(stores);
-      setIsOwner(authService.isOwner());
 
       // Try to restore previously selected store
       const persistedStoreId = getPersistedStoreId();
@@ -80,34 +81,31 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // 2. Persisted store if accessible
       // 3. First available store
       if (stores.length > 0) {
-        let shouldPersistFirstStore = false;
-        
         setCurrentStore(currentStoreState => {
+          // Priority 1: Keep current store if it's still in the list
           if (currentStoreState && stores.find(s => s.store_id === currentStoreState.store_id)) {
-            // Current store is still accessible, keep it
             console.log('Keeping current store:', currentStoreState);
             return currentStoreState;
-          } else if (targetStore) {
-            // Use restored persisted store
+          }
+          
+          // Priority 2: Use persisted store if available
+          if (targetStore) {
             console.log('Setting restored store:', targetStore);
             return targetStore;
-          } else if (!currentStoreState) {
-            // No current store, select first available
+          }
+          
+          // Priority 3: Select first available store only if no current store
+          if (!currentStoreState) {
             console.log('Auto-selecting first store:', stores[0]);
-            shouldPersistFirstStore = true;
-            return stores[0];
-          } else {
-            // Current store no longer accessible, switch to first available
-            console.log('Current store no longer accessible, switching to first available');
-            shouldPersistFirstStore = true;
+            persistStoreId(stores[0].store_id);
             return stores[0];
           }
+          
+          // If current store is no longer accessible, keep the current state
+          // instead of auto-switching to first store
+          console.log('Current store no longer accessible, but keeping selection to avoid auto-switch');
+          return currentStoreState;
         });
-        
-        // Persist store ID outside the functional update
-        if (shouldPersistFirstStore) {
-          persistStoreId(stores[0].store_id);
-        }
       } else {
         // No stores available
         setCurrentStore(null);
@@ -130,14 +128,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const switchStore = (storeId: string) => {
+    console.log('switchStore called with storeId:', storeId);
+    console.log('Available stores:', userStores.map(s => ({ id: s.store_id, name: s.store_name })));
+    
     const store = userStores.find(s => s.store_id === storeId);
     if (store) {
+      console.log('Switching to store:', store);
       setCurrentStore(store);
       persistStoreId(store.store_id);
+      
       toast({
         title: "Store Switched",
         description: `Now working in: ${store.store_name}`,
       });
+    } else {
+      console.error('Store not found with ID:', storeId);
     }
   };
 
@@ -161,19 +166,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.log('User logged out, resetting store context...');
       setCurrentStore(null);
       setUserStores([]);
-      setIsOwner(false);
       setLoading(false);
       persistStoreId(null); // Clear persisted store on logout
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user?.id]); // Only depend on user ID, not the entire user object
 
   // Reset store context when user logs out (backup check)
   useEffect(() => {
     if (!authService.isAuthenticated()) {
       setCurrentStore(null);
       setUserStores([]);
-      setIsOwner(false);
       persistStoreId(null); // Clear persisted store on logout
     }
   }, []);
