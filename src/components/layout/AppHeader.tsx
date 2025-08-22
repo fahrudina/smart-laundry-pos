@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users } from 'lucide-react';
+import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users, Check } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,7 @@ import { PWAInstallButton } from '@/components/ui/PWAInstallButton';
 
 export const AppHeader: React.FC = () => {
   const { user, signOut } = useAuth();
-  const { currentStore, isOwner } = useStore();
+  const { currentStore, isOwner, userStores, switchStore } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -259,7 +259,7 @@ export const AppHeader: React.FC = () => {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuContent className="w-72" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
@@ -281,11 +281,36 @@ export const AppHeader: React.FC = () => {
                 <DropdownMenuSeparator />
                 {isOwner && (
                   <div className="md:hidden">
-                    <DropdownMenuItem>
-                      <div className="w-full">
-                        <StoreSelector />
-                      </div>
-                    </DropdownMenuItem>
+                    <DropdownMenuLabel>Switch Store</DropdownMenuLabel>
+                    {userStores.map((store) => (
+                      <DropdownMenuItem
+                        key={store.store_id}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('AppHeader: Mobile store switch to:', store.store_name, store.store_id);
+                          switchStore(store.store_id);
+                        }}
+                        className="flex items-start gap-3 cursor-pointer p-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate pr-2">{store.store_name}</div>
+                          {store.store_description && (
+                            <div className="text-xs text-muted-foreground truncate pr-2 mt-1">
+                              {store.store_description}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          {store.is_owner && (
+                            <Badge variant="secondary" className="text-xs">Owner</Badge>
+                          )}
+                          {currentStore?.store_id === store.store_id && (
+                            <Check className="h-3 w-3 text-primary" />
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
                     <DropdownMenuSeparator />
                   </div>
                 )}
