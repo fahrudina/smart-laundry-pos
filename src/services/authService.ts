@@ -64,7 +64,7 @@ class AuthService {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
   }
 
-  async signUp(email: string, password: string, fullName?: string, phone?: string, role: 'staff' | 'laundry_owner' = 'staff', storeData?: { name: string; address?: string; phone?: string; }): Promise<User> {
+  async signUp(email: string, password: string, fullName?: string, phone?: string, role: 'staff' | 'laundry_owner' = 'staff', storeData?: { name: string; address?: string; phone?: string; }, setSession: boolean = true): Promise<User> {
     try {
       const { data, error } = await supabase.rpc('create_user', {
         user_email: email,
@@ -121,14 +121,17 @@ class AuthService {
         is_active: userData.is_active
       };
 
-      // Create session
-      const session: AuthSession = {
-        user,
-        token: this.generateToken(),
-        expires_at: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
-      };
+      // Create session (only if caller wants to set it)
+      if (setSession) {
+        const session: AuthSession = {
+          user,
+          token: this.generateToken(),
+          expires_at: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+        };
 
-      this.saveSession(session);
+        this.saveSession(session);
+      }
+
       return user;
     } catch (error) {
       console.error('Sign up error:', error);
@@ -263,8 +266,32 @@ class AuthService {
       throw new Error('User not authenticated');
     }
 
+    // Always use the current session user ID (the owner)
+    const ownerUserId = this.session!.user.id;
+
+    // Verify the user in DB is actually a laundry_owner
+    try {
+      const { data: ownerData, error: ownerError } = await supabase
+        .from('users')
+        .select('id, role')
+        .eq('id', ownerUserId)
+        .single();
+
+      if (ownerError) {
+        console.error('assignStaffToStore: error fetching owner from users table', ownerError);
+        throw new Error(ownerError.message);
+      }
+
+      if (!ownerData || ownerData.role !== 'laundry_owner') {
+        throw new Error('Current user is not a laundry owner');
+      }
+    } catch (err) {
+      console.error('assignStaffToStore: owner verification failed', err);
+      throw err;
+    }
+
     const { data, error } = await supabase.rpc('assign_staff_to_store', {
-      user_id: this.session!.user.id,
+      user_id: ownerUserId,
       staff_user_id: staffUserId,
       target_store_id: storeId
     });
