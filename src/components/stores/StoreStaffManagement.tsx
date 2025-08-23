@@ -98,14 +98,17 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
       
       // Use the signUp method to create a new staff user
       const newUser = await authService.signUp(
-        createForm.email, 
-        createForm.password, 
-        createForm.full_name, 
-        createForm.phone
+        createForm.email,
+        createForm.password,
+        createForm.full_name,
+        createForm.phone,
+        'staff',
+        undefined,
+        false // do not set session when creating staff
       );
 
-      // Assign the new user to the store
-      await authService.assignStaffToStore(newUser.id, store.store_id);
+  // Assign the new user to the store, passing the current owner user ID
+  await authService.assignStaffToStore(newUser.id, store.store_id);
 
       toast({
         title: 'Success',
@@ -130,6 +133,7 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
   const handleAssignStaff = async (staffId: string) => {
     try {
       setLoading(true);
+      // Always use the current session owner user ID for assignment
       await authService.assignStaffToStore(staffId, store.store_id);
 
       toast({
@@ -149,7 +153,7 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const handleRemoveStaff = async (staffId: string) => {
     try {
