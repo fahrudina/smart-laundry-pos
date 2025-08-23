@@ -28,7 +28,21 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner />
+      <Sonner 
+        position="top-center"
+        richColors
+        closeButton
+        toastOptions={{
+          style: {
+            minWidth: '320px',
+            maxWidth: '500px',
+            width: '90vw',
+            padding: '16px',
+            fontSize: '16px',
+            borderRadius: '12px',
+          },
+        }}
+      />
       <BrowserRouter>
         <AuthProvider>
           <StoreProvider>

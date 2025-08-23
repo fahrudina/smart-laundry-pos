@@ -13,9 +13,12 @@ export const StoreManagement: React.FC = () => {
   const { userStores, currentStore, isOwner, switchStore, refreshStores } = useStore();
   const [selectedStore, setSelectedStore] = useState<StoreWithOwnershipInfo | null>(null);
 
+  // Initialize selectedStore with currentStore when component mounts or currentStore changes
   useEffect(() => {
-    refreshStores();
-  }, []);
+    if (currentStore && !selectedStore) {
+      setSelectedStore(currentStore);
+    }
+  }, [currentStore, selectedStore]);
 
   const handleStoreCreated = () => {
     refreshStores();

@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/contexts/StoreContext';
 import { useWhatsApp } from '@/hooks/useWhatsApp';
 import { WhatsAppDataHelper } from '@/integrations/whatsapp/data-helper';
-import { OrderCreatedData, OrderCompletedData } from '@/integrations/whatsapp/types';
+import { OrderCreatedData, OrderCompletedData, OrderReadyForPickupData } from '@/integrations/whatsapp/types';
 import type { CreateOrderData, UnitItem } from './useOrdersOptimized';
 
 // Re-export types for convenience
@@ -116,7 +116,7 @@ export const useCreateOrderWithNotifications = () => {
 export const useUpdateOrderStatusWithNotifications = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { notifyOrderCompleted } = useWhatsApp();
+  const { notifyOrderReadyForPickup } = useWhatsApp();
   const { currentStore } = useStore();
 
   return useMutation({
@@ -171,26 +171,55 @@ export const useUpdateOrderStatusWithNotifications = () => {
       if (error) throw error;
 
       // Send WhatsApp notification for completed orders
-      if (executionStatus === 'completed' && orderData) {
+      // if (executionStatus === 'completed' && orderData) {
+      //   (async () => {
+      //     try {
+      //       // Use store context data directly instead of querying by ID
+      //       const storeInfo = WhatsAppDataHelper.getStoreInfoFromContext(currentStore);
+      //       const orderItems = WhatsAppDataHelper.formatOrderItems(orderData.order_items || []);
+            
+      //       console.log('🏪 Current store context for completion:', currentStore);
+      //       console.log('📋 Store info for completion notification:', storeInfo);
+            
+      //       const notificationData: OrderCompletedData = {
+      //         orderId: orderId,
+      //         customerName: orderData.customer_name,
+      //         totalAmount: orderData.total_amount,
+      //         completedAt: WhatsAppDataHelper.formatCompletionDate(new Date().toISOString()),
+      //         orderItems,
+      //         storeInfo,
+      //       };
+
+      //       await notifyOrderCompleted(orderData.customer_phone, notificationData);
+      //     } catch (error) {
+      //       // Log WhatsApp notification errors but don't fail the status update
+      //       console.warn('WhatsApp notification failed:', error);
+      //     }
+      //   })();
+      // }
+
+      // Send WhatsApp notification for ready for pickup orders
+      if (executionStatus === 'ready_for_pickup' && orderData) {
         (async () => {
           try {
             // Use store context data directly instead of querying by ID
             const storeInfo = WhatsAppDataHelper.getStoreInfoFromContext(currentStore);
             const orderItems = WhatsAppDataHelper.formatOrderItems(orderData.order_items || []);
             
-            console.log('🏪 Current store context for completion:', currentStore);
-            console.log('📋 Store info for completion notification:', storeInfo);
+            console.log('🏪 Current store context for ready for pickup:', currentStore);
+            console.log('📋 Store info for ready for pickup notification:', storeInfo);
             
-            const notificationData: OrderCompletedData = {
+            const notificationData: OrderReadyForPickupData = {
               orderId: orderId,
               customerName: orderData.customer_name,
               totalAmount: orderData.total_amount,
-              completedAt: WhatsAppDataHelper.formatCompletionDate(new Date().toISOString()),
+              readyAt: WhatsAppDataHelper.formatCompletionDate(new Date().toISOString()),
               orderItems,
               storeInfo,
+              paymentStatus: orderData.payment_status,
             };
 
-            await notifyOrderCompleted(orderData.customer_phone, notificationData);
+            await notifyOrderReadyForPickup(orderData.customer_phone, notificationData);
           } catch (error) {
             // Log WhatsApp notification errors but don't fail the status update
             console.warn('WhatsApp notification failed:', error);

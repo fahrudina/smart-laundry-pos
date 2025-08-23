@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X } from 'lucide-react';
+import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCustomers } from '@/hooks/useCustomers';
 //import { useCreateOrder, UnitItem } from '@/hooks/useOrdersOptimized';
 import { useCreateOrderWithNotifications as useCreateOrder, UnitItem } from '@/hooks/useOrdersWithNotifications';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { ServiceSelectionPopup } from './ServiceSelectionPopup';
 import { FloatingOrderSummary } from './FloatingOrderSummary';
 import { CashPaymentDialog } from './CashPaymentDialog';
@@ -135,7 +135,6 @@ export const LaundryPOS = () => {
   const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading } = useCustomers();
   const createOrderMutation = useCreateOrder();
-  const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const nameDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -433,19 +432,31 @@ export const LaundryPOS = () => {
 
   const processPayment = async (paymentMethod: string = 'cash') => {
     if (currentOrder.length === 0) {
-      toast({
-        title: "Error",
-        description: "No items in order",
-        variant: "destructive",
+      toast.error("❌ No items in order", {
+        style: {
+          minWidth: '320px',
+          maxWidth: '500px',
+          width: '90vw',
+          padding: '16px',
+          fontSize: '16px',
+          borderRadius: '12px',
+          border: '2px solid #ef4444',
+        }
       });
       return;
     }
 
     if (!customerName || !customerPhone) {
-      toast({
-        title: "Error",
-        description: "Please provide customer information",
-        variant: "destructive",
+      toast.error("❌ Please provide customer information", {
+        style: {
+          minWidth: '320px',
+          maxWidth: '500px',
+          width: '90vw',
+          padding: '16px',
+          fontSize: '16px',
+          borderRadius: '12px',
+          border: '2px solid #ef4444',
+        }
       });
       return;
     }
@@ -499,12 +510,34 @@ export const LaundryPOS = () => {
       
       // Enhanced success message with change information
       const change = cashReceived - totalAmount;
-      const changeMessage = change > 0 ? ` Kembalian: Rp ${change.toLocaleString('id-ID')}.` : '';
+      const changeMessage = change > 0 ? ` | Kembalian: Rp ${change.toLocaleString('id-ID')}` : '';
       
-      toast({
-        title: "Success",
-        description: `Payment processed successfully!${changeMessage} Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
-      });
+      toast.success(
+        <div className="flex items-start space-x-3 py-2">
+          <CheckCircle2 className="h-7 w-7 text-green-600 mt-1 flex-shrink-0" />
+          <div className="flex-1">
+            <div className="text-lg font-bold text-green-800 mb-1">✅ Order berhasil dibuat!</div>
+            <div className="text-sm text-green-700 leading-relaxed">
+              <div className="font-medium">Pembayaran tunai berhasil{changeMessage}</div>
+              <div className="mt-1">Selesai: <span className="font-semibold">{completionDate ? formatDate(completionDate) : 'segera'}</span></div>
+            </div>
+          </div>
+        </div>,
+        { 
+          duration: 6000,
+          style: {
+            background: '#f0fdf4',
+            border: '2px solid #22c55e',
+            color: '#166534',
+            minWidth: '320px',
+            maxWidth: '500px',
+            width: '90vw',
+            padding: '20px',
+            borderRadius: '16px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          }
+        }
+      );
     } catch (error) {
       // Error is already handled in the hook
       setShowCashPaymentDialog(false);
@@ -547,10 +580,32 @@ export const LaundryPOS = () => {
       setCustomerName('');
       setCustomerPhone('');
       
-      toast({
-        title: "Success",
-        description: `Payment processed successfully via ${paymentMethod.toUpperCase()}! Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
-      });
+      toast.success(
+        <div className="flex items-start space-x-3 py-2">
+          <CheckCircle2 className="h-7 w-7 text-green-600 mt-1 flex-shrink-0" />
+          <div className="flex-1">
+            <div className="text-lg font-bold text-green-800 mb-1">✅ Order berhasil dibuat!</div>
+            <div className="text-sm text-green-700 leading-relaxed">
+              <div className="font-medium">Pembayaran {paymentMethod.toUpperCase()} berhasil</div>
+              <div className="mt-1">Selesai: <span className="font-semibold">{completionDate ? formatDate(completionDate) : 'segera'}</span></div>
+            </div>
+          </div>
+        </div>,
+        { 
+          duration: 6000,
+          style: {
+            background: '#f0fdf4',
+            border: '2px solid #22c55e',
+            color: '#166534',
+            minWidth: '320px',
+            maxWidth: '500px',
+            width: '90vw',
+            padding: '20px',
+            borderRadius: '16px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          }
+        }
+      );
     } catch (error) {
       // Error is already handled in the hook
     }
@@ -558,19 +613,31 @@ export const LaundryPOS = () => {
 
   const createDraftOrder = async () => {
     if (currentOrder.length === 0) {
-      toast({
-        title: "Error",
-        description: "No items in order",
-        variant: "destructive",
+      toast.error("❌ No items in order", {
+        style: {
+          minWidth: '320px',
+          maxWidth: '500px',
+          width: '90vw',
+          padding: '16px',
+          fontSize: '16px',
+          borderRadius: '12px',
+          border: '2px solid #ef4444',
+        }
       });
       return;
     }
 
     if (!customerName || !customerPhone) {
-      toast({
-        title: "Error", 
-        description: "Please provide customer information",
-        variant: "destructive",
+      toast.error("❌ Please provide customer information", {
+        style: {
+          minWidth: '320px',
+          maxWidth: '500px',
+          width: '90vw',
+          padding: '16px',
+          fontSize: '16px',
+          borderRadius: '12px',
+          border: '2px solid #ef4444',
+        }
       });
       return;
     }
@@ -608,10 +675,32 @@ export const LaundryPOS = () => {
       setCustomerName('');
       setCustomerPhone('');
       
-      toast({
-        title: "Success",
-        description: `Draft order created successfully! Estimated completion: ${completionDate ? formatDate(completionDate) : 'TBD'}.`,
-      });
+      toast.success(
+        <div className="flex items-start space-x-3 py-2">
+          <CheckCircle2 className="h-7 w-7 text-blue-600 mt-1 flex-shrink-0" />
+          <div className="flex-1">
+            <div className="text-lg font-bold text-blue-800 mb-1">📝 Order berhasil dibuat!</div>
+            <div className="text-sm text-blue-700 leading-relaxed">
+              <div className="font-medium">Menunggu pembayaran</div>
+              <div className="mt-1">Estimasi selesai: <span className="font-semibold">{completionDate ? formatDate(completionDate) : 'TBD'}</span></div>
+            </div>
+          </div>
+        </div>,
+        { 
+          duration: 6000,
+          style: {
+            background: '#eff6ff',
+            border: '2px solid #3b82f6',
+            color: '#1d4ed8',
+            minWidth: '320px',
+            maxWidth: '500px',
+            width: '90vw',
+            padding: '20px',
+            borderRadius: '16px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          }
+        }
+      );
     } catch (error) {
       // Error is already handled in the hook
     }

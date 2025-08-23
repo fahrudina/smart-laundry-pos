@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users, BarChart3 } from 'lucide-react';
+import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users, Check, BarChart3 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,7 @@ import { PWAInstallButton } from '@/components/ui/PWAInstallButton';
 
 export const AppHeader: React.FC = () => {
   const { user, signOut } = useAuth();
-  const { currentStore, isOwner } = useStore();
+  const { currentStore, isOwner, userStores, switchStore } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -84,7 +84,7 @@ export const AppHeader: React.FC = () => {
   const isOnReports = location.pathname === '/reports';
 
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Left Section - Mobile Menu + Logo */}
@@ -147,7 +147,7 @@ export const AppHeader: React.FC = () => {
           </div>
 
           {/* Primary Navigation - Desktop */}
-          <nav className="hidden lg:flex items-center space-x-1">
+          <nav className="hidden lg:flex items-center space-x-3">
             <Button
               variant={isOnHome ? "default" : "ghost"}
               size="sm"
@@ -159,7 +159,7 @@ export const AppHeader: React.FC = () => {
               }`}
             >
               <Home className="h-4 w-4" />
-              <span className="hidden xl:inline">Home</span>
+              <span className="hidden lg:inline">Home</span>
             </Button>
             
             <Button
@@ -173,7 +173,7 @@ export const AppHeader: React.FC = () => {
               }`}
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden xl:inline">New Order</span>
+              <span className="hidden lg:inline">New Order</span>
             </Button>
             
             <Button
@@ -187,7 +187,7 @@ export const AppHeader: React.FC = () => {
               }`}
             >
               <History className="h-4 w-4" />
-              <span className="hidden xl:inline">History</span>
+              <span className="hidden lg:inline">History</span>
             </Button>
 
             <Button
@@ -201,7 +201,7 @@ export const AppHeader: React.FC = () => {
               }`}
             >
               <Users className="h-4 w-4" />
-              <span className="hidden xl:inline">Customers</span>
+              <span className="hidden lg:inline">Customers</span>
             </Button>
 
             <Button
@@ -232,7 +232,7 @@ export const AppHeader: React.FC = () => {
                   }`}
                 >
                   <Wrench className="h-4 w-4" />
-                  <span className="hidden xl:inline">Services</span>
+                  <span className="hidden lg:inline">Services</span>
                 </Button>
                 
                 <Button
@@ -246,7 +246,7 @@ export const AppHeader: React.FC = () => {
                   }`}
                 >
                   <Building2 className="h-4 w-4" />
-                  <span className="hidden xl:inline">Stores</span>
+                  <span className="hidden lg:inline">Stores</span>
                 </Button>
               </>
             )}
@@ -284,7 +284,7 @@ export const AppHeader: React.FC = () => {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuContent className="w-72" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
@@ -306,11 +306,36 @@ export const AppHeader: React.FC = () => {
                 <DropdownMenuSeparator />
                 {isOwner && (
                   <div className="md:hidden">
-                    <DropdownMenuItem>
-                      <div className="w-full">
-                        <StoreSelector />
-                      </div>
-                    </DropdownMenuItem>
+                    <DropdownMenuLabel>Switch Store</DropdownMenuLabel>
+                    {userStores.map((store) => (
+                      <DropdownMenuItem
+                        key={store.store_id}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('AppHeader: Mobile store switch to:', store.store_name, store.store_id);
+                          switchStore(store.store_id);
+                        }}
+                        className="flex items-start gap-3 cursor-pointer p-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate pr-2">{store.store_name}</div>
+                          {store.store_description && (
+                            <div className="text-xs text-muted-foreground truncate pr-2 mt-1">
+                              {store.store_description}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          {store.is_owner && (
+                            <Badge variant="secondary" className="text-xs">Owner</Badge>
+                          )}
+                          {currentStore?.store_id === store.store_id && (
+                            <Check className="h-3 w-3 text-primary" />
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
                     <DropdownMenuSeparator />
                   </div>
                 )}

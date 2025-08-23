@@ -7,7 +7,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  signUp: (email: string, password: string, fullName?: string, phone?: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName?: string, phone?: string, role?: 'staff' | 'laundry_owner', storeData?: { name: string; address?: string; phone?: string; }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,15 +57,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string, fullName?: string, phone?: string) => {
+  const signUp = async (email: string, password: string, fullName?: string, phone?: string, role?: 'staff' | 'laundry_owner', storeData?: { name: string; address?: string; phone?: string; }) => {
     try {
       setLoading(true);
-      const user = await authService.signUp(email, password, fullName, phone);
+      const user = await authService.signUp(email, password, fullName, phone, role, storeData);
       setUser(user);
       
       toast({
         title: "Success",
-        description: "Account created successfully!",
+        description: role === 'laundry_owner' && storeData ? 
+          `Account created successfully! Your store "${storeData.name}" has been set up.` :
+          "Account created successfully!",
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';

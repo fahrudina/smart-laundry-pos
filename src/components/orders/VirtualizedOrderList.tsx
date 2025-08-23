@@ -3,7 +3,7 @@ import { FixedSizeList as List } from 'react-window';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
+import { Eye, Printer, Download, Receipt } from 'lucide-react';
 import { Order } from '@/hooks/useOrdersOptimized';
 
 interface VirtualizedOrderListProps {
@@ -12,6 +12,9 @@ interface VirtualizedOrderListProps {
   onUpdatePayment: (orderId: string, status: string, method?: string) => void;
   onUpdateExecution: (orderId: string, status: string) => void;
   height: number;
+  onViewReceipt?: (orderId: string) => void;
+  onPrintReceipt?: (orderId: string) => void;
+  onExportReceiptPDF?: (orderId: string, customerName: string) => void;
 }
 
 interface ItemData {
@@ -19,6 +22,9 @@ interface ItemData {
   onOrderClick: (order: Order) => void;
   onUpdatePayment: (orderId: string, status: string, method?: string) => void;
   onUpdateExecution: (orderId: string, status: string) => void;
+  onViewReceipt?: (orderId: string) => void;
+  onPrintReceipt?: (orderId: string) => void;
+  onExportReceiptPDF?: (orderId: string, customerName: string) => void;
 }
 
 const OrderItem = memo(({ index, style, data }: { 
@@ -63,9 +69,9 @@ const OrderItem = memo(({ index, style, data }: {
   };
 
   return (
-    <div style={style} className="px-2 sm:px-4">
+    <div style={style} className="px-1 sm:px-4">
       <Card className="mb-2 hover:shadow-md transition-shadow">
-        <CardContent className="p-3 sm:p-4">
+        <CardContent className="p-2 sm:p-4">
           <div className="flex justify-between items-start">
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-2">
@@ -121,72 +127,111 @@ const OrderItem = memo(({ index, style, data }: {
               </div>
 
               {/* Mobile-optimized Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onOrderClick(order)}
-                  className="flex items-center justify-center space-x-2 w-full sm:w-auto"
-                >
-                  <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="text-xs sm:text-sm">View Details</span>
-                </Button>
-
-                {/* Execution Status Actions - Simplified for mobile */}
-                {order.execution_status === 'in_queue' && (
+              <div className="space-y-1 sm:space-y-2 mt-3 sm:mt-4">
+                {/* Row 1: Main Actions in grid */}
+                <div className="grid grid-cols-2 gap-1 sm:gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onUpdateExecution(order.id, 'in_progress')}
-                    className="w-full sm:w-auto text-xs sm:text-sm"
+                    onClick={() => onOrderClick(order)}
+                    className="flex items-center justify-center space-x-1 text-xs"
                   >
-                    <span className="hidden sm:inline">Start Processing</span>
-                    <span className="sm:hidden">🔄 Start</span>
+                    <Eye className="h-3 w-3" />
+                    <span>View</span>
+                  </Button>
+
+                  {data.onViewReceipt && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => data.onViewReceipt!(order.id)}
+                      className="flex items-center justify-center space-x-1 text-xs border-blue-200 text-blue-700 hover:bg-blue-50"
+                    >
+                      <Receipt className="h-3 w-3" />
+                      <span>Receipt</span>
+                    </Button>
+                  )}
+                </div>
+
+                {/* Row 2: Print Actions */}
+                {(data.onPrintReceipt || data.onExportReceiptPDF) && (
+                  <div className="grid grid-cols-2 gap-1 sm:gap-2">
+                    {data.onPrintReceipt && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => data.onPrintReceipt!(order.id)}
+                        className="flex items-center justify-center space-x-1 text-xs border-green-200 text-green-700 hover:bg-green-50"
+                      >
+                        <Printer className="h-3 w-3" />
+                        <span>Print</span>
+                      </Button>
+                    )}
+
+                    {data.onExportReceiptPDF && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => data.onExportReceiptPDF!(order.id, order.customer_name)}
+                        className="flex items-center justify-center space-x-1 text-xs border-purple-200 text-purple-700 hover:bg-purple-50"
+                      >
+                        <Download className="h-3 w-3" />
+                        <span>PDF</span>
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {/* Row 3: Status Action */}
+                {order.execution_status === 'in_queue' && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => onUpdateExecution(order.id, 'in_progress')}
+                    className="w-full text-xs bg-blue-600 hover:bg-blue-700"
+                  >
+                    🔄 Start Processing
                   </Button>
                 )}
                 {order.execution_status === 'in_progress' && (
                   <Button
-                    variant="outline"
+                    variant="default"
                     size="sm"
                     onClick={() => onUpdateExecution(order.id, 'ready_for_pickup')}
-                    className="w-full sm:w-auto text-xs sm:text-sm"
+                    className="w-full text-xs bg-orange-600 hover:bg-orange-700"
                   >
-                    <span className="hidden sm:inline">Ready for Pickup</span>
-                    <span className="sm:hidden">📦 Ready</span>
+                    📦 Ready for Pickup
                   </Button>
                 )}
                 {order.execution_status === 'ready_for_pickup' && (
                   <Button
-                    variant="outline"
+                    variant="default"
                     size="sm"
                     onClick={() => onUpdateExecution(order.id, 'completed')}
-                    className="w-full sm:w-auto text-xs sm:text-sm"
+                    className="w-full text-xs bg-green-600 hover:bg-green-700"
                   >
-                    <span className="hidden sm:inline">Mark as Picked Up</span>
-                    <span className="sm:hidden">✅ Picked Up</span>
+                    ✅ Mark as Picked Up
                   </Button>
                 )}
 
-                {/* Payment Status Actions - Simplified for mobile */}
+                {/* Row 4: Payment Actions */}
                 {order.payment_status === 'pending' && (
-                  <div className="flex gap-2 w-full sm:w-auto">
+                  <div className="grid grid-cols-2 gap-1 sm:gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => onUpdatePayment(order.id, 'completed', 'cash')}
-                      className="flex-1 sm:flex-none text-xs sm:text-sm"
+                      className="text-xs border-green-300 text-green-700 hover:bg-green-50"
                     >
-                      <span className="hidden sm:inline">Cash Payment</span>
-                      <span className="sm:hidden">💵</span>
+                      💵 Cash
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => onUpdatePayment(order.id, 'completed', 'qris')}
-                      className="flex-1 sm:flex-none text-xs sm:text-sm"
+                      className="text-xs border-blue-300 text-blue-700 hover:bg-blue-50"
                     >
-                      <span className="hidden sm:inline">QRIS Payment</span>
-                      <span className="sm:hidden">📱</span>
+                      📱 QRIS
                     </Button>
                   </div>
                 )}
@@ -206,7 +251,10 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
   onOrderClick,
   onUpdatePayment,
   onUpdateExecution,
-  height
+  height,
+  onViewReceipt,
+  onPrintReceipt,
+  onExportReceiptPDF
 }) => {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -226,10 +274,13 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
     onOrderClick,
     onUpdatePayment,
     onUpdateExecution,
+    onViewReceipt,
+    onPrintReceipt,
+    onExportReceiptPDF,
   };
 
-  // Responsive item size - larger on mobile for better touch interaction
-  const itemSize = isMobile ? 300 : 220;
+  // Responsive item size - much larger for mobile to prevent overlap
+  const itemSize = isMobile ? 420 : 380;
 
   return (
     <List

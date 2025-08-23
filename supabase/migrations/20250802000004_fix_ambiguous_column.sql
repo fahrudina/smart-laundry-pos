@@ -23,7 +23,7 @@ BEGIN
     -- Return all stores owned by this user
     RETURN QUERY
     SELECT 
-      s.id,
+      s.id AS store_id,
       s.name,
       s.description,
       s.address,
@@ -38,7 +38,7 @@ BEGIN
     -- Return only the store assigned to this staff member
     RETURN QUERY
     SELECT 
-      s.id,
+      s.id AS store_id,
       s.name,
       s.description,
       s.address,

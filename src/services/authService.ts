@@ -64,14 +64,14 @@ class AuthService {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
   }
 
-  async signUp(email: string, password: string, fullName?: string, phone?: string): Promise<User> {
+  async signUp(email: string, password: string, fullName?: string, phone?: string, role: 'staff' | 'laundry_owner' = 'staff', storeData?: { name: string; address?: string; phone?: string; }, setSession: boolean = true): Promise<User> {
     try {
       const { data, error } = await supabase.rpc('create_user', {
         user_email: email,
         user_password: password,
         user_full_name: fullName || null,
         user_phone: phone || null,
-        user_role: 'staff'
+        user_role: role
       });
 
       if (error) {
@@ -89,24 +89,49 @@ class AuthService {
         throw new Error(fetchError.message);
       }
 
+      let storeId = userData.store_id;
+
+      // If owner signup and store data provided, create store (owner_id will be set by RPC)
+      // Note: For owners, we keep users.store_id NULL and track ownership via stores.owner_id
+      if (role === 'laundry_owner' && storeData && storeData.name) {
+        try {
+          console.log('Creating store for owner:', userData.id, 'with data:', storeData);
+          // createStoreForUser RPC will set stores.owner_id = userData.id
+          const newStoreId = await this.createStoreForUser(userData.id, storeData);
+          console.log('Store created successfully with ID:', newStoreId);
+          // Do NOT update users.store_id for owners - keep it null per multi-tenant design
+        } catch (storeError) {
+          // If store creation fails, remove the created user record to avoid orphan
+          try {
+            await supabase.from('users').delete().eq('id', userData.id);
+          } catch (cleanupErr) {
+            console.error('Cleanup failed after store creation failure:', cleanupErr);
+          }
+          throw new Error(storeError instanceof Error ? storeError.message : String(storeError));
+        }
+      }
+
       const user: User = {
         id: userData.id,
         email: userData.email,
         full_name: userData.full_name,
         phone: userData.phone,
         role: userData.role as 'staff' | 'laundry_owner',
-        store_id: userData.store_id,
+        store_id: storeId,
         is_active: userData.is_active
       };
 
-      // Create session
-      const session: AuthSession = {
-        user,
-        token: this.generateToken(),
-        expires_at: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
-      };
+      // Create session (only if caller wants to set it)
+      if (setSession) {
+        const session: AuthSession = {
+          user,
+          token: this.generateToken(),
+          expires_at: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+        };
 
-      this.saveSession(session);
+        this.saveSession(session);
+      }
+
       return user;
     } catch (error) {
       console.error('Sign up error:', error);
@@ -180,6 +205,35 @@ class AuthService {
   }
 
   // Store management methods
+  private async createStoreForUser(userId: string, storeData: { name: string; address?: string; phone?: string; }): Promise<string> {
+    console.log('createStoreForUser: calling RPC with params:', {
+      user_id: userId,
+      store_name: storeData.name,
+      store_description: `Store owned by user`,
+      store_address: storeData.address ?? null,
+      store_phone: storeData.phone ?? null,
+      store_email: null
+    });
+    
+    const { data, error } = await supabase.rpc('create_store', {
+      user_id: userId,
+      store_name: storeData.name,
+      store_description: `Store owned by user`,
+      store_address: storeData.address ?? null,
+      store_phone: storeData.phone ?? null,
+      store_email: null
+    });
+
+    if (error) {
+      console.error('createStoreForUser: RPC error:', error);
+      throw new Error(error.message);
+    }
+
+    console.log('createStoreForUser: RPC returned data:', data);
+    // RPC returns the created store UUID
+    return data as string;
+  }
+
   async createStore(storeData: {
     name: string;
     description?: string;
@@ -212,8 +266,32 @@ class AuthService {
       throw new Error('User not authenticated');
     }
 
+    // Always use the current session user ID (the owner)
+    const ownerUserId = this.session!.user.id;
+
+    // Verify the user in DB is actually a laundry_owner
+    try {
+      const { data: ownerData, error: ownerError } = await supabase
+        .from('users')
+        .select('id, role')
+        .eq('id', ownerUserId)
+        .single();
+
+      if (ownerError) {
+        console.error('assignStaffToStore: error fetching owner from users table', ownerError);
+        throw new Error(ownerError.message);
+      }
+
+      if (!ownerData || ownerData.role !== 'laundry_owner') {
+        throw new Error('Current user is not a laundry owner');
+      }
+    } catch (err) {
+      console.error('assignStaffToStore: owner verification failed', err);
+      throw err;
+    }
+
     const { data, error } = await supabase.rpc('assign_staff_to_store', {
-      user_id: this.session!.user.id,
+      user_id: ownerUserId,
       staff_user_id: staffUserId,
       target_store_id: storeId
     });
@@ -230,14 +308,17 @@ class AuthService {
       throw new Error('User not authenticated');
     }
 
+    console.log('getUserStores: calling RPC with user_id:', this.session!.user.id);
     const { data, error } = await supabase.rpc('get_user_stores', {
       user_id: this.session!.user.id
     });
 
     if (error) {
+      console.error('getUserStores: RPC error:', error);
       throw new Error(error.message);
     }
 
+    console.log('getUserStores: RPC returned data:', data);
     return data;
   }
 
