@@ -21,6 +21,9 @@ interface SignUpForm extends LoginForm {
   fullName: string;
   phone: string;
   isOwner: boolean;
+  storeName: string;
+  storeAddress: string;
+  storePhone: string;
 }
 
 export const Login: React.FC = () => {
@@ -32,6 +35,7 @@ export const Login: React.FC = () => {
 
   const loginForm = useForm<LoginForm>();
   const signUpForm = useForm<SignUpForm>();
+  const isOwner = signUpForm.watch('isOwner');
 
   // Redirect if already authenticated
   if (user) {
@@ -62,7 +66,12 @@ export const Login: React.FC = () => {
     try {
       setIsLoading(true);
       const role = data.isOwner ? 'laundry_owner' : 'staff';
-      await signUp(data.email, data.password, data.fullName, data.phone, role);
+      const storeData = data.isOwner ? {
+        name: data.storeName,
+        address: data.storeAddress,
+        phone: data.storePhone
+      } : undefined;
+      await signUp(data.email, data.password, data.fullName, data.phone, role, storeData);
     } catch (error) {
       // Error is handled in the auth context
     } finally {
@@ -231,12 +240,62 @@ export const Login: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="signup-owner"
-                    {...signUpForm.register('isOwner')}
+                    checked={isOwner}
+                    onCheckedChange={(checked) => signUpForm.setValue('isOwner', !!checked)}
                   />
                   <Label htmlFor="signup-owner" className="text-sm">
                     Create as Laundry Owner (can manage multiple stores)
                   </Label>
                 </div>
+                
+                {isOwner && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-store-name">Store Name</Label>
+                      <Input
+                        id="signup-store-name"
+                        type="text"
+                        placeholder="Enter your store name"
+                        {...signUpForm.register('storeName', { 
+                          required: isOwner ? 'Store name is required for owners' : false
+                        })}
+                      />
+                      {signUpForm.formState.errors.storeName && (
+                        <p className="text-sm text-red-500">{signUpForm.formState.errors.storeName.message}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-store-address">Store Address</Label>
+                      <Input
+                        id="signup-store-address"
+                        type="text"
+                        placeholder="Enter your store address"
+                        {...signUpForm.register('storeAddress', { 
+                          required: isOwner ? 'Store address is required for owners' : false
+                        })}
+                      />
+                      {signUpForm.formState.errors.storeAddress && (
+                        <p className="text-sm text-red-500">{signUpForm.formState.errors.storeAddress.message}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-store-phone">Store Phone Number</Label>
+                      <Input
+                        id="signup-store-phone"
+                        type="tel"
+                        placeholder="Enter your store phone number"
+                        {...signUpForm.register('storePhone', { 
+                          required: isOwner ? 'Store phone number is required for owners' : false
+                        })}
+                      />
+                      {signUpForm.formState.errors.storePhone && (
+                        <p className="text-sm text-red-500">{signUpForm.formState.errors.storePhone.message}</p>
+                      )}
+                    </div>
+                  </>
+                )}
                 
                 <Button 
                   type="submit" 
