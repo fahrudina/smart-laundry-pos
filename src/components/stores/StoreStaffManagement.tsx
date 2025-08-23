@@ -116,8 +116,9 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
       });
 
       setCreateForm({ email: '', password: '', full_name: '', phone: '' });
-      setCreateDialogOpen(false);
-      loadStaff();
+  setCreateDialogOpen(false);
+  await loadStaff();
+  await loadUnassignedStaff();
     } catch (error) {
       console.error('Error creating staff:', error);
       toast({
@@ -192,14 +193,14 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
             <Users className="h-5 w-5" />
             Staff Management - {store.store_name}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
                   Assign Existing
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-lg">
                 <DialogHeader>
                   <DialogTitle>Assign Existing Staff</DialogTitle>
                 </DialogHeader>
@@ -209,18 +210,27 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
                   ) : (
                     <div className="space-y-2">
                       {unassignedStaff.map((staffMember) => (
-                        <div key={staffMember.id} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div>
+                        <div
+                          key={staffMember.id}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleAssignStaff(staffMember.id); } }}
+                          onClick={() => handleAssignStaff(staffMember.id)}
+                          className="cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border rounded-lg gap-3"
+                        >
+                          <div className="flex-1">
                             <p className="font-medium">{staffMember.full_name || 'No name'}</p>
                             <p className="text-sm text-muted-foreground">{staffMember.email}</p>
                           </div>
-                          <Button
-                            size="sm"
-                            onClick={() => handleAssignStaff(staffMember.id)}
-                            disabled={loading}
-                          >
-                            Assign
-                          </Button>
+                          <div className="flex-shrink-0">
+                            <Button
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); handleAssignStaff(staffMember.id); }}
+                              disabled={loading}
+                            >
+                              Assign
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -236,7 +246,7 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
                   Add New Staff
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-lg">
                 <DialogHeader>
                   <DialogTitle>Create New Staff Member</DialogTitle>
                 </DialogHeader>
@@ -314,12 +324,15 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
             ) : (
               <div className="space-y-3">
                 {staff.map((staffMember) => (
-                  <div key={staffMember.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div
+                    key={staffMember.id}
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-3"
+                  >
                     <div className="flex-1">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-start sm:items-center gap-3">
                         <div>
                           <h4 className="font-medium">{staffMember.full_name || 'No name'}</h4>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Mail className="h-3 w-3" />
                               {staffMember.email}
@@ -338,7 +351,7 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex-shrink-0 flex items-center gap-2">
                       <Badge variant={staffMember.is_active ? 'default' : 'secondary'}>
                         {staffMember.is_active ? 'Active' : 'Inactive'}
                       </Badge>
