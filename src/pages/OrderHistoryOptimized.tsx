@@ -11,6 +11,7 @@ import { useOrders, useUpdatePaymentStatus, OrderFilters, Order } from '@/hooks/
 import { useUpdateOrderStatusWithNotifications } from '@/hooks/useOrdersWithNotifications';
 import { OrderDetailsDialog } from '@/components/pos/OrderDetailsDialog';
 import { CashPaymentDialog } from '@/components/pos/CashPaymentDialog';
+import { ThermalPrintDialog } from '@/components/thermal/ThermalPrintDialog';
 import { VirtualizedOrderList } from '@/components/orders/VirtualizedOrderList';
 import { formatDate, isDateOverdue } from '@/lib/utils';
 import { openReceiptForView, openReceiptForPrint, generateReceiptPDFFromUrl, sanitizeFilename } from '@/lib/printUtils';
@@ -39,7 +40,9 @@ export const OrderHistory = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [showCashPaymentDialog, setShowCashPaymentDialog] = useState(false);
+  const [showThermalPrintDialog, setShowThermalPrintDialog] = useState(false);
   const [cashPaymentOrder, setCashPaymentOrder] = useState<Order | null>(null);
+  const [thermalPrintOrder, setThermalPrintOrder] = useState<Order | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     executionStatus: 'all',
@@ -296,6 +299,13 @@ export const OrderHistory = () => {
     console.log('Opening receipt for printing:', orderId);
     openReceiptForPrint(orderId);
   }, []);
+
+  const handleThermalPrint = useCallback((orderId: string) => {
+    console.log('Opening thermal print dialog for:', orderId);
+    const order = filteredAndSortedOrders.find(o => o.id === orderId);
+    setThermalPrintOrder(order || null);
+    setShowThermalPrintDialog(true);
+  }, [filteredAndSortedOrders]);
 
   const handleExportReceiptPDF = useCallback(async (orderId: string, customerName: string) => {
     try {
@@ -575,6 +585,7 @@ export const OrderHistory = () => {
                       onUpdateExecution={handleUpdateExecutionStatus}
                       onViewReceipt={handleViewReceipt}
                       onPrintReceipt={handlePrintReceipt}
+                      onPrintThermal={handleThermalPrint}
                       onExportReceiptPDF={handleExportReceiptPDF}
                       height={500} // Fixed responsive height
                     />
@@ -634,6 +645,17 @@ export const OrderHistory = () => {
             onSubmit={handleCashPaymentSubmit}
           />
         )}
+
+        {/* Thermal Print Dialog */}
+        <ThermalPrintDialog
+          isOpen={showThermalPrintDialog}
+          onClose={() => {
+            setShowThermalPrintDialog(false);
+            setThermalPrintOrder(null);
+          }}
+          orderId={thermalPrintOrder?.id || null}
+          customerName={thermalPrintOrder?.customer_name}
+        />
       </div>
     </div>
   );
