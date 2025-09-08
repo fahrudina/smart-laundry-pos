@@ -3,7 +3,7 @@ import { FixedSizeList as List } from 'react-window';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, Printer, Download, Receipt } from 'lucide-react';
+import { Eye, Printer, Download, Receipt, Bluetooth } from 'lucide-react';
 import { Order } from '@/hooks/useOrdersOptimized';
 
 interface VirtualizedOrderListProps {
@@ -14,6 +14,7 @@ interface VirtualizedOrderListProps {
   height: number;
   onViewReceipt?: (orderId: string) => void;
   onPrintReceipt?: (orderId: string) => void;
+  onPrintThermal?: (orderId: string) => void;
   onExportReceiptPDF?: (orderId: string, customerName: string) => void;
 }
 
@@ -24,6 +25,7 @@ interface ItemData {
   onUpdateExecution: (orderId: string, status: string) => void;
   onViewReceipt?: (orderId: string) => void;
   onPrintReceipt?: (orderId: string) => void;
+  onPrintThermal?: (orderId: string) => void;
   onExportReceiptPDF?: (orderId: string, customerName: string) => void;
 }
 
@@ -154,8 +156,8 @@ const OrderItem = memo(({ index, style, data }: {
                 </div>
 
                 {/* Row 2: Print Actions */}
-                {(data.onPrintReceipt || data.onExportReceiptPDF) && (
-                  <div className="grid grid-cols-2 gap-1 sm:gap-2">
+                {(data.onPrintReceipt || data.onPrintThermal || data.onExportReceiptPDF) && (
+                  <div className="grid grid-cols-3 gap-1 sm:gap-2">
                     {data.onPrintReceipt && (
                       <Button
                         variant="outline"
@@ -164,7 +166,19 @@ const OrderItem = memo(({ index, style, data }: {
                         className="flex items-center justify-center space-x-1 text-xs border-green-200 text-green-700 hover:bg-green-50"
                       >
                         <Printer className="h-3 w-3" />
-                        <span>Print</span>
+                        <span className="hidden sm:inline">Print</span>
+                      </Button>
+                    )}
+
+                    {data.onPrintThermal && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => data.onPrintThermal!(order.id)}
+                        className="flex items-center justify-center space-x-1 text-xs border-blue-200 text-blue-700 hover:bg-blue-50"
+                      >
+                        <Bluetooth className="h-3 w-3" />
+                        <span className="hidden sm:inline">Thermal</span>
                       </Button>
                     )}
 
@@ -176,7 +190,7 @@ const OrderItem = memo(({ index, style, data }: {
                         className="flex items-center justify-center space-x-1 text-xs border-purple-200 text-purple-700 hover:bg-purple-50"
                       >
                         <Download className="h-3 w-3" />
-                        <span>PDF</span>
+                        <span className="hidden sm:inline">PDF</span>
                       </Button>
                     )}
                   </div>
@@ -254,6 +268,7 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
   height,
   onViewReceipt,
   onPrintReceipt,
+  onPrintThermal,
   onExportReceiptPDF
 }) => {
   const [isMobile, setIsMobile] = useState(false);
@@ -276,6 +291,7 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
     onUpdateExecution,
     onViewReceipt,
     onPrintReceipt,
+    onPrintThermal,
     onExportReceiptPDF,
   };
 
