@@ -302,10 +302,10 @@ export const OrderHistory = () => {
 
   const handleThermalPrint = useCallback((orderId: string) => {
     console.log('Opening thermal print dialog for:', orderId);
-    const order = filteredAndSortedOrders.find(o => o.id === orderId);
+    const order = filteredOrders.find(o => o.id === orderId);
     setThermalPrintOrder(order || null);
     setShowThermalPrintDialog(true);
-  }, [filteredAndSortedOrders]);
+  }, [filteredOrders]);
 
   const handleExportReceiptPDF = useCallback(async (orderId: string, customerName: string) => {
     try {
