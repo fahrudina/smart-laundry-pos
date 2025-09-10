@@ -8,7 +8,8 @@ import {
   History, 
   UserPlus,
   Settings,
-  Users
+  Users,
+  BarChart3
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AddCustomerDialog } from '@/components/pos/AddCustomerDialog';
@@ -52,6 +53,14 @@ export const QuickActions: React.FC = () => {
       icon: Users,
       color: 'bg-orange-500 hover:bg-orange-600',
       onClick: () => navigate('/customers')
+    },
+    {
+      id: 'reports',
+      title: 'Reports',
+      description: 'View analytics & reports',
+      icon: BarChart3,
+      color: 'bg-indigo-500 hover:bg-indigo-600',
+      onClick: () => navigate('/reports')
     }
   ];
 
@@ -64,7 +73,7 @@ export const QuickActions: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {actions.map((action) => (
             <Button
               key={action.id}
