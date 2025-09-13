@@ -6,15 +6,18 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useCreateOrderWithNotifications as useCreateOrder, UnitItem } from '@/hooks/useOrdersWithNotifications';
 import { useToast } from '@/hooks/use-toast';
 import { useServices } from '@/hooks/useServices';
 import { EnhancedServiceSelector, Service, EnhancedOrderItem } from './EnhancedServiceSelector';
+import { DynamicOrderItemsManager, DynamicOrderItemData } from './DynamicOrderItem';
 
 export const EnhancedLaundryPOS = () => {
   const [currentOrder, setCurrentOrder] = useState<EnhancedOrderItem[]>([]);
+  const [dynamicItems, setDynamicItems] = useState<DynamicOrderItemData[]>([]);
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -68,6 +71,19 @@ export const EnhancedLaundryPOS = () => {
     return finishDate;
   };
 
+  // Calculate finish date for dynamic items
+  const calculateDynamicItemFinishDate = (item: DynamicOrderItemData, startDate: Date = dropOffDate) => {
+    const finishDate = new Date(startDate);
+    
+    if (item.durationUnit === 'hours') {
+      finishDate.setHours(finishDate.getHours() + item.durationValue);
+    } else if (item.durationUnit === 'days') {
+      finishDate.setDate(finishDate.getDate() + item.durationValue);
+    }
+    
+    return finishDate;
+  };
+
   // Helper function to format date for display
   const formatDate = (date: Date) => {
     const now = new Date();
@@ -100,23 +116,42 @@ export const EnhancedLaundryPOS = () => {
     }
   };
 
-  // Get total price
+  // Get total price including both regular and dynamic items
   const getTotalPrice = () => {
-    return currentOrder.reduce((sum, item) => sum + item.totalPrice, 0);
+    const regularItemsTotal = currentOrder.reduce((sum, item) => sum + item.totalPrice, 0);
+    const dynamicItemsTotal = dynamicItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    return regularItemsTotal + dynamicItemsTotal;
   };
 
   // Get the estimated completion time for the entire order
   const getOrderCompletionTime = () => {
-    if (currentOrder.length === 0) return null;
+    if (currentOrder.length === 0 && dynamicItems.length === 0) return null;
     
-    // Find the service with the longest duration
-    const longestService = currentOrder.reduce((longest, item) => {
-      const currentFinish = calculateFinishDate(item.service);
-      const longestFinish = longest ? calculateFinishDate(longest.service) : new Date();
-      return currentFinish > longestFinish ? item : longest;
-    }, currentOrder[0]);
+    let longestDate = new Date();
+
+    // Check regular service items
+    if (currentOrder.length > 0) {
+      const longestService = currentOrder.reduce((longest, item) => {
+        const currentFinish = calculateFinishDate(item.service);
+        const longestFinish = longest ? calculateFinishDate(longest.service) : new Date();
+        return currentFinish > longestFinish ? item : longest;
+      }, currentOrder[0]);
+      longestDate = calculateFinishDate(longestService.service);
+    }
+
+    // Check dynamic items
+    if (dynamicItems.length > 0) {
+      const longestDynamicDate = dynamicItems.reduce((longest, item) => {
+        const currentFinish = calculateDynamicItemFinishDate(item);
+        return currentFinish > longest ? currentFinish : longest;
+      }, longestDate);
+      
+      if (longestDynamicDate > longestDate) {
+        longestDate = longestDynamicDate;
+      }
+    }
     
-    return calculateFinishDate(longestService.service);
+    return longestDate;
   };
 
   // Search for customers when phone number changes
@@ -218,7 +253,7 @@ export const EnhancedLaundryPOS = () => {
 
   // Process payment
   const processPayment = async () => {
-    if (currentOrder.length === 0) {
+    if (currentOrder.length === 0 && dynamicItems.length === 0) {
       toast({
         title: "Error",
         description: "No items in order",
@@ -241,18 +276,31 @@ export const EnhancedLaundryPOS = () => {
       const totalAmount = subtotal;
       const completionDate = getOrderCompletionTime();
 
+      // Combine regular order items and dynamic items
+      const regularItems = currentOrder.map(item => ({
+        service_name: item.service.name,
+        service_price: item.service.price,
+        quantity: item.quantity,
+        estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
+        service_type: item.serviceType,
+        weight_kg: item.weight,
+        unit_items: item.unitItems,
+      }));
+
+      const dynamicOrderItems = dynamicItems.map(item => ({
+        service_name: item.itemName,
+        service_price: item.price,
+        quantity: item.quantity,
+        estimated_completion: calculateDynamicItemFinishDate(item, dropOffDate).toISOString(),
+        service_type: 'unit' as const,
+        weight_kg: undefined,
+        unit_items: undefined,
+      }));
+
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: currentOrder.map(item => ({
-          service_name: item.service.name,
-          service_price: item.service.price,
-          quantity: item.quantity,
-          estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
-          service_type: item.serviceType,
-          weight_kg: item.weight,
-          unit_items: item.unitItems,
-        })),
+        items: [...regularItems, ...dynamicOrderItems],
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
@@ -267,6 +315,7 @@ export const EnhancedLaundryPOS = () => {
       await createOrderMutation.mutateAsync(orderData);
 
       setCurrentOrder([]);
+      setDynamicItems([]);
       setCustomerName('');
       setCustomerPhone('');
       
@@ -281,7 +330,7 @@ export const EnhancedLaundryPOS = () => {
 
   // Create draft order
   const createDraftOrder = async () => {
-    if (currentOrder.length === 0) {
+    if (currentOrder.length === 0 && dynamicItems.length === 0) {
       toast({
         title: "Error",
         description: "No items in order",
@@ -304,18 +353,31 @@ export const EnhancedLaundryPOS = () => {
       const totalAmount = subtotal;
       const completionDate = getOrderCompletionTime();
 
+      // Combine regular order items and dynamic items
+      const regularItems = currentOrder.map(item => ({
+        service_name: item.service.name,
+        service_price: item.service.price,
+        quantity: item.quantity,
+        estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
+        service_type: item.serviceType,
+        weight_kg: item.weight,
+        unit_items: item.unitItems,
+      }));
+
+      const dynamicOrderItems = dynamicItems.map(item => ({
+        service_name: item.itemName,
+        service_price: item.price,
+        quantity: item.quantity,
+        estimated_completion: calculateDynamicItemFinishDate(item, dropOffDate).toISOString(),
+        service_type: 'unit' as const,
+        weight_kg: undefined,
+        unit_items: undefined,
+      }));
+
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: currentOrder.map(item => ({
-          service_name: item.service.name,
-          service_price: item.service.price,
-          quantity: item.quantity,
-          estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
-          service_type: item.serviceType,
-          weight_kg: item.weight,
-          unit_items: item.unitItems,
-        })),
+        items: [...regularItems, ...dynamicOrderItems],
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
@@ -328,6 +390,7 @@ export const EnhancedLaundryPOS = () => {
       await createOrderMutation.mutateAsync(orderData);
 
       setCurrentOrder([]);
+      setDynamicItems([]);
       setCustomerName('');
       setCustomerPhone('');
       
@@ -495,65 +558,73 @@ export const EnhancedLaundryPOS = () => {
         </CardContent>
       </Card>
 
-      {/* Services Grid */}
-      {services.length > 0 && (
-        <Card className="shadow-medium animate-scale-in">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Available Services</CardTitle>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/services')}
-              >
-                Manage Services
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {services.map((service) => (
-                <div
-                  key={service.id}
-                  className="p-3 sm:p-4 border rounded-lg hover:shadow-soft transition-smooth cursor-pointer bg-card"
-                  onClick={() => handleServiceSelect(service)}
-                >
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2">
-                    <h3 className="font-semibold text-foreground text-sm sm:text-base">{service.name}</h3>
-                    <div className="flex space-x-1 mt-1 sm:mt-0">
-                      <Badge className={`${getCategoryColor(service.category)} w-fit`}>
-                        {service.category}
-                      </Badge>
-                      {service.supportsKilo && (
-                        <Badge variant="outline" className="w-fit">
-                          Kilo
-                        </Badge>
-                      )}
+      {/* Dynamic Custom Items */}
+      <Card className="shadow-medium animate-scale-in">
+        <CardContent className="p-4 lg:p-6">
+          <Tabs defaultValue="services" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="services">Available Services</TabsTrigger>
+              <TabsTrigger value="custom">Custom Items</TabsTrigger>
+            </TabsList>
+            <TabsContent value="services" className="mt-6">
+              {services.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                  {services.map((service) => (
+                    <div
+                      key={service.id}
+                      className="p-3 sm:p-4 border rounded-lg hover:shadow-soft transition-smooth cursor-pointer bg-card"
+                      onClick={() => handleServiceSelect(service)}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2">
+                        <h3 className="font-semibold text-foreground text-sm sm:text-base">{service.name}</h3>
+                        <div className="flex space-x-1 mt-1 sm:mt-0">
+                          <Badge className={`${getCategoryColor(service.category)} w-fit`}>
+                            {service.category}
+                          </Badge>
+                          {service.supportsKilo && (
+                            <Badge variant="outline" className="w-fit">
+                              Kilo
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-lg sm:text-xl font-bold text-primary">
+                          Rp{service.price.toLocaleString('id-ID')}
+                        </p>
+                        {service.supportsKilo && service.kiloPrice && (
+                          <p className="text-sm text-gray-600">
+                            Rp{service.kiloPrice.toLocaleString('id-ID')}/kg
+                          </p>
+                        )}
+                        <p className="text-xs sm:text-sm text-muted-foreground flex items-center">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Duration: {service.duration}
+                        </p>
+                        <p className="text-xs text-green-600 font-medium">
+                          Ready: {formatDate(calculateFinishDate(service))}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-lg sm:text-xl font-bold text-primary">
-                      Rp{service.price.toLocaleString('id-ID')}
-                    </p>
-                    {service.supportsKilo && service.kiloPrice && (
-                      <p className="text-sm text-gray-600">
-                        Rp{service.kiloPrice.toLocaleString('id-ID')}/kg
-                      </p>
-                    )}
-                    <p className="text-xs sm:text-sm text-muted-foreground flex items-center">
-                      <Clock className="h-3 w-3 mr-1" />
-                      Duration: {service.duration}
-                    </p>
-                    <p className="text-xs text-green-600 font-medium">
-                      Ready: {formatDate(calculateFinishDate(service))}
-                    </p>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No predefined services available.</p>
+                  <p className="text-sm">You can create custom items or add services first.</p>
+                </div>
+              )}
+            </TabsContent>
+            <TabsContent value="custom" className="mt-6">
+              <DynamicOrderItemsManager
+                items={dynamicItems}
+                onItemsChange={setDynamicItems}
+                disabled={createOrderMutation.isPending}
+              />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       {/* Current Order */}
       <Card className="bg-card shadow-strong">
@@ -561,19 +632,19 @@ export const EnhancedLaundryPOS = () => {
           <CardTitle className="text-lg flex items-center">
             <ShoppingCart className="h-5 w-5 mr-2" />
             Current Order
-            {currentOrder.length > 0 && (
+            {(currentOrder.length > 0 || dynamicItems.length > 0) && (
               <Badge variant="secondary" className="ml-2">
-                {currentOrder.length} services
+                {currentOrder.length + dynamicItems.length} items
               </Badge>
             )}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4 lg:p-6">
-          {currentOrder.length === 0 ? (
+          {currentOrder.length === 0 && dynamicItems.length === 0 ? (
             <div className="text-center py-6 sm:py-8 text-muted-foreground">
               <ShoppingCart className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 opacity-50" />
               <p className="text-sm sm:text-base">No items in order</p>
-              <p className="text-xs sm:text-sm">Add services to get started</p>
+              <p className="text-xs sm:text-sm">Add services or custom items to get started</p>
             </div>
           ) : (
             <>
@@ -610,6 +681,42 @@ export const EnhancedLaundryPOS = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => removeFromOrder(index)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Dynamic Items */}
+                {dynamicItems.map((item, index) => (
+                  <div key={`dynamic-${item.id}-${index}`} className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-medium text-foreground text-sm sm:text-base">{item.itemName}</h4>
+                        <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800">
+                          Custom
+                        </Badge>
+                      </div>
+                      <div className="text-xs sm:text-sm text-muted-foreground mt-1">
+                        <span>Quantity: {item.quantity} × Rp{item.price.toLocaleString('id-ID')}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Duration: {item.duration} | Ready: {formatDate(calculateDynamicItemFinishDate(item))}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2 ml-2">
+                      <span className="font-semibold text-primary">
+                        Rp{item.totalPrice.toLocaleString('id-ID')}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const updatedItems = dynamicItems.filter((_, i) => i !== index);
+                          setDynamicItems(updatedItems);
+                        }}
                         className="h-8 w-8 p-0"
                       >
                         <X className="h-4 w-4" />
