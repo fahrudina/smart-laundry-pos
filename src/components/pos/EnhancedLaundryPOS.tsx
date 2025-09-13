@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useServices } from '@/hooks/useServices';
 import { EnhancedServiceSelector, Service, EnhancedOrderItem } from './EnhancedServiceSelector';
 import { DynamicOrderItemsManager, DynamicOrderItemData } from './DynamicOrderItem';
+import { FloatingOrderSummary } from './FloatingOrderSummary';
 
 export const EnhancedLaundryPOS = () => {
   const [currentOrder, setCurrentOrder] = useState<EnhancedOrderItem[]>([]);
@@ -249,6 +250,11 @@ export const EnhancedLaundryPOS = () => {
   // Remove item from order
   const removeFromOrder = (index: number) => {
     setCurrentOrder(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Remove dynamic item
+  const removeDynamicItem = (index: number) => {
+    setDynamicItems(prev => prev.filter((_, i) => i !== index));
   };
 
   // Process payment
@@ -626,153 +632,29 @@ export const EnhancedLaundryPOS = () => {
         </CardContent>
       </Card>
 
-      {/* Current Order */}
-      <Card className="bg-card shadow-strong">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center">
-            <ShoppingCart className="h-5 w-5 mr-2" />
-            Current Order
-            {(currentOrder.length > 0 || dynamicItems.length > 0) && (
-              <Badge variant="secondary" className="ml-2">
-                {currentOrder.length + dynamicItems.length} items
-              </Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 lg:p-6">
-          {currentOrder.length === 0 && dynamicItems.length === 0 ? (
-            <div className="text-center py-6 sm:py-8 text-muted-foreground">
-              <ShoppingCart className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 opacity-50" />
-              <p className="text-sm sm:text-base">No items in order</p>
-              <p className="text-xs sm:text-sm">Add services or custom items to get started</p>
-            </div>
-          ) : (
-            <>
-              <div className="space-y-3 mb-6">
-                {currentOrder.map((item, index) => (
-                  <div key={`${item.service.id}-${index}`} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-medium text-foreground text-sm sm:text-base">{item.service.name}</h4>
-                        <Badge variant="outline" className="text-xs">
-                          {item.serviceType}
-                        </Badge>
-                      </div>
-                      <div className="text-xs sm:text-sm text-muted-foreground mt-1">
-                        {item.serviceType === 'unit' && (
-                          <span>Quantity: {item.quantity}</span>
-                        )}
-                        {item.serviceType === 'kilo' && item.weight && (
-                          <span>Weight: {item.weight} kg</span>
-                        )}
-                        {item.serviceType === 'combined' && (
-                          <span>Weight: {item.weight} kg + {item.unitItems?.length || 0} unit items</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Ready: {formatDate(calculateFinishDate(item.service))}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2 ml-2">
-                      <span className="font-semibold text-primary">
-                        Rp{item.totalPrice.toLocaleString('id-ID')}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeFromOrder(index)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Dynamic Items */}
-                {dynamicItems.map((item, index) => (
-                  <div key={`dynamic-${item.id}-${index}`} className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-medium text-foreground text-sm sm:text-base">{item.itemName}</h4>
-                        <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800">
-                          Custom
-                        </Badge>
-                      </div>
-                      <div className="text-xs sm:text-sm text-muted-foreground mt-1">
-                        <span>Quantity: {item.quantity} × Rp{item.price.toLocaleString('id-ID')}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Duration: {item.duration} | Ready: {formatDate(calculateDynamicItemFinishDate(item))}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2 ml-2">
-                      <span className="font-semibold text-primary">
-                        Rp{item.totalPrice.toLocaleString('id-ID')}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const updatedItems = dynamicItems.filter((_, i) => i !== index);
-                          setDynamicItems(updatedItems);
-                        }}
-                        className="h-8 w-8 p-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <Separator className="mb-4" />
-
-              {/* Order Completion Information */}
-              {getOrderCompletionTime() && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center mb-2">
-                    <Clock className="h-4 w-4 text-blue-600 mr-2" />
-                    <span className="font-semibold text-blue-800">Estimated Completion</span>
-                  </div>
-                  <p className="text-blue-700">
-                    {formatDate(getOrderCompletionTime()!)}
-                  </p>
-                </div>
-              )}
-
-              {/* Order Summary */}
-              <div className="space-y-2 mb-6">
-                <div className="flex justify-between text-lg font-semibold">
-                  <span>Total:</span>
-                  <span>Rp{getTotalPrice().toLocaleString('id-ID')}</span>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Button
-                  variant="outline"
-                  onClick={createDraftOrder}
-                  disabled={createOrderMutation.isPending}
-                  className="flex items-center"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Draft
-                </Button>
-                <Button
-                  onClick={processPayment}
-                  disabled={createOrderMutation.isPending}
-                  className="flex items-center"
-                >
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Process Payment
-                </Button>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+      {/* FloatingOrderSummary instead of fixed Current Order card */}
+      <FloatingOrderSummary
+        currentOrder={currentOrder.map(item => ({
+          service: item.service,
+          quantity: item.quantity,
+          serviceType: item.serviceType,
+          weight: item.weight,
+          totalPrice: item.totalPrice,
+        }))}
+        dynamicItems={dynamicItems}
+        getTotalPrice={getTotalPrice}
+        getOrderCompletionTime={getOrderCompletionTime}
+        formatDate={formatDate}
+        dropOffDate={dropOffDate}
+        onProcessPayment={processPayment}
+        onCreateDraft={createDraftOrder}
+        isProcessing={createOrderMutation.isPending}
+        customerName={customerName}
+        customerPhone={customerPhone}
+        calculateFinishDate={calculateFinishDate}
+        calculateDynamicItemFinishDate={calculateDynamicItemFinishDate}
+        removeDynamicItem={removeDynamicItem}
+      />
 
       {/* Service Selection Dialog */}
       <Dialog open={showServiceDialog} onOpenChange={setShowServiceDialog}>

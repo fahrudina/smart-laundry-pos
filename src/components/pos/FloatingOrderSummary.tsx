@@ -22,25 +22,40 @@ interface OrderItem {
   totalPrice: number;
 }
 
+interface DynamicOrderItemData {
+  id: string;
+  itemName: string;
+  duration: string;
+  durationValue: number;
+  durationUnit: 'hours' | 'days';
+  price: number;
+  quantity: number;
+  totalPrice: number;
+}
+
 interface FloatingOrderSummaryProps {
   currentOrder: OrderItem[];
+  dynamicItems?: DynamicOrderItemData[];
   getTotalPrice: () => number;
   getOrderCompletionTime: () => Date | null;
   formatDate: (date: Date) => string;
   dropOffDate: Date;
-  onProcessPayment: (paymentMethod: string) => void;
+  onProcessPayment: (paymentMethod?: string) => void;
   onCreateDraft: () => void;
   onOpenServicePopup?: () => void;
   isProcessing: boolean;
   customerName: string;
   customerPhone: string;
   calculateFinishDate: (service: any, dropOffDate?: Date) => Date;
-  updateQuantity: (serviceId: string, quantity: number, serviceType: 'unit' | 'kilo' | 'combined') => void;
-  removeFromOrder: (serviceId: string, serviceType: 'unit' | 'kilo' | 'combined') => void;
+  calculateDynamicItemFinishDate?: (item: DynamicOrderItemData, dropOffDate?: Date) => Date;
+  updateQuantity?: (serviceId: string, quantity: number, serviceType: 'unit' | 'kilo' | 'combined') => void;
+  removeFromOrder?: (serviceId: string, serviceType: 'unit' | 'kilo' | 'combined') => void;
+  removeDynamicItem?: (index: number) => void;
 }
 
 export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
   currentOrder,
+  dynamicItems = [],
   getTotalPrice,
   getOrderCompletionTime,
   formatDate,
@@ -52,8 +67,10 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
   customerName,
   customerPhone,
   calculateFinishDate,
+  calculateDynamicItemFinishDate,
   updateQuantity,
   removeFromOrder,
+  removeDynamicItem,
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('cash');
 
@@ -63,7 +80,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
     { id: 'transfer', name: 'Transfer', icon: Smartphone, color: 'bg-purple-500' },
   ];
 
-  if (currentOrder.length === 0) {
+  if (currentOrder.length === 0 && dynamicItems.length === 0) {
     return null;
   }
 
@@ -82,7 +99,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
               <span className="font-semibold text-gray-800 text-sm sm:text-base">Current Order</span>
             </div>
             <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs sm:text-sm">
-              {currentOrder.reduce((sum, item) => sum + item.quantity, 0)} items
+              {currentOrder.reduce((sum, item) => sum + item.quantity, 0) + dynamicItems.length} items
             </Badge>
           </div>
 
@@ -133,11 +150,13 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        const decrement = item.serviceType === 'kilo' ? 0.1 : 1;
-                        const newValue = Math.max(item.serviceType === 'kilo' ? 0.1 : 1, item.quantity - decrement);
-                        // Round to 1 decimal place to avoid floating point precision issues
-                        const roundedValue = Math.round(newValue * 10) / 10;
-                        updateQuantity(item.service.id, roundedValue, item.serviceType);
+                        if (updateQuantity) {
+                          const decrement = item.serviceType === 'kilo' ? 0.1 : 1;
+                          const newValue = Math.max(item.serviceType === 'kilo' ? 0.1 : 1, item.quantity - decrement);
+                          // Round to 1 decimal place to avoid floating point precision issues
+                          const roundedValue = Math.round(newValue * 10) / 10;
+                          updateQuantity(item.service.id, roundedValue, item.serviceType);
+                        }
                       }}
                       className="h-6 w-6 p-0"
                     >
@@ -149,11 +168,13 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                         step="0.1"
                         value={item.quantity}
                         onChange={(e) => {
-                          const inputValue = parseFloat(e.target.value);
-                          if (!isNaN(inputValue)) {
-                            // Round to 1 decimal place and ensure minimum 0.1
-                            const value = Math.max(0.1, Math.round(inputValue * 10) / 10);
-                            updateQuantity(item.service.id, value, item.serviceType);
+                          if (updateQuantity) {
+                            const inputValue = parseFloat(e.target.value);
+                            if (!isNaN(inputValue)) {
+                              // Round to 1 decimal place and ensure minimum 0.1
+                              const value = Math.max(0.1, Math.round(inputValue * 10) / 10);
+                              updateQuantity(item.service.id, value, item.serviceType);
+                            }
                           }
                         }}
                         className="w-14 h-6 text-xs text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -166,11 +187,13 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        const increment = item.serviceType === 'kilo' ? 0.1 : 1;
-                        const newValue = item.quantity + increment;
-                        // Round to 1 decimal place to avoid floating point precision issues
-                        const roundedValue = Math.round(newValue * 10) / 10;
-                        updateQuantity(item.service.id, roundedValue, item.serviceType);
+                        if (updateQuantity) {
+                          const increment = item.serviceType === 'kilo' ? 0.1 : 1;
+                          const newValue = item.quantity + increment;
+                          // Round to 1 decimal place to avoid floating point precision issues
+                          const roundedValue = Math.round(newValue * 10) / 10;
+                          updateQuantity(item.service.id, roundedValue, item.serviceType);
+                        }
                       }}
                       className="h-6 w-6 p-0"
                     >
@@ -179,7 +202,43 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => removeFromOrder(item.service.id, item.serviceType)}
+                      onClick={() => {
+                        if (removeFromOrder) {
+                          removeFromOrder(item.service.id, item.serviceType);
+                        }
+                      }}
+                      className="h-6 w-6 p-0 text-red-600"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+
+              {/* Dynamic Items */}
+              {dynamicItems.map((item, index) => (
+                <div key={`dynamic-${item.id}-${index}`} className="flex items-center justify-between p-1.5 sm:p-2 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="flex-1 min-w-0">
+                    <h5 className="text-sm font-medium text-gray-900 truncate">{item.itemName}</h5>
+                    <p className="text-xs text-gray-600">
+                      Rp{item.price.toLocaleString('id-ID')} × {item.quantity} unit{item.quantity !== 1 ? 's' : ''}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Ready: {calculateDynamicItemFinishDate ? formatDate(calculateDynamicItemFinishDate(item, dropOffDate)) : 'TBD'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 ml-2">
+                    <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800">
+                      Custom
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (removeDynamicItem) {
+                          removeDynamicItem(index);
+                        }
+                      }}
                       className="h-6 w-6 p-0 text-red-600"
                     >
                       <X className="h-3 w-3" />
