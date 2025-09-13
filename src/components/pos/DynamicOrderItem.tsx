@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,7 +42,7 @@ export const DynamicOrderItem: React.FC<DynamicOrderItemProps> = ({
   const totalPrice = price * quantity;
 
   // Validate form
-  const validateForm = (): boolean => {
+  const validateForm = useCallback((): boolean => {
     const newErrors: { [key: string]: string } = {};
 
     if (!itemName.trim()) {
@@ -63,7 +63,7 @@ export const DynamicOrderItem: React.FC<DynamicOrderItemProps> = ({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [itemName, durationValue, price, quantity]);
 
   // Update parent component when form data changes
   useEffect(() => {
@@ -82,7 +82,7 @@ export const DynamicOrderItem: React.FC<DynamicOrderItemProps> = ({
     } else {
       onItemUpdate(null);
     }
-  }, [itemName, durationValue, durationUnit, price, quantity]);
+  }, [itemName, durationValue, durationUnit, price, quantity, totalPrice, validateForm, onItemUpdate, initialData?.id]);
 
   return (
     <Card className="relative">

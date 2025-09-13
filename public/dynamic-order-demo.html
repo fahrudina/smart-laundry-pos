@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Order Item Demo</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css');
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState } = React;
+        
+        // Mock component to demonstrate the dynamic item functionality
+        const DynamicOrderItemDemo = () => {
+            const [items, setItems] = useState([
+                {
+                    id: 'demo-1',
+                    itemName: 'Express Dry Clean',
+                    duration: '4 hours',
+                    durationValue: 4,
+                    durationUnit: 'hours',
+                    price: 25000,
+                    quantity: 2,
+                    totalPrice: 50000,
+                }
+            ]);
+            
+            const totalPrice = items.reduce((sum, item) => sum + item.totalPrice, 0);
+            
+            return (
+                <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
+                    <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+                        Dynamic Order Item Feature Demo
+                    </h1>
+                    
+                    {/* Feature Overview */}
+                    <div className="bg-white rounded-lg p-6 mb-8 shadow-lg">
+                        <h2 className="text-xl font-semibold mb-4 text-blue-600">✨ New Features Implemented</h2>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <h3 className="font-medium text-gray-700 mb-2">Dynamic Item Input</h3>
+                                <ul className="text-sm text-gray-600 space-y-1">
+                                    <li>• Custom item name input</li>
+                                    <li>• Flexible duration (hours/days)</li>
+                                    <li>• Price per unit setting</li>
+                                    <li>• Quantity management</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 className="font-medium text-gray-700 mb-2">Enhanced POS Interface</h3>
+                                <ul className="text-sm text-gray-600 space-y-1">
+                                    <li>• Tabbed interface for services/custom items</li>
+                                    <li>• Real-time validation</li>
+                                    <li>• Mixed order calculations</li>
+                                    <li>• Completion time estimation</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Demo Order */}
+                    <div className="bg-white rounded-lg p-6 shadow-lg">
+                        <h2 className="text-xl font-semibold mb-4 text-green-600">📋 Sample Order with Custom Items</h2>
+                        
+                        {/* Regular Service Item */}
+                        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h3 className="font-semibold text-blue-800">Regular Washing Service</h3>
+                                    <p className="text-sm text-blue-600 mt-1">
+                                        <span className="bg-blue-100 px-2 py-1 rounded text-xs">Predefined Service</span>
+                                    </p>
+                                    <p className="text-sm text-gray-600 mt-1">Quantity: 1 | Duration: 24 hours</p>
+                                    <p className="text-xs text-gray-500">Ready: Tomorrow, 10:00 AM</p>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-lg font-bold text-blue-700">Rp 15,000</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Dynamic Custom Items */}
+                        {items.map((item, index) => (
+                            <div key={item.id} className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="font-semibold text-orange-800">{item.itemName}</h3>
+                                        <p className="text-sm text-orange-600 mt-1">
+                                            <span className="bg-orange-100 px-2 py-1 rounded text-xs">Custom Item</span>
+                                        </p>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                            Quantity: {item.quantity} × Rp {item.price.toLocaleString('id-ID')}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            Duration: {item.duration} | Ready: Today, 2:00 PM
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-lg font-bold text-orange-700">
+                                            Rp {item.totalPrice.toLocaleString('id-ID')}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        
+                        {/* Order Summary */}
+                        <div className="border-t pt-4 mt-6">
+                            <div className="flex justify-between items-center">
+                                <span className="text-lg font-medium">Total Order:</span>
+                                <span className="text-2xl font-bold text-green-600">
+                                    Rp {(totalPrice + 15000).toLocaleString('id-ID')}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Feature Benefits */}
+                    <div className="bg-white rounded-lg p-6 mt-8 shadow-lg">
+                        <h2 className="text-xl font-semibold mb-4 text-purple-600">🎯 Key Benefits</h2>
+                        <div className="grid md:grid-cols-3 gap-4">
+                            <div className="text-center p-4 bg-purple-50 rounded-lg">
+                                <div className="text-2xl mb-2">🔧</div>
+                                <h3 className="font-medium text-purple-800">Flexible Input</h3>
+                                <p className="text-sm text-purple-600 mt-1">
+                                    Create custom services on-demand without pre-configuration
+                                </p>
+                            </div>
+                            <div className="text-center p-4 bg-purple-50 rounded-lg">
+                                <div className="text-2xl mb-2">✅</div>
+                                <h3 className="font-medium text-purple-800">Validation</h3>
+                                <p className="text-sm text-purple-600 mt-1">
+                                    Real-time validation ensures all required fields are completed
+                                </p>
+                            </div>
+                            <div className="text-center p-4 bg-purple-50 rounded-lg">
+                                <div className="text-2xl mb-2">🧮</div>
+                                <h3 className="font-medium text-purple-800">Auto Calculation</h3>
+                                <p className="text-sm text-purple-600 mt-1">
+                                    Automatic total calculation with mixed service types
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Implementation Details */}
+                    <div className="bg-gray-800 text-white rounded-lg p-6 mt-8">
+                        <h2 className="text-xl font-semibold mb-4 text-yellow-400">🛠️ Implementation Details</h2>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 className="font-medium text-yellow-300 mb-2">New Components</h3>
+                                <ul className="text-sm space-y-1">
+                                    <li>• <code className="bg-gray-700 px-1 rounded">DynamicOrderItem.tsx</code></li>
+                                    <li>• <code className="bg-gray-700 px-1 rounded">DynamicOrderItemsManager</code></li>
+                                    <li>• Enhanced <code className="bg-gray-700 px-1 rounded">EnhancedLaundryPOS</code></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 className="font-medium text-yellow-300 mb-2">Database Integration</h3>
+                                <ul className="text-sm space-y-1">
+                                    <li>• Uses existing <code className="bg-gray-700 px-1 rounded">order_items</code> table</li>
+                                    <li>• Compatible with current order flow</li>
+                                    <li>• Preserves data integrity</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        ReactDOM.render(<DynamicOrderItemDemo />, document.getElementById('root'));
+    </script>
+</body>
+</html>
