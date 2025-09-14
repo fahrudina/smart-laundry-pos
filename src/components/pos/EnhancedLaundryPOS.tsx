@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X } from 'lucide-react';
+import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { EnhancedOrderItem } from './EnhancedServiceSelector';
 import { DynamicOrderItemData } from './DynamicOrderItem';
 import { EnhancedServiceSelectionPopup } from './EnhancedServiceSelectionPopup';
 import { FloatingOrderSummary } from './FloatingOrderSummary';
+import { CashPaymentDialog } from './CashPaymentDialog';
 
 export const EnhancedLaundryPOS = () => {
   const [currentOrder, setCurrentOrder] = useState<EnhancedOrderItem[]>([]);
@@ -22,6 +23,8 @@ export const EnhancedLaundryPOS = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSelectingCustomer, setIsSelectingCustomer] = useState(false);
+  const [isServicePopupOpen, setIsServicePopupOpen] = useState(false);
+  const [showCashPaymentDialog, setShowCashPaymentDialog] = useState(false);
   const [dropOffDate, setDropOffDate] = useState(() => {
     // Set to current date/time in Asia/Jakarta timezone
     const now = new Date();
@@ -269,7 +272,7 @@ export const EnhancedLaundryPOS = () => {
   };
 
   // Process payment
-  const processPayment = async () => {
+  const processPayment = async (paymentMethod: string = 'cash') => {
     if (currentOrder.length === 0 && dynamicItems.length === 0) {
       toast({
         title: "Error",
@@ -288,6 +291,16 @@ export const EnhancedLaundryPOS = () => {
       return;
     }
 
+    // Show cash payment dialog for cash payments, otherwise process directly
+    if (paymentMethod === 'cash') {
+      setShowCashPaymentDialog(true);
+    } else {
+      // For other payment methods, process directly without cash dialog
+      await processNonCashPayment(paymentMethod);
+    }
+  };
+
+  const processCashPayment = async (cashReceived: number) => {
     try {
       const subtotal = getTotalPrice();
       const totalAmount = subtotal;
@@ -325,12 +338,79 @@ export const EnhancedLaundryPOS = () => {
         payment_status: 'completed',
         payment_method: 'cash',
         payment_amount: totalAmount,
+        cash_received: cashReceived, // Add the cash received amount
         order_date: dropOffDate.toISOString(),
         estimated_completion: completionDate?.toISOString(),
       };
 
       await createOrderMutation.mutateAsync(orderData);
 
+      // Close cash payment dialog and clear the current order
+      setShowCashPaymentDialog(false);
+      setCurrentOrder([]);
+      setDynamicItems([]);
+      setCustomerName('');
+      setCustomerPhone('');
+      
+      // Enhanced success message with change information
+      const change = cashReceived - totalAmount;
+      const changeMessage = change > 0 ? ` | Kembalian: Rp ${change.toLocaleString('id-ID')}` : '';
+      
+      toast({
+        title: "Success",
+        description: `Payment processed successfully! Cash payment completed${changeMessage}. Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
+      });
+    } catch (error) {
+      // Error is already handled in the hook
+      setShowCashPaymentDialog(false);
+    }
+  };
+
+  const processNonCashPayment = async (paymentMethod: string) => {
+    try {
+      const subtotal = getTotalPrice();
+      const totalAmount = subtotal;
+      const completionDate = getOrderCompletionTime();
+
+      // Combine regular order items and dynamic items
+      const regularItems = currentOrder.map(item => ({
+        service_name: item.service.name,
+        service_price: item.service.price,
+        quantity: item.quantity,
+        estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
+        service_type: item.serviceType,
+        weight_kg: item.weight,
+        unit_items: item.unitItems,
+      }));
+
+      const dynamicOrderItems = dynamicItems.map(item => ({
+        service_name: item.itemName,
+        service_price: item.price,
+        quantity: item.quantity,
+        estimated_completion: calculateDynamicItemFinishDate(item, dropOffDate).toISOString(),
+        service_type: 'unit' as const,
+        weight_kg: undefined,
+        unit_items: undefined,
+      }));
+
+      const orderData = {
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        items: [...regularItems, ...dynamicOrderItems],
+        subtotal,
+        tax_amount: 0,
+        total_amount: totalAmount,
+        execution_status: 'in_queue',
+        payment_status: 'completed',
+        payment_method: paymentMethod,
+        payment_amount: totalAmount,
+        order_date: dropOffDate.toISOString(),
+        estimated_completion: completionDate?.toISOString(),
+      };
+
+      await createOrderMutation.mutateAsync(orderData);
+
+      // Clear the current order after successful payment
       setCurrentOrder([]);
       setDynamicItems([]);
       setCustomerName('');
@@ -338,7 +418,7 @@ export const EnhancedLaundryPOS = () => {
       
       toast({
         title: "Success",
-        description: `Payment processed successfully! Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
+        description: `Payment processed successfully! ${paymentMethod.toUpperCase()} payment completed. Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
       });
     } catch (error) {
       // Error is already handled in the hook
@@ -582,6 +662,8 @@ export const EnhancedLaundryPOS = () => {
             onServicesSelected={handleServicesAndItemsSelected}
             disabled={!customerName || !customerPhone}
             dropOffDate={dropOffDate}
+            isOpen={isServicePopupOpen}
+            onOpenChange={setIsServicePopupOpen}
           />
         </CardContent>
       </Card>
@@ -602,12 +684,21 @@ export const EnhancedLaundryPOS = () => {
         dropOffDate={dropOffDate}
         onProcessPayment={processPayment}
         onCreateDraft={createDraftOrder}
+        onOpenServicePopup={() => setIsServicePopupOpen(true)}
         isProcessing={createOrderMutation.isPending}
         customerName={customerName}
         customerPhone={customerPhone}
         calculateFinishDate={calculateFinishDate}
         calculateDynamicItemFinishDate={calculateDynamicItemFinishDate}
         removeDynamicItem={removeDynamicItem}
+      />
+
+      {/* Cash Payment Dialog */}
+      <CashPaymentDialog
+        isOpen={showCashPaymentDialog}
+        onClose={() => setShowCashPaymentDialog(false)}
+        totalAmount={getTotalPrice()}
+        onSubmit={processCashPayment}
       />
     </div>
   );
