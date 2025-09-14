@@ -1,68 +1,66 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X } from 'lucide-react';
+import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useCreateOrderWithNotifications as useCreateOrder, UnitItem } from '@/hooks/useOrdersWithNotifications';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useServices } from '@/hooks/useServices';
-import { EnhancedServiceSelector, Service, EnhancedOrderItem } from './EnhancedServiceSelector';
+import { EnhancedOrderItem } from './EnhancedServiceSelector';
+import { DynamicOrderItemData } from './DynamicOrderItem';
+import { EnhancedServiceSelectionPopup } from './EnhancedServiceSelectionPopup';
+import { FloatingOrderSummary } from './FloatingOrderSummary';
+import { CashPaymentDialog } from './CashPaymentDialog';
 
 export const EnhancedLaundryPOS = () => {
   const [currentOrder, setCurrentOrder] = useState<EnhancedOrderItem[]>([]);
+  const [dynamicItems, setDynamicItems] = useState<DynamicOrderItemData[]>([]);
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSelectingCustomer, setIsSelectingCustomer] = useState(false);
+  const [isServicePopupOpen, setIsServicePopupOpen] = useState(false);
+  const [showCashPaymentDialog, setShowCashPaymentDialog] = useState(false);
   const [dropOffDate, setDropOffDate] = useState(() => {
     // Set to current date/time in Asia/Jakarta timezone
     const now = new Date();
     const jakartaTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
     return jakartaTime;
   });
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [showServiceDialog, setShowServiceDialog] = useState(false);
   
   const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading: customersLoading } = useCustomers();
   const createOrderMutation = useCreateOrder();
-  const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Load services from our service management system
   const { data: servicesData, isLoading: servicesLoading, error: servicesError } = useServices();
 
-  // Convert ServiceData to Service format for compatibility
-  const services: Service[] = React.useMemo(() => {
-    if (!servicesData) return [];
-    
-    return servicesData.map(serviceData => ({
-      id: serviceData.id,
-      name: serviceData.name,
-      price: serviceData.unit_price || 0,
-      duration: `${serviceData.duration_value} ${serviceData.duration_unit}`,
-      durationValue: serviceData.duration_value,
-      durationUnit: serviceData.duration_unit,
-      category: serviceData.category,
-      supportsKilo: serviceData.supports_kilo,
-      kiloPrice: serviceData.kilo_price,
-    }));
-  }, [servicesData]);
-
   // Helper function to calculate finish date based on service duration
-  const calculateFinishDate = (service: Service, startDate: Date = dropOffDate) => {
+  const calculateFinishDate = (service: any, startDate: Date = dropOffDate) => {
     const finishDate = new Date(startDate);
     
     if (service.durationUnit === 'hours') {
       finishDate.setHours(finishDate.getHours() + service.durationValue);
     } else if (service.durationUnit === 'days') {
       finishDate.setDate(finishDate.getDate() + service.durationValue);
+    }
+    
+    return finishDate;
+  };
+
+  // Calculate finish date for dynamic items
+  const calculateDynamicItemFinishDate = (item: DynamicOrderItemData, startDate: Date = dropOffDate) => {
+    const finishDate = new Date(startDate);
+    
+    if (item.durationUnit === 'hours') {
+      finishDate.setHours(finishDate.getHours() + item.durationValue);
+    } else if (item.durationUnit === 'days') {
+      finishDate.setDate(finishDate.getDate() + item.durationValue);
     }
     
     return finishDate;
@@ -88,35 +86,42 @@ export const EnhancedLaundryPOS = () => {
     }
   };
 
-  // Get category color
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'wash': return 'bg-blue-100 text-blue-800';
-      case 'dry': return 'bg-green-100 text-green-800';
-      case 'ironing': return 'bg-orange-100 text-orange-800';
-      case 'folding': return 'bg-yellow-100 text-yellow-800';
-      case 'special': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // Get total price
+  // Get total price including both regular and dynamic items
   const getTotalPrice = () => {
-    return currentOrder.reduce((sum, item) => sum + item.totalPrice, 0);
+    const regularItemsTotal = currentOrder.reduce((sum, item) => sum + item.totalPrice, 0);
+    const dynamicItemsTotal = dynamicItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    return regularItemsTotal + dynamicItemsTotal;
   };
 
   // Get the estimated completion time for the entire order
   const getOrderCompletionTime = () => {
-    if (currentOrder.length === 0) return null;
+    if (currentOrder.length === 0 && dynamicItems.length === 0) return null;
     
-    // Find the service with the longest duration
-    const longestService = currentOrder.reduce((longest, item) => {
-      const currentFinish = calculateFinishDate(item.service);
-      const longestFinish = longest ? calculateFinishDate(longest.service) : new Date();
-      return currentFinish > longestFinish ? item : longest;
-    }, currentOrder[0]);
+    let longestDate = new Date();
+
+    // Check regular service items
+    if (currentOrder.length > 0) {
+      const longestService = currentOrder.reduce((longest, item) => {
+        const currentFinish = calculateFinishDate(item.service);
+        const longestFinish = longest ? calculateFinishDate(longest.service) : new Date();
+        return currentFinish > longestFinish ? item : longest;
+      }, currentOrder[0]);
+      longestDate = calculateFinishDate(longestService.service);
+    }
+
+    // Check dynamic items
+    if (dynamicItems.length > 0) {
+      const longestDynamicDate = dynamicItems.reduce((longest, item) => {
+        const currentFinish = calculateDynamicItemFinishDate(item);
+        return currentFinish > longest ? currentFinish : longest;
+      }, longestDate);
+      
+      if (longestDynamicDate > longestDate) {
+        longestDate = longestDynamicDate;
+      }
+    }
     
-    return calculateFinishDate(longestService.service);
+    return longestDate;
   };
 
   // Search for customers when phone number changes
@@ -181,34 +186,78 @@ export const EnhancedLaundryPOS = () => {
     }, 200);
   };
 
-  // Handle service selection
-  const handleServiceSelect = (service: Service) => {
-    setSelectedService(service);
-    setShowServiceDialog(true);
-  };
+  // Handle services and dynamic items selected from popup
+  const handleServicesAndItemsSelected = (selectedServices: any[], selectedDynamicItems: any[]) => {
+    // Process regular services
+    selectedServices.forEach(selectedService => {
+      const service = {
+        id: selectedService.service.id,
+        name: selectedService.service.name,
+        price: selectedService.price,
+        duration: selectedService.service.duration,
+        durationValue: selectedService.service.durationValue,
+        durationUnit: selectedService.service.durationUnit,
+        category: selectedService.service.category,
+        supportsKilo: selectedService.service.supportsKilo,
+        kiloPrice: selectedService.service.kiloPrice,
+      };
 
-  // Handle enhanced order item addition
-  const handleOrderItemAdd = (item: EnhancedOrderItem | null) => {
-    if (item) {
-      // Check if this service already exists in the order
-      const existingIndex = currentOrder.findIndex(orderItem => 
-        orderItem.service.id === item.service.id &&
-        orderItem.serviceType === item.serviceType
-      );
+      // Add to regular order with the specified quantity
+      setCurrentOrder(prev => {
+        const existingItem = prev.find(item => 
+          item.service.id === service.id && 
+          item.serviceType === selectedService.type
+        );
+        
+        if (existingItem) {
+          return prev.map(item =>
+            item.service.id === service.id && item.serviceType === selectedService.type
+              ? { 
+                  ...item, 
+                  quantity: item.quantity + selectedService.quantity,
+                  totalPrice: (item.quantity + selectedService.quantity) * service.price,
+                  weight: selectedService.type === 'kilo' ? selectedService.quantity : item.weight
+                }
+              : item
+          );
+        } else {
+          return [...prev, { 
+            service, 
+            quantity: selectedService.quantity, 
+            serviceType: selectedService.type as 'unit' | 'kilo',
+            weight: selectedService.type === 'kilo' ? selectedService.quantity : undefined,
+            totalPrice: selectedService.quantity * service.price
+          }];
+        }
+      });
+    });
 
-      if (existingIndex >= 0) {
-        // Update existing item
-        const updatedOrder = [...currentOrder];
-        updatedOrder[existingIndex] = item;
-        setCurrentOrder(updatedOrder);
-      } else {
-        // Add new item
-        setCurrentOrder(prev => [...prev, item]);
-      }
-      
-      setShowServiceDialog(false);
-      setSelectedService(null);
-    }
+    // Process dynamic items
+    selectedDynamicItems.forEach(dynamicItem => {
+      const newDynamicItem: DynamicOrderItemData = {
+        id: dynamicItem.id,
+        itemName: dynamicItem.itemName,
+        duration: `${dynamicItem.durationValue} ${dynamicItem.durationUnit}`,
+        durationValue: dynamicItem.durationValue,
+        durationUnit: dynamicItem.durationUnit,
+        price: dynamicItem.price,
+        quantity: dynamicItem.quantity,
+        totalPrice: dynamicItem.price * dynamicItem.quantity,
+      };
+
+      setDynamicItems(prev => {
+        const existingIndex = prev.findIndex(item => item.id === dynamicItem.id);
+        if (existingIndex >= 0) {
+          // Update existing item
+          const updated = [...prev];
+          updated[existingIndex] = newDynamicItem;
+          return updated;
+        } else {
+          // Add new item
+          return [...prev, newDynamicItem];
+        }
+      });
+    });
   };
 
   // Remove item from order
@@ -216,43 +265,102 @@ export const EnhancedLaundryPOS = () => {
     setCurrentOrder(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Remove dynamic item
+  const removeDynamicItem = (index: number) => {
+    setDynamicItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Update quantity for service item
+  const updateQuantity = (serviceId: string, quantity: number, serviceType: 'unit' | 'kilo' | 'combined') => {
+    setCurrentOrder(prev => prev.map(item => {
+      if (item.service.id === serviceId && item.serviceType === serviceType) {
+        const updatedItem = { ...item, quantity };
+        updatedItem.totalPrice = item.service.price * quantity;
+        return updatedItem;
+      }
+      return item;
+    }));
+  };
+
+  // Remove service item from order
+  const removeServiceFromOrder = (serviceId: string, serviceType: 'unit' | 'kilo' | 'combined') => {
+    setCurrentOrder(prev => prev.filter(item => 
+      !(item.service.id === serviceId && item.serviceType === serviceType)
+    ));
+  };
+
   // Process payment
-  const processPayment = async () => {
-    if (currentOrder.length === 0) {
-      toast({
-        title: "Error",
-        description: "No items in order",
-        variant: "destructive",
+  const processPayment = async (paymentMethod: string = 'cash') => {
+    if (currentOrder.length === 0 && dynamicItems.length === 0) {
+      toast.error("❌ No items in order", {
+        style: {
+          minWidth: '320px',
+          maxWidth: '500px',
+          width: '90vw',
+          padding: '16px',
+          fontSize: '16px',
+          borderRadius: '12px',
+          border: '2px solid #ef4444',
+        }
       });
       return;
     }
 
     if (!customerName || !customerPhone) {
-      toast({
-        title: "Error", 
-        description: "Please provide customer information",
-        variant: "destructive",
+      toast.error("❌ Please provide customer information", {
+        style: {
+          minWidth: '320px',
+          maxWidth: '500px',
+          width: '90vw',
+          padding: '16px',
+          fontSize: '16px',
+          borderRadius: '12px',
+          border: '2px solid #ef4444',
+        }
       });
       return;
     }
 
+    // Show cash payment dialog for cash payments, otherwise process directly
+    if (paymentMethod === 'cash') {
+      setShowCashPaymentDialog(true);
+    } else {
+      // For other payment methods, process directly without cash dialog
+      await processNonCashPayment(paymentMethod);
+    }
+  };
+
+  const processCashPayment = async (cashReceived: number) => {
     try {
       const subtotal = getTotalPrice();
       const totalAmount = subtotal;
       const completionDate = getOrderCompletionTime();
 
+      // Combine regular order items and dynamic items
+      const regularItems = currentOrder.map(item => ({
+        service_name: item.service.name,
+        service_price: item.service.price,
+        quantity: item.quantity,
+        estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
+        service_type: item.serviceType,
+        weight_kg: item.weight,
+        unit_items: item.unitItems,
+      }));
+
+      const dynamicOrderItems = dynamicItems.map(item => ({
+        service_name: item.itemName,
+        service_price: item.price,
+        quantity: item.quantity,
+        estimated_completion: calculateDynamicItemFinishDate(item, dropOffDate).toISOString(),
+        service_type: 'unit' as const,
+        weight_kg: undefined,
+        unit_items: undefined,
+      }));
+
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: currentOrder.map(item => ({
-          service_name: item.service.name,
-          service_price: item.service.price,
-          quantity: item.quantity,
-          estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
-          service_type: item.serviceType,
-          weight_kg: item.weight,
-          unit_items: item.unitItems,
-        })),
+        items: [...regularItems, ...dynamicOrderItems],
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
@@ -260,20 +368,132 @@ export const EnhancedLaundryPOS = () => {
         payment_status: 'completed',
         payment_method: 'cash',
         payment_amount: totalAmount,
+        cash_received: cashReceived, // Add the cash received amount
         order_date: dropOffDate.toISOString(),
         estimated_completion: completionDate?.toISOString(),
       };
 
       await createOrderMutation.mutateAsync(orderData);
 
+      // Close cash payment dialog and clear the current order
+      setShowCashPaymentDialog(false);
       setCurrentOrder([]);
+      setDynamicItems([]);
       setCustomerName('');
       setCustomerPhone('');
       
-      toast({
-        title: "Success",
-        description: `Payment processed successfully! Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
-      });
+      // Enhanced success message with change information
+      const change = cashReceived - totalAmount;
+      const changeMessage = change > 0 ? ` | Kembalian: Rp ${change.toLocaleString('id-ID')}` : '';
+      
+      toast.success(
+        <div className="flex items-start space-x-3 py-2">
+          <CheckCircle2 className="h-7 w-7 text-green-600 mt-1 flex-shrink-0" />
+          <div className="flex-1">
+            <div className="text-lg font-bold text-green-800 mb-1">✅ Order berhasil dibuat!</div>
+            <div className="text-sm text-green-700 leading-relaxed">
+              <div className="font-medium">Pembayaran tunai berhasil{changeMessage}</div>
+              <div className="mt-1">Selesai: <span className="font-semibold">{completionDate ? formatDate(completionDate) : 'segera'}</span></div>
+            </div>
+          </div>
+        </div>,
+        { 
+          duration: 6000,
+          style: {
+            background: '#f0fdf4',
+            border: '2px solid #22c55e',
+            color: '#166534',
+            minWidth: '320px',
+            maxWidth: '500px',
+            width: '90vw',
+            padding: '20px',
+            borderRadius: '16px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          }
+        }
+      );
+    } catch (error) {
+      // Error is already handled in the hook
+      setShowCashPaymentDialog(false);
+    }
+  };
+
+  const processNonCashPayment = async (paymentMethod: string) => {
+    try {
+      const subtotal = getTotalPrice();
+      const totalAmount = subtotal;
+      const completionDate = getOrderCompletionTime();
+
+      // Combine regular order items and dynamic items
+      const regularItems = currentOrder.map(item => ({
+        service_name: item.service.name,
+        service_price: item.service.price,
+        quantity: item.quantity,
+        estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
+        service_type: item.serviceType,
+        weight_kg: item.weight,
+        unit_items: item.unitItems,
+      }));
+
+      const dynamicOrderItems = dynamicItems.map(item => ({
+        service_name: item.itemName,
+        service_price: item.price,
+        quantity: item.quantity,
+        estimated_completion: calculateDynamicItemFinishDate(item, dropOffDate).toISOString(),
+        service_type: 'unit' as const,
+        weight_kg: undefined,
+        unit_items: undefined,
+      }));
+
+      const orderData = {
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        items: [...regularItems, ...dynamicOrderItems],
+        subtotal,
+        tax_amount: 0,
+        total_amount: totalAmount,
+        execution_status: 'in_queue',
+        payment_status: 'completed',
+        payment_method: paymentMethod,
+        payment_amount: totalAmount,
+        order_date: dropOffDate.toISOString(),
+        estimated_completion: completionDate?.toISOString(),
+      };
+
+      await createOrderMutation.mutateAsync(orderData);
+
+      // Clear the current order after successful payment
+      setCurrentOrder([]);
+      setDynamicItems([]);
+      setCustomerName('');
+      setCustomerPhone('');
+      
+      toast.success(
+        <div className="flex items-start space-x-3 py-2">
+          <CheckCircle2 className="h-7 w-7 text-green-600 mt-1 flex-shrink-0" />
+          <div className="flex-1">
+            <div className="text-lg font-bold text-green-800 mb-1">✅ Order berhasil dibuat!</div>
+            <div className="text-sm text-green-700 leading-relaxed">
+              <div className="font-medium">Pembayaran {paymentMethod.toUpperCase()} berhasil</div>
+              <div className="mt-1">Selesai: <span className="font-semibold">{completionDate ? formatDate(completionDate) : 'segera'}</span></div>
+            </div>
+          </div>
+        </div>,
+        { 
+          duration: 6000,
+          style: {
+            background: '#f0fdf4',
+            border: '2px solid #22c55e',
+            color: '#166534',
+            minWidth: '320px',
+            maxWidth: '500px',
+            width: '90vw',
+            padding: '20px',
+            borderRadius: '16px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          }
+        }
+      );
     } catch (error) {
       // Error is already handled in the hook
     }
@@ -281,20 +501,32 @@ export const EnhancedLaundryPOS = () => {
 
   // Create draft order
   const createDraftOrder = async () => {
-    if (currentOrder.length === 0) {
-      toast({
-        title: "Error",
-        description: "No items in order",
-        variant: "destructive",
+    if (currentOrder.length === 0 && dynamicItems.length === 0) {
+      toast.error("❌ No items in order", {
+        style: {
+          minWidth: '320px',
+          maxWidth: '500px',
+          width: '90vw',
+          padding: '16px',
+          fontSize: '16px',
+          borderRadius: '12px',
+          border: '2px solid #ef4444',
+        }
       });
       return;
     }
 
     if (!customerName || !customerPhone) {
-      toast({
-        title: "Error", 
-        description: "Please provide customer information",
-        variant: "destructive",
+      toast.error("❌ Please provide customer information", {
+        style: {
+          minWidth: '320px',
+          maxWidth: '500px',
+          width: '90vw',
+          padding: '16px',
+          fontSize: '16px',
+          borderRadius: '12px',
+          border: '2px solid #ef4444',
+        }
       });
       return;
     }
@@ -304,18 +536,31 @@ export const EnhancedLaundryPOS = () => {
       const totalAmount = subtotal;
       const completionDate = getOrderCompletionTime();
 
+      // Combine regular order items and dynamic items
+      const regularItems = currentOrder.map(item => ({
+        service_name: item.service.name,
+        service_price: item.service.price,
+        quantity: item.quantity,
+        estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
+        service_type: item.serviceType,
+        weight_kg: item.weight,
+        unit_items: item.unitItems,
+      }));
+
+      const dynamicOrderItems = dynamicItems.map(item => ({
+        service_name: item.itemName,
+        service_price: item.price,
+        quantity: item.quantity,
+        estimated_completion: calculateDynamicItemFinishDate(item, dropOffDate).toISOString(),
+        service_type: 'unit' as const,
+        weight_kg: undefined,
+        unit_items: undefined,
+      }));
+
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: currentOrder.map(item => ({
-          service_name: item.service.name,
-          service_price: item.service.price,
-          quantity: item.quantity,
-          estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
-          service_type: item.serviceType,
-          weight_kg: item.weight,
-          unit_items: item.unitItems,
-        })),
+        items: [...regularItems, ...dynamicOrderItems],
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
@@ -328,13 +573,36 @@ export const EnhancedLaundryPOS = () => {
       await createOrderMutation.mutateAsync(orderData);
 
       setCurrentOrder([]);
+      setDynamicItems([]);
       setCustomerName('');
       setCustomerPhone('');
       
-      toast({
-        title: "Success",
-        description: `Draft order created successfully! Estimated completion: ${completionDate ? formatDate(completionDate) : 'TBD'}.`,
-      });
+      toast.success(
+        <div className="flex items-start space-x-3 py-2">
+          <CheckCircle2 className="h-7 w-7 text-blue-600 mt-1 flex-shrink-0" />
+          <div className="flex-1">
+            <div className="text-lg font-bold text-blue-800 mb-1">📝 Order berhasil dibuat!</div>
+            <div className="text-sm text-blue-700 leading-relaxed">
+              <div className="font-medium">Menunggu pembayaran</div>
+              <div className="mt-1">Estimasi selesai: <span className="font-semibold">{completionDate ? formatDate(completionDate) : 'TBD'}</span></div>
+            </div>
+          </div>
+        </div>,
+        { 
+          duration: 6000,
+          style: {
+            background: '#eff6ff',
+            border: '2px solid #3b82f6',
+            color: '#1d4ed8',
+            minWidth: '320px',
+            maxWidth: '500px',
+            width: '90vw',
+            padding: '20px',
+            borderRadius: '16px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          }
+        }
+      );
     } catch (error) {
       // Error is already handled in the hook
     }
@@ -377,7 +645,7 @@ export const EnhancedLaundryPOS = () => {
   return (
     <div className="space-y-6">
       {/* Service Management Notice */}
-      {services.length === 0 && (
+      {servicesData && servicesData.length === 0 && (
         <Card className="border-orange-200 bg-orange-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -495,192 +763,53 @@ export const EnhancedLaundryPOS = () => {
         </CardContent>
       </Card>
 
-      {/* Services Grid */}
-      {services.length > 0 && (
-        <Card className="shadow-medium animate-scale-in">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Available Services</CardTitle>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/services')}
-              >
-                Manage Services
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {services.map((service) => (
-                <div
-                  key={service.id}
-                  className="p-3 sm:p-4 border rounded-lg hover:shadow-soft transition-smooth cursor-pointer bg-card"
-                  onClick={() => handleServiceSelect(service)}
-                >
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2">
-                    <h3 className="font-semibold text-foreground text-sm sm:text-base">{service.name}</h3>
-                    <div className="flex space-x-1 mt-1 sm:mt-0">
-                      <Badge className={`${getCategoryColor(service.category)} w-fit`}>
-                        {service.category}
-                      </Badge>
-                      {service.supportsKilo && (
-                        <Badge variant="outline" className="w-fit">
-                          Kilo
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-lg sm:text-xl font-bold text-primary">
-                      Rp{service.price.toLocaleString('id-ID')}
-                    </p>
-                    {service.supportsKilo && service.kiloPrice && (
-                      <p className="text-sm text-gray-600">
-                        Rp{service.kiloPrice.toLocaleString('id-ID')}/kg
-                      </p>
-                    )}
-                    <p className="text-xs sm:text-sm text-muted-foreground flex items-center">
-                      <Clock className="h-3 w-3 mr-1" />
-                      Duration: {service.duration}
-                    </p>
-                    <p className="text-xs text-green-600 font-medium">
-                      Ready: {formatDate(calculateFinishDate(service))}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Current Order */}
-      <Card className="bg-card shadow-strong">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center">
-            <ShoppingCart className="h-5 w-5 mr-2" />
-            Current Order
-            {currentOrder.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {currentOrder.length} services
-              </Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 lg:p-6">
-          {currentOrder.length === 0 ? (
-            <div className="text-center py-6 sm:py-8 text-muted-foreground">
-              <ShoppingCart className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 opacity-50" />
-              <p className="text-sm sm:text-base">No items in order</p>
-              <p className="text-xs sm:text-sm">Add services to get started</p>
-            </div>
-          ) : (
-            <>
-              <div className="space-y-3 mb-6">
-                {currentOrder.map((item, index) => (
-                  <div key={`${item.service.id}-${index}`} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-medium text-foreground text-sm sm:text-base">{item.service.name}</h4>
-                        <Badge variant="outline" className="text-xs">
-                          {item.serviceType}
-                        </Badge>
-                      </div>
-                      <div className="text-xs sm:text-sm text-muted-foreground mt-1">
-                        {item.serviceType === 'unit' && (
-                          <span>Quantity: {item.quantity}</span>
-                        )}
-                        {item.serviceType === 'kilo' && item.weight && (
-                          <span>Weight: {item.weight} kg</span>
-                        )}
-                        {item.serviceType === 'combined' && (
-                          <span>Weight: {item.weight} kg + {item.unitItems?.length || 0} unit items</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Ready: {formatDate(calculateFinishDate(item.service))}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2 ml-2">
-                      <span className="font-semibold text-primary">
-                        Rp{item.totalPrice.toLocaleString('id-ID')}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeFromOrder(index)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <Separator className="mb-4" />
-
-              {/* Order Completion Information */}
-              {getOrderCompletionTime() && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center mb-2">
-                    <Clock className="h-4 w-4 text-blue-600 mr-2" />
-                    <span className="font-semibold text-blue-800">Estimated Completion</span>
-                  </div>
-                  <p className="text-blue-700">
-                    {formatDate(getOrderCompletionTime()!)}
-                  </p>
-                </div>
-              )}
-
-              {/* Order Summary */}
-              <div className="space-y-2 mb-6">
-                <div className="flex justify-between text-lg font-semibold">
-                  <span>Total:</span>
-                  <span>Rp{getTotalPrice().toLocaleString('id-ID')}</span>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Button
-                  variant="outline"
-                  onClick={createDraftOrder}
-                  disabled={createOrderMutation.isPending}
-                  className="flex items-center"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Draft
-                </Button>
-                <Button
-                  onClick={processPayment}
-                  disabled={createOrderMutation.isPending}
-                  className="flex items-center"
-                >
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Process Payment
-                </Button>
-              </div>
-            </>
-          )}
+      {/* Add Service Section */}
+      <Card className="shadow-medium animate-scale-in">
+        <CardContent className="pt-6">
+          <EnhancedServiceSelectionPopup
+            onServicesSelected={handleServicesAndItemsSelected}
+            disabled={!customerName || !customerPhone}
+            dropOffDate={dropOffDate}
+            isOpen={isServicePopupOpen}
+            onOpenChange={setIsServicePopupOpen}
+          />
         </CardContent>
       </Card>
 
-      {/* Service Selection Dialog */}
-      <Dialog open={showServiceDialog} onOpenChange={setShowServiceDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Configure Service: {selectedService?.name}</DialogTitle>
-          </DialogHeader>
-          {selectedService && (
-            <EnhancedServiceSelector
-              service={selectedService}
-              onItemChange={handleOrderItemAdd}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* FloatingOrderSummary instead of fixed Current Order card */}
+      <FloatingOrderSummary
+        currentOrder={currentOrder.map(item => ({
+          service: item.service,
+          quantity: item.quantity,
+          serviceType: item.serviceType,
+          weight: item.weight,
+          totalPrice: item.totalPrice,
+        }))}
+        dynamicItems={dynamicItems}
+        getTotalPrice={getTotalPrice}
+        getOrderCompletionTime={getOrderCompletionTime}
+        formatDate={formatDate}
+        dropOffDate={dropOffDate}
+        onProcessPayment={processPayment}
+        onCreateDraft={createDraftOrder}
+        onOpenServicePopup={() => setIsServicePopupOpen(true)}
+        isProcessing={createOrderMutation.isPending}
+        customerName={customerName}
+        customerPhone={customerPhone}
+        calculateFinishDate={calculateFinishDate}
+        calculateDynamicItemFinishDate={calculateDynamicItemFinishDate}
+        updateQuantity={updateQuantity}
+        removeFromOrder={removeServiceFromOrder}
+        removeDynamicItem={removeDynamicItem}
+      />
+
+      {/* Cash Payment Dialog */}
+      <CashPaymentDialog
+        isOpen={showCashPaymentDialog}
+        onClose={() => setShowCashPaymentDialog(false)}
+        totalAmount={getTotalPrice()}
+        onSubmit={processCashPayment}
+      />
     </div>
   );
 };
