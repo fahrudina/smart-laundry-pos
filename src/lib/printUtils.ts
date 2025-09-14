@@ -46,6 +46,8 @@ declare global {
   type BluetoothServiceUUID = string | number;
 }
 
+import { supabase } from '@/integrations/supabase/client';
+
 // Constants
 const IFRAME_RENDER_WAIT_MS = 1000;
 const PRINT_WINDOW_CHECK_INTERVAL_MS = 100;
@@ -716,9 +718,6 @@ export const printToThermalPrinter = async (
  */
 export const fetchReceiptDataForThermal = async (orderId: string): Promise<any> => {
   try {
-    // Import Supabase client (static import to avoid chunking issues)
-    const { supabase } = await import('@/integrations/supabase/client');
-    
     console.log('🧾 Fetching receipt data for thermal printing, order:', orderId);
     
     // Fetch order data using the same RPC function as the receipt page
