@@ -18,6 +18,7 @@ interface Service {
   durationValue: number;
   durationUnit: 'hours' | 'days';
   category: string;
+  supportsUnit?: boolean;
   supportsKilo?: boolean;
   kiloPrice?: number;
 }
@@ -37,6 +38,7 @@ interface DynamicItem {
   durationUnit: 'hours' | 'days';
   price: number;
   quantity: number;
+  unitType: 'unit' | 'kilo';
 }
 
 interface EnhancedServiceSelectionPopupProps {
@@ -71,6 +73,7 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
       durationValue: serviceData.duration_value,
       durationUnit: serviceData.duration_unit,
       category: serviceData.category,
+      supportsUnit: serviceData.supports_unit,
       supportsKilo: serviceData.supports_kilo,
       kiloPrice: serviceData.kilo_price,
     }));
@@ -152,14 +155,20 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
       const updated = prev.map(item => {
         if (item.service.id === serviceId && item.type === type) {
           const increment = type === 'kilo' ? (change > 0 ? 0.1 : -0.1) : change;
-          const minValue = type === 'kilo' ? 0.1 : 1;
-          const newQuantity = Math.max(minValue, item.quantity + increment);
+          const newQuantity = item.quantity + increment;
           // Round to 1 decimal place to avoid floating point precision issues
           const roundedQuantity = Math.round(newQuantity * 10) / 10;
           return { ...item, quantity: roundedQuantity };
         }
         return item;
-      }).filter(item => item.quantity > 0); // Remove items with 0 quantity
+      }).filter(item => {
+        // Remove items with 0 or negative quantity, respecting type-specific minimums
+        if (item.type === 'kilo') {
+          return item.quantity >= 0.1;
+        } else {
+          return item.quantity >= 1;
+        }
+      });
       
       return updated;
     });
@@ -173,6 +182,7 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
       durationUnit: 'hours',
       price: 0,
       quantity: 1,
+      unitType: 'unit',
     };
     setDynamicItems([...dynamicItems, newItem]);
   };
@@ -231,25 +241,25 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
           disabled={disabled}
         >
           <Plus className="h-4 w-4 mr-2" />
-          Add Service & Items
+          Tambah Layanan & Item
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Services & Custom Items</DialogTitle>
+          <DialogTitle>Tambah Layanan & Item Kustom</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
           <Tabs defaultValue="services" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="services">Available Services</TabsTrigger>
-              <TabsTrigger value="custom">Custom Items</TabsTrigger>
+              <TabsTrigger value="services">Layanan Tersedia</TabsTrigger>
+              <TabsTrigger value="custom">Item Kustom</TabsTrigger>
             </TabsList>
             
             <TabsContent value="services" className="mt-4">
               <div className="space-y-3">
                 {isLoading ? (
-                  <div className="text-center py-4">Loading services...</div>
+                  <div className="text-center py-4">Memuat layanan...</div>
                 ) : services.length > 0 ? (
                   services.map((service) => (
                     <Card key={service.id} className="p-4">
@@ -263,16 +273,18 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                           </div>
                           <p className="text-xs text-gray-500 flex items-center">
                             <Clock className="h-3 w-3 mr-1" />
-                            Duration: {service.duration}
+                            Durasi: {service.duration}
                           </p>
                           <p className="text-xs text-green-600 font-medium">
-                            Ready: {formatDate(calculateFinishDate(service.durationValue, service.durationUnit))}
+                            Siap: {formatDate(calculateFinishDate(service.durationValue, service.durationUnit))}
                           </p>
                         </div>
                         <div className="text-right">
-                          <div className="text-blue-600 font-semibold">
-                            Rp{service.price.toLocaleString('id-ID')}
-                          </div>
+                          {service.supportsUnit && service.price && (
+                            <div className="text-blue-600 font-semibold">
+                              Rp{service.price.toLocaleString('id-ID')}
+                            </div>
+                          )}
                           {service.supportsKilo && service.kiloPrice && (
                             <div className="text-sm text-gray-600">
                               Rp{service.kiloPrice.toLocaleString('id-ID')}/kg
@@ -282,15 +294,17 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                       </div>
 
                       <div className="flex gap-2 mt-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => addService(service, 'unit')}
-                          className="flex-1"
-                        >
-                          <Plus className="h-3 w-3 mr-1" />
-                          Add Unit
-                        </Button>
+                        {service.supportsUnit && service.price && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addService(service, 'unit')}
+                            className="flex-1"
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Tambah Satuan
+                          </Button>
+                        )}
                         {service.supportsKilo && service.kiloPrice && (
                           <Button
                             variant="outline"
@@ -299,7 +313,7 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                             className="flex-1"
                           >
                             <Plus className="h-3 w-3 mr-1" />
-                            Add Kilo
+                            Tambah Kilo
                           </Button>
                         )}
                       </div>
@@ -307,8 +321,8 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                   ))
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    <p>No predefined services available.</p>
-                    <p className="text-sm">You can create custom items instead.</p>
+                    <p>Tidak ada layanan tersedia.</p>
+                    <p className="text-sm">Anda dapat membuat item kustom sebagai gantinya.</p>
                   </div>
                 )}
               </div>
@@ -317,21 +331,21 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
             <TabsContent value="custom" className="mt-4">
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h4 className="font-semibold">Custom Items</h4>
+                  <h4 className="font-semibold">Item Kustom</h4>
                   <Button
                     variant="outline"
                     onClick={addDynamicItem}
                     className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Custom Item
+                    Tambah Item Kustom
                   </Button>
                 </div>
                 
                 {dynamicItems.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    <p>No custom items added yet.</p>
-                    <p className="text-sm">Click "Add Custom Item" to create a new service.</p>
+                    <p>Belum ada item kustom yang ditambahkan.</p>
+                    <p className="text-sm">Klik "Tambah Item Kustom" untuk membuat layanan baru.</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -341,9 +355,9 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                           <div className="flex justify-between items-start">
                             <div className="flex-1 space-y-3">
                               <div>
-                                <label className="text-sm font-medium mb-1 block">Item Name *</label>
+                                <label className="text-sm font-medium mb-1 block">Nama Item *</label>
                                 <Input
-                                  placeholder="e.g., Special Dry Clean, Express Wash"
+                                  placeholder="Contoh: Cuci Kering Khusus, Cuci Express"
                                   value={item.itemName}
                                   onChange={(e) => updateDynamicItem(item.id, 'itemName', e.target.value)}
                                   className={item.itemName.trim() === '' ? 'border-red-300' : ''}
@@ -352,7 +366,7 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                               
                               <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                  <label className="text-sm font-medium mb-1 block">Service Duration *</label>
+                                  <label className="text-sm font-medium mb-1 block">Durasi Layanan *</label>
                                   <div className="flex gap-2">
                                     <Input
                                       type="number"
@@ -369,49 +383,89 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        <SelectItem value="hours">Hours</SelectItem>
-                                        <SelectItem value="days">Days</SelectItem>
+                                        <SelectItem value="hours">Jam</SelectItem>
+                                        <SelectItem value="days">Hari</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
                                 </div>
                                 
                                 <div>
-                                  <label className="text-sm font-medium mb-1 block">Price per Unit *</label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    placeholder="15000"
-                                    value={item.price || ''}
-                                    onChange={(e) => updateDynamicItem(item.id, 'price', parseFloat(e.target.value) || 0)}
-                                    className={item.price <= 0 ? 'border-red-300' : ''}
-                                  />
+                                  <label className="text-sm font-medium mb-1 block">Jenis Unit *</label>
+                                  <Select 
+                                    value={item.unitType} 
+                                    onValueChange={(value: 'unit' | 'kilo') => updateDynamicItem(item.id, 'unitType', value)}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="unit">Satuan</SelectItem>
+                                      <SelectItem value="kilo">Kilogram</SelectItem>
+                                    </SelectContent>
+                                  </Select>
                                 </div>
+                              </div>
+
+                              <div>
+                                <label className="text-sm font-medium mb-1 block">
+                                  Harga per {item.unitType === 'kilo' ? 'Kg' : 'Satuan'} *
+                                </label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  placeholder="15000"
+                                  value={item.price || ''}
+                                  onChange={(e) => updateDynamicItem(item.id, 'price', parseFloat(e.target.value) || 0)}
+                                  className={item.price <= 0 ? 'border-red-300' : ''}
+                                />
                               </div>
                               
                               <div>
-                                <label className="text-sm font-medium mb-1 block">Quantity *</label>
+                                <label className="text-sm font-medium mb-1 block">
+                                  Jumlah ({item.unitType === 'kilo' ? 'kg' : 'satuan'}) *
+                                </label>
                                 <div className="flex items-center gap-2">
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => updateDynamicItem(item.id, 'quantity', Math.max(1, item.quantity - 1))}
+                                    onClick={() => {
+                                      const minValue = item.unitType === 'kilo' ? 0.1 : 1;
+                                      const decrement = item.unitType === 'kilo' ? 0.1 : 1;
+                                      const newValue = Math.max(minValue, item.quantity - decrement);
+                                      const roundedValue = item.unitType === 'kilo' ? Math.round(newValue * 10) / 10 : newValue;
+                                      updateDynamicItem(item.id, 'quantity', roundedValue);
+                                    }}
                                     className="h-8 w-8 p-0"
                                   >
                                     <Minus className="h-3 w-3" />
                                   </Button>
                                   <Input
                                     type="number"
-                                    min="1"
+                                    min={item.unitType === 'kilo' ? "0.1" : "1"}
+                                    step={item.unitType === 'kilo' ? "0.1" : "1"}
                                     value={item.quantity}
-                                    onChange={(e) => updateDynamicItem(item.id, 'quantity', Math.max(1, parseInt(e.target.value) || 1))}
+                                    onChange={(e) => {
+                                      const inputValue = parseFloat(e.target.value);
+                                      if (!isNaN(inputValue)) {
+                                        const minValue = item.unitType === 'kilo' ? 0.1 : 1;
+                                        const value = Math.max(minValue, inputValue);
+                                        const roundedValue = item.unitType === 'kilo' ? Math.round(value * 10) / 10 : Math.round(value);
+                                        updateDynamicItem(item.id, 'quantity', roundedValue);
+                                      }
+                                    }}
                                     className="w-20 text-center"
                                   />
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => updateDynamicItem(item.id, 'quantity', item.quantity + 1)}
+                                    onClick={() => {
+                                      const increment = item.unitType === 'kilo' ? 0.1 : 1;
+                                      const newValue = item.quantity + increment;
+                                      const roundedValue = item.unitType === 'kilo' ? Math.round(newValue * 10) / 10 : newValue;
+                                      updateDynamicItem(item.id, 'quantity', roundedValue);
+                                    }}
                                     className="h-8 w-8 p-0"
                                   >
                                     <Plus className="h-3 w-3" />
@@ -422,9 +476,9 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                               {isDynamicItemValid(item) && (
                                 <div className="bg-white p-2 rounded border">
                                   <div className="text-sm">
-                                    <div className="font-medium">Total Price: Rp{(item.price * item.quantity).toLocaleString('id-ID')}</div>
+                                    <div className="font-medium">Total Harga: Rp{(item.price * item.quantity).toLocaleString('id-ID')}</div>
                                     <div className="text-green-600 text-xs">
-                                      Ready: {formatDate(calculateFinishDate(item.durationValue, item.durationUnit))}
+                                      Siap: {formatDate(calculateFinishDate(item.durationValue, item.durationUnit))}
                                     </div>
                                   </div>
                                 </div>
@@ -452,7 +506,7 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
           {/* Selected Items Summary */}
           {(selectedServices.length > 0 || dynamicItems.some(isDynamicItemValid)) && (
             <div className="border-t pt-4">
-              <h4 className="font-semibold mb-3">Selected Items</h4>
+              <h4 className="font-semibold mb-3">Item Terpilih</h4>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {/* Regular Services */}
                 {selectedServices.map((item, index) => (
@@ -460,7 +514,7 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                     <div className="flex-1">
                       <div className="font-medium">{item.service.name}</div>
                       <div className="text-sm text-gray-600">
-                        {item.type === 'unit' ? 'Per Unit' : 'Per Kg'} - Rp{item.price.toLocaleString('id-ID')}
+                        {item.type === 'unit' ? 'Per Satuan' : 'Per Kg'} - Rp{item.price.toLocaleString('id-ID')}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -523,15 +577,17 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                       <div className="font-medium flex items-center gap-2">
                         {item.itemName}
                         <Badge variant="outline" className="text-orange-700 border-orange-200">
-                          Custom
+                          Kustom
                         </Badge>
                       </div>
                       <div className="text-sm text-gray-600">
-                        Per Unit - Rp{item.price.toLocaleString('id-ID')}
+                        Per {item.unitType === 'kilo' ? 'Kg' : 'Satuan'} - Rp{item.price.toLocaleString('id-ID')}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="w-8 text-center">{item.quantity}</span>
+                      <span className="w-8 text-center">
+                        {item.unitType === 'kilo' ? `${item.quantity}kg` : `${item.quantity}`}
+                      </span>
                       <div className="text-sm font-medium">
                         Rp{(item.price * item.quantity).toLocaleString('id-ID')}
                       </div>
@@ -546,10 +602,10 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={handleCancel}>
-                    Cancel
+                    Batal
                   </Button>
                   <Button onClick={handleConfirm} disabled={!isFormValid()}>
-                    Add to Order
+                    Tambah ke Pesanan
                   </Button>
                 </div>
               </div>
