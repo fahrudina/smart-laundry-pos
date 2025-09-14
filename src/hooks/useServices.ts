@@ -19,6 +19,10 @@ export interface ServiceData {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  
+  // New fields for duration type system (optional for backward compatibility)
+  base_unit_price?: number;
+  base_kilo_price?: number;
 }
 
 // Form data interface for creating/updating services
@@ -33,6 +37,10 @@ export interface ServiceFormData {
   duration_value: number;
   duration_unit: 'hours' | 'days';
   is_active?: boolean;
+  
+  // New fields for duration type system (optional)
+  base_unit_price?: number;
+  base_kilo_price?: number;
 }
 
 // Hook to fetch services for the current store
@@ -105,6 +113,9 @@ export const useCreateService = () => {
           ...serviceData,
           store_id: currentStore.store_id,
           is_active: serviceData.is_active ?? true,
+          // Auto-populate base prices from current prices for backward compatibility
+          base_unit_price: serviceData.base_unit_price ?? serviceData.unit_price,
+          base_kilo_price: serviceData.base_kilo_price ?? serviceData.kilo_price,
         }])
         .select()
         .single();

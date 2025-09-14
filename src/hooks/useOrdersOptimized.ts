@@ -18,6 +18,12 @@ interface OrderItem {
   service_type: 'unit' | 'kilo' | 'combined';
   weight_kg?: number;
   unit_items?: UnitItem[];
+  
+  // New fields for duration types system
+  service_duration_type_id?: string;
+  selected_duration_value?: number;
+  selected_duration_unit?: string;
+  duration_price_multiplier?: number;
 }
 
 interface Order {
@@ -51,6 +57,12 @@ interface CreateOrderData {
     service_type: 'unit' | 'kilo' | 'combined';
     weight_kg?: number;
     unit_items?: UnitItem[];
+    
+    // New fields for duration types system
+    service_duration_type_id?: string;
+    selected_duration_value?: number;
+    selected_duration_unit?: string;
+    duration_price_multiplier?: number;
   }[];
   subtotal: number;
   tax_amount: number;
@@ -297,6 +309,12 @@ export const useCreateOrder = () => {
         service_type: item.service_type || 'unit',
         weight_kg: item.weight_kg,
         unit_items: item.service_type === 'kilo' ? 0 : item.unit_items,
+        
+        // Include duration type fields if available
+        service_duration_type_id: item.service_duration_type_id,
+        selected_duration_value: item.selected_duration_value,
+        selected_duration_unit: item.selected_duration_unit,
+        duration_price_multiplier: item.duration_price_multiplier,
       }));
 
       const { error: itemsError } = await supabase
