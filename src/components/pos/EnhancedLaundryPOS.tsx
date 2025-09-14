@@ -271,6 +271,25 @@ export const EnhancedLaundryPOS = () => {
     setDynamicItems(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Update quantity for service item
+  const updateQuantity = (serviceId: string, quantity: number, serviceType: 'unit' | 'kilo' | 'combined') => {
+    setCurrentOrder(prev => prev.map(item => {
+      if (item.service.id === serviceId && item.serviceType === serviceType) {
+        const updatedItem = { ...item, quantity };
+        updatedItem.totalPrice = item.service.price * quantity;
+        return updatedItem;
+      }
+      return item;
+    }));
+  };
+
+  // Remove service item from order
+  const removeServiceFromOrder = (serviceId: string, serviceType: 'unit' | 'kilo' | 'combined') => {
+    setCurrentOrder(prev => prev.filter(item => 
+      !(item.service.id === serviceId && item.serviceType === serviceType)
+    ));
+  };
+
   // Process payment
   const processPayment = async (paymentMethod: string = 'cash') => {
     if (currentOrder.length === 0 && dynamicItems.length === 0) {
@@ -690,6 +709,8 @@ export const EnhancedLaundryPOS = () => {
         customerPhone={customerPhone}
         calculateFinishDate={calculateFinishDate}
         calculateDynamicItemFinishDate={calculateDynamicItemFinishDate}
+        updateQuantity={updateQuantity}
+        removeFromOrder={removeServiceFromOrder}
         removeDynamicItem={removeDynamicItem}
       />
 
