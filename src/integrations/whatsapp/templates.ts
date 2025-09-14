@@ -60,6 +60,9 @@ export const messageTemplates: MessageTemplate = {
           if (item.service_type === 'kilo' && item.weight_kg) {
             serviceInfo += `\nBerat (kg) = ${item.weight_kg}`;
           }
+          if (item.service_type === 'unit' && item.quantity) {
+            serviceInfo += `\nJumlah (unit) = ${item.quantity}`;
+          }
           serviceInfo += `\nHarga = Rp. ${item.service_price.toLocaleString('id-ID')},-`;
           return serviceInfo;
         }).join('\n\n')
