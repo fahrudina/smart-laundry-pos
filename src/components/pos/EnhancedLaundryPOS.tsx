@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useCreateOrderWithNotifications as useCreateOrder, UnitItem } from '@/hooks/useOrdersWithNotifications';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useServices } from '@/hooks/useServices';
 import { EnhancedOrderItem } from './EnhancedServiceSelector';
 import { DynamicOrderItemData } from './DynamicOrderItem';
@@ -35,7 +35,6 @@ export const EnhancedLaundryPOS = () => {
   const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading: customersLoading } = useCustomers();
   const createOrderMutation = useCreateOrder();
-  const { toast } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Load services from our service management system
@@ -293,19 +292,31 @@ export const EnhancedLaundryPOS = () => {
   // Process payment
   const processPayment = async (paymentMethod: string = 'cash') => {
     if (currentOrder.length === 0 && dynamicItems.length === 0) {
-      toast({
-        title: "Error",
-        description: "No items in order",
-        variant: "destructive",
+      toast.error("❌ No items in order", {
+        style: {
+          minWidth: '320px',
+          maxWidth: '500px',
+          width: '90vw',
+          padding: '16px',
+          fontSize: '16px',
+          borderRadius: '12px',
+          border: '2px solid #ef4444',
+        }
       });
       return;
     }
 
     if (!customerName || !customerPhone) {
-      toast({
-        title: "Error", 
-        description: "Please provide customer information",
-        variant: "destructive",
+      toast.error("❌ Please provide customer information", {
+        style: {
+          minWidth: '320px',
+          maxWidth: '500px',
+          width: '90vw',
+          padding: '16px',
+          fontSize: '16px',
+          borderRadius: '12px',
+          border: '2px solid #ef4444',
+        }
       });
       return;
     }
@@ -375,10 +386,32 @@ export const EnhancedLaundryPOS = () => {
       const change = cashReceived - totalAmount;
       const changeMessage = change > 0 ? ` | Kembalian: Rp ${change.toLocaleString('id-ID')}` : '';
       
-      toast({
-        title: "Success",
-        description: `Payment processed successfully! Cash payment completed${changeMessage}. Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
-      });
+      toast.success(
+        <div className="flex items-start space-x-3 py-2">
+          <CheckCircle2 className="h-7 w-7 text-green-600 mt-1 flex-shrink-0" />
+          <div className="flex-1">
+            <div className="text-lg font-bold text-green-800 mb-1">✅ Order berhasil dibuat!</div>
+            <div className="text-sm text-green-700 leading-relaxed">
+              <div className="font-medium">Pembayaran tunai berhasil{changeMessage}</div>
+              <div className="mt-1">Selesai: <span className="font-semibold">{completionDate ? formatDate(completionDate) : 'segera'}</span></div>
+            </div>
+          </div>
+        </div>,
+        { 
+          duration: 6000,
+          style: {
+            background: '#f0fdf4',
+            border: '2px solid #22c55e',
+            color: '#166534',
+            minWidth: '320px',
+            maxWidth: '500px',
+            width: '90vw',
+            padding: '20px',
+            borderRadius: '16px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          }
+        }
+      );
     } catch (error) {
       // Error is already handled in the hook
       setShowCashPaymentDialog(false);
@@ -435,10 +468,32 @@ export const EnhancedLaundryPOS = () => {
       setCustomerName('');
       setCustomerPhone('');
       
-      toast({
-        title: "Success",
-        description: `Payment processed successfully! ${paymentMethod.toUpperCase()} payment completed. Order will be ready ${completionDate ? formatDate(completionDate) : 'soon'}.`,
-      });
+      toast.success(
+        <div className="flex items-start space-x-3 py-2">
+          <CheckCircle2 className="h-7 w-7 text-green-600 mt-1 flex-shrink-0" />
+          <div className="flex-1">
+            <div className="text-lg font-bold text-green-800 mb-1">✅ Order berhasil dibuat!</div>
+            <div className="text-sm text-green-700 leading-relaxed">
+              <div className="font-medium">Pembayaran {paymentMethod.toUpperCase()} berhasil</div>
+              <div className="mt-1">Selesai: <span className="font-semibold">{completionDate ? formatDate(completionDate) : 'segera'}</span></div>
+            </div>
+          </div>
+        </div>,
+        { 
+          duration: 6000,
+          style: {
+            background: '#f0fdf4',
+            border: '2px solid #22c55e',
+            color: '#166534',
+            minWidth: '320px',
+            maxWidth: '500px',
+            width: '90vw',
+            padding: '20px',
+            borderRadius: '16px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          }
+        }
+      );
     } catch (error) {
       // Error is already handled in the hook
     }
@@ -447,19 +502,31 @@ export const EnhancedLaundryPOS = () => {
   // Create draft order
   const createDraftOrder = async () => {
     if (currentOrder.length === 0 && dynamicItems.length === 0) {
-      toast({
-        title: "Error",
-        description: "No items in order",
-        variant: "destructive",
+      toast.error("❌ No items in order", {
+        style: {
+          minWidth: '320px',
+          maxWidth: '500px',
+          width: '90vw',
+          padding: '16px',
+          fontSize: '16px',
+          borderRadius: '12px',
+          border: '2px solid #ef4444',
+        }
       });
       return;
     }
 
     if (!customerName || !customerPhone) {
-      toast({
-        title: "Error", 
-        description: "Please provide customer information",
-        variant: "destructive",
+      toast.error("❌ Please provide customer information", {
+        style: {
+          minWidth: '320px',
+          maxWidth: '500px',
+          width: '90vw',
+          padding: '16px',
+          fontSize: '16px',
+          borderRadius: '12px',
+          border: '2px solid #ef4444',
+        }
       });
       return;
     }
@@ -510,10 +577,32 @@ export const EnhancedLaundryPOS = () => {
       setCustomerName('');
       setCustomerPhone('');
       
-      toast({
-        title: "Success",
-        description: `Draft order created successfully! Estimated completion: ${completionDate ? formatDate(completionDate) : 'TBD'}.`,
-      });
+      toast.success(
+        <div className="flex items-start space-x-3 py-2">
+          <CheckCircle2 className="h-7 w-7 text-blue-600 mt-1 flex-shrink-0" />
+          <div className="flex-1">
+            <div className="text-lg font-bold text-blue-800 mb-1">📝 Order berhasil dibuat!</div>
+            <div className="text-sm text-blue-700 leading-relaxed">
+              <div className="font-medium">Menunggu pembayaran</div>
+              <div className="mt-1">Estimasi selesai: <span className="font-semibold">{completionDate ? formatDate(completionDate) : 'TBD'}</span></div>
+            </div>
+          </div>
+        </div>,
+        { 
+          duration: 6000,
+          style: {
+            background: '#eff6ff',
+            border: '2px solid #3b82f6',
+            color: '#1d4ed8',
+            minWidth: '320px',
+            maxWidth: '500px',
+            width: '90vw',
+            padding: '20px',
+            borderRadius: '16px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          }
+        }
+      );
     } catch (error) {
       // Error is already handled in the hook
     }
