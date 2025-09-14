@@ -4,16 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useCreateOrderWithNotifications as useCreateOrder, UnitItem } from '@/hooks/useOrdersWithNotifications';
 import { useToast } from '@/hooks/use-toast';
 import { useServices } from '@/hooks/useServices';
-import { EnhancedServiceSelector, Service, EnhancedOrderItem } from './EnhancedServiceSelector';
-import { DynamicOrderItemsManager, DynamicOrderItemData } from './DynamicOrderItem';
+import { EnhancedOrderItem } from './EnhancedServiceSelector';
+import { DynamicOrderItemData } from './DynamicOrderItem';
+import { EnhancedServiceSelectionPopup } from './EnhancedServiceSelectionPopup';
 import { FloatingOrderSummary } from './FloatingOrderSummary';
 
 export const EnhancedLaundryPOS = () => {
@@ -30,8 +28,6 @@ export const EnhancedLaundryPOS = () => {
     const jakartaTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
     return jakartaTime;
   });
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [showServiceDialog, setShowServiceDialog] = useState(false);
   
   const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading: customersLoading } = useCustomers();
@@ -42,25 +38,8 @@ export const EnhancedLaundryPOS = () => {
   // Load services from our service management system
   const { data: servicesData, isLoading: servicesLoading, error: servicesError } = useServices();
 
-  // Convert ServiceData to Service format for compatibility
-  const services: Service[] = React.useMemo(() => {
-    if (!servicesData) return [];
-    
-    return servicesData.map(serviceData => ({
-      id: serviceData.id,
-      name: serviceData.name,
-      price: serviceData.unit_price || 0,
-      duration: `${serviceData.duration_value} ${serviceData.duration_unit}`,
-      durationValue: serviceData.duration_value,
-      durationUnit: serviceData.duration_unit,
-      category: serviceData.category,
-      supportsKilo: serviceData.supports_kilo,
-      kiloPrice: serviceData.kilo_price,
-    }));
-  }, [servicesData]);
-
   // Helper function to calculate finish date based on service duration
-  const calculateFinishDate = (service: Service, startDate: Date = dropOffDate) => {
+  const calculateFinishDate = (service: any, startDate: Date = dropOffDate) => {
     const finishDate = new Date(startDate);
     
     if (service.durationUnit === 'hours') {
@@ -102,18 +81,6 @@ export const EnhancedLaundryPOS = () => {
         hour: '2-digit', 
         minute: '2-digit' 
       });
-    }
-  };
-
-  // Get category color
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'wash': return 'bg-blue-100 text-blue-800';
-      case 'dry': return 'bg-green-100 text-green-800';
-      case 'ironing': return 'bg-orange-100 text-orange-800';
-      case 'folding': return 'bg-yellow-100 text-yellow-800';
-      case 'special': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -217,34 +184,78 @@ export const EnhancedLaundryPOS = () => {
     }, 200);
   };
 
-  // Handle service selection
-  const handleServiceSelect = (service: Service) => {
-    setSelectedService(service);
-    setShowServiceDialog(true);
-  };
+  // Handle services and dynamic items selected from popup
+  const handleServicesAndItemsSelected = (selectedServices: any[], selectedDynamicItems: any[]) => {
+    // Process regular services
+    selectedServices.forEach(selectedService => {
+      const service = {
+        id: selectedService.service.id,
+        name: selectedService.service.name,
+        price: selectedService.price,
+        duration: selectedService.service.duration,
+        durationValue: selectedService.service.durationValue,
+        durationUnit: selectedService.service.durationUnit,
+        category: selectedService.service.category,
+        supportsKilo: selectedService.service.supportsKilo,
+        kiloPrice: selectedService.service.kiloPrice,
+      };
 
-  // Handle enhanced order item addition
-  const handleOrderItemAdd = (item: EnhancedOrderItem | null) => {
-    if (item) {
-      // Check if this service already exists in the order
-      const existingIndex = currentOrder.findIndex(orderItem => 
-        orderItem.service.id === item.service.id &&
-        orderItem.serviceType === item.serviceType
-      );
+      // Add to regular order with the specified quantity
+      setCurrentOrder(prev => {
+        const existingItem = prev.find(item => 
+          item.service.id === service.id && 
+          item.serviceType === selectedService.type
+        );
+        
+        if (existingItem) {
+          return prev.map(item =>
+            item.service.id === service.id && item.serviceType === selectedService.type
+              ? { 
+                  ...item, 
+                  quantity: item.quantity + selectedService.quantity,
+                  totalPrice: (item.quantity + selectedService.quantity) * service.price,
+                  weight: selectedService.type === 'kilo' ? selectedService.quantity : item.weight
+                }
+              : item
+          );
+        } else {
+          return [...prev, { 
+            service, 
+            quantity: selectedService.quantity, 
+            serviceType: selectedService.type as 'unit' | 'kilo',
+            weight: selectedService.type === 'kilo' ? selectedService.quantity : undefined,
+            totalPrice: selectedService.quantity * service.price
+          }];
+        }
+      });
+    });
 
-      if (existingIndex >= 0) {
-        // Update existing item
-        const updatedOrder = [...currentOrder];
-        updatedOrder[existingIndex] = item;
-        setCurrentOrder(updatedOrder);
-      } else {
-        // Add new item
-        setCurrentOrder(prev => [...prev, item]);
-      }
-      
-      setShowServiceDialog(false);
-      setSelectedService(null);
-    }
+    // Process dynamic items
+    selectedDynamicItems.forEach(dynamicItem => {
+      const newDynamicItem: DynamicOrderItemData = {
+        id: dynamicItem.id,
+        itemName: dynamicItem.itemName,
+        duration: `${dynamicItem.durationValue} ${dynamicItem.durationUnit}`,
+        durationValue: dynamicItem.durationValue,
+        durationUnit: dynamicItem.durationUnit,
+        price: dynamicItem.price,
+        quantity: dynamicItem.quantity,
+        totalPrice: dynamicItem.price * dynamicItem.quantity,
+      };
+
+      setDynamicItems(prev => {
+        const existingIndex = prev.findIndex(item => item.id === dynamicItem.id);
+        if (existingIndex >= 0) {
+          // Update existing item
+          const updated = [...prev];
+          updated[existingIndex] = newDynamicItem;
+          return updated;
+        } else {
+          // Add new item
+          return [...prev, newDynamicItem];
+        }
+      });
+    });
   };
 
   // Remove item from order
@@ -446,7 +457,7 @@ export const EnhancedLaundryPOS = () => {
   return (
     <div className="space-y-6">
       {/* Service Management Notice */}
-      {services.length === 0 && (
+      {servicesData && servicesData.length === 0 && (
         <Card className="border-orange-200 bg-orange-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -564,71 +575,14 @@ export const EnhancedLaundryPOS = () => {
         </CardContent>
       </Card>
 
-      {/* Dynamic Custom Items */}
+      {/* Add Service Section */}
       <Card className="shadow-medium animate-scale-in">
-        <CardContent className="p-4 lg:p-6">
-          <Tabs defaultValue="services" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="services">Available Services</TabsTrigger>
-              <TabsTrigger value="custom">Custom Items</TabsTrigger>
-            </TabsList>
-            <TabsContent value="services" className="mt-6">
-              {services.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  {services.map((service) => (
-                    <div
-                      key={service.id}
-                      className="p-3 sm:p-4 border rounded-lg hover:shadow-soft transition-smooth cursor-pointer bg-card"
-                      onClick={() => handleServiceSelect(service)}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2">
-                        <h3 className="font-semibold text-foreground text-sm sm:text-base">{service.name}</h3>
-                        <div className="flex space-x-1 mt-1 sm:mt-0">
-                          <Badge className={`${getCategoryColor(service.category)} w-fit`}>
-                            {service.category}
-                          </Badge>
-                          {service.supportsKilo && (
-                            <Badge variant="outline" className="w-fit">
-                              Kilo
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-lg sm:text-xl font-bold text-primary">
-                          Rp{service.price.toLocaleString('id-ID')}
-                        </p>
-                        {service.supportsKilo && service.kiloPrice && (
-                          <p className="text-sm text-gray-600">
-                            Rp{service.kiloPrice.toLocaleString('id-ID')}/kg
-                          </p>
-                        )}
-                        <p className="text-xs sm:text-sm text-muted-foreground flex items-center">
-                          <Clock className="h-3 w-3 mr-1" />
-                          Duration: {service.duration}
-                        </p>
-                        <p className="text-xs text-green-600 font-medium">
-                          Ready: {formatDate(calculateFinishDate(service))}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No predefined services available.</p>
-                  <p className="text-sm">You can create custom items or add services first.</p>
-                </div>
-              )}
-            </TabsContent>
-            <TabsContent value="custom" className="mt-6">
-              <DynamicOrderItemsManager
-                items={dynamicItems}
-                onItemsChange={setDynamicItems}
-                disabled={createOrderMutation.isPending}
-              />
-            </TabsContent>
-          </Tabs>
+        <CardContent className="pt-6">
+          <EnhancedServiceSelectionPopup
+            onServicesSelected={handleServicesAndItemsSelected}
+            disabled={!customerName || !customerPhone}
+            dropOffDate={dropOffDate}
+          />
         </CardContent>
       </Card>
 
@@ -655,21 +609,6 @@ export const EnhancedLaundryPOS = () => {
         calculateDynamicItemFinishDate={calculateDynamicItemFinishDate}
         removeDynamicItem={removeDynamicItem}
       />
-
-      {/* Service Selection Dialog */}
-      <Dialog open={showServiceDialog} onOpenChange={setShowServiceDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Configure Service: {selectedService?.name}</DialogTitle>
-          </DialogHeader>
-          {selectedService && (
-            <EnhancedServiceSelector
-              service={selectedService}
-              onItemChange={handleOrderItemAdd}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
