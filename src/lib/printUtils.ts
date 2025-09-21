@@ -593,13 +593,13 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   }
   
   // QR Code notice (if enabled)
-  if (receiptData.enableQr) {
-    commands.push(ESC_POS.CRLF);
-    commands.push(textToBytes(centerText('[QR Code tersedia di nota digital]', paperWidth)));
-    commands.push(ESC_POS.CRLF);
-    commands.push(textToBytes(centerText('Scan untuk pembayaran digital', paperWidth)));
-    commands.push(ESC_POS.CRLF);
-  }
+  // if (receiptData.enableQr) {
+  //   commands.push(ESC_POS.CRLF);
+  //   commands.push(textToBytes(centerText('[QR Code tersedia di nota digital]', paperWidth)));
+  //   commands.push(ESC_POS.CRLF);
+  //   commands.push(textToBytes(centerText('Scan untuk pembayaran digital', paperWidth)));
+  //   commands.push(ESC_POS.CRLF);
+  // }
   
   // Separator
   commands.push(ESC_POS.CRLF);
@@ -658,12 +658,18 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   commands.push(ESC_POS.CRLF);
   
   // Date and Time
-  const orderDate = new Date(receiptData.orderDate || new Date());
+  const orderDate = receiptData.orderDate ? new Date(receiptData.orderDate) : new Date();
   const formatDate = (date: Date) => {
     const months = [
       'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
+    
+    // Ensure we have a valid date
+    if (isNaN(date.getTime())) {
+      date = new Date(); // Fallback to current date if invalid
+    }
+    
     const day = date.getDate().toString().padStart(2, '0');
     const month = months[date.getMonth()];
     const year = date.getFullYear();
@@ -672,7 +678,7 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
     return `${day} ${month} ${year}, ${hours}:${minutes} WIB`;
   };
   
-  commands.push(textToBytes(`Tanggal: ${formatDate(orderDate)}`));
+  commands.push(textToBytes(`Diterima: ${formatDate(orderDate)}`));
   commands.push(ESC_POS.CRLF);
   
   // Status info
@@ -825,11 +831,11 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   commands.push(ESC_POS.CRLF);
   
   // Digital receipt info
-  commands.push(ESC_POS.CRLF);
-  commands.push(textToBytes(centerText('Nota digital tersedia di:', paperWidth)));
-  commands.push(ESC_POS.CRLF);
-  commands.push(textToBytes(centerText(`/receipt/${receiptData.orderId}`, paperWidth)));
-  commands.push(ESC_POS.CRLF);
+  // commands.push(ESC_POS.CRLF);
+  // commands.push(textToBytes(centerText('Nota digital tersedia di:', paperWidth)));
+  // commands.push(ESC_POS.CRLF);
+  // commands.push(textToBytes(centerText(`/receipt/${receiptData.orderId}`, paperWidth)));
+  // commands.push(ESC_POS.CRLF);
   
   // Feed and cut
   if (options.feedLines && options.feedLines > 0) {
@@ -990,7 +996,7 @@ export const fetchReceiptDataForThermal = async (orderId: string): Promise<any> 
       customerName: orderData.customer_name || '',
       customerPhone: orderData.customer_phone || '',
       orderId: orderData.id || orderId,
-      orderDate: orderData.order_date ? new Date(orderData.order_date).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID'),
+      orderDate: orderData.order_date || orderData.created_at || new Date().toISOString(),
       items: orderItems,
       totalAmount: orderData.total_amount || 0,
       subtotal: orderData.subtotal || 0,
