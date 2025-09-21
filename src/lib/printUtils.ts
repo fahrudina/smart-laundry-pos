@@ -701,10 +701,32 @@ export const printToThermalPrinter = async (
       ...options
     });
 
-    console.log('Sending data to thermal printer...');
+    console.log('Sending data to thermal printer in chunks...');
+    console.log('Total data size:', printData.byteLength, 'bytes');
     
-    // Send data to printer
-    await connection.characteristic.writeValue(printData);
+    // Split data into chunks to respect Bluetooth characteristic 512-byte limit
+    const CHUNK_SIZE = 512;
+    const chunks = [];
+    
+    for (let i = 0; i < printData.byteLength; i += CHUNK_SIZE) {
+      const chunk = printData.slice(i, i + CHUNK_SIZE);
+      chunks.push(chunk);
+    }
+    
+    console.log(`Sending ${chunks.length} chunks to printer...`);
+    
+    // Send chunks with small delays to prevent overwhelming the printer
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      console.log(`Sending chunk ${i + 1}/${chunks.length} (${chunk.byteLength} bytes)`);
+      
+      await connection.characteristic.writeValue(chunk);
+      
+      // Small delay between chunks to prevent overwhelming the printer
+      if (i < chunks.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    }
     
     console.log('Receipt sent to thermal printer successfully');
   } catch (error) {
