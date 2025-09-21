@@ -116,7 +116,7 @@ interface PrintOptions {
   scale?: number;
 }
 
-interface ThermalPrinterConnection {
+export interface ThermalPrinterConnection {
   device: BluetoothDevice;
   server: BluetoothRemoteGATTServer;
   service: BluetoothRemoteGATTService;
