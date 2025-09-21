@@ -726,22 +726,29 @@ export const fetchReceiptDataForThermal = async (orderId: string): Promise<any> 
     });
 
     if (error) {
-      console.error('Error fetching receipt data:', error);
-      throw new Error('Failed to fetch receipt data');
+      console.error('❌ Supabase RPC error:', error);
+      throw new Error(`Failed to fetch receipt data: ${error.message || error.details || 'Unknown error'}`);
     }
 
     if (!receiptData) {
+      console.error('❌ No receipt data returned');
       throw new Error('Receipt data not found');
     }
 
     console.log('📄 Receipt data fetched for thermal printing:', receiptData);
+    console.log('📄 Receipt data type:', typeof receiptData);
+    console.log('📄 Receipt data keys:', Object.keys(receiptData || {}));
 
     // Transform the data for thermal printing - handle nested structure from RPC function
     const orderData = receiptData.order || {};
     const storeData = receiptData.store || {};
     const orderItems = receiptData.order_items || [];
 
-    return {
+    console.log('🏪 Store data:', storeData);
+    console.log('📋 Order data:', orderData);
+    console.log('📦 Order items:', orderItems);
+
+    const transformedData = {
       storeName: storeData.name || 'SMART LAUNDRY POS',
       storeAddress: storeData.address || '',
       storePhone: storeData.phone || '',
@@ -760,6 +767,9 @@ export const fetchReceiptDataForThermal = async (orderId: string): Promise<any> 
       cashReceived: orderData.cash_received || null,
       enableQr: storeData.enable_qr || false,
     };
+
+    console.log('🔄 Transformed data:', transformedData);
+    return transformedData;
   } catch (error) {
     console.error('Error fetching receipt data for thermal printing:', error);
     throw error;
