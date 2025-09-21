@@ -722,7 +722,7 @@ export const fetchReceiptDataForThermal = async (orderId: string): Promise<any> 
     
     // Fetch order data using the same RPC function as the receipt page
     const { data: receiptData, error } = await supabase.rpc('get_receipt_data', {
-      order_id: orderId
+      order_id_param: orderId
     });
 
     if (error) {
