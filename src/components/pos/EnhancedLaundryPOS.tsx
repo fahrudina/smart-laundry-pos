@@ -28,7 +28,10 @@ export const EnhancedLaundryPOS = () => {
   const [dropOffDate, setDropOffDate] = useState(() => {
     // Set to current date/time in Asia/Jakarta timezone
     const now = new Date();
-    const jakartaTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
+    // Create a new date that represents the current time in Jakarta
+    const jakartaOffset = 7 * 60; // Jakarta is UTC+7
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const jakartaTime = new Date(utc + (jakartaOffset * 60000));
     return jakartaTime;
   });
   
@@ -174,7 +177,9 @@ export const EnhancedLaundryPOS = () => {
     setShowResults(false);
     // Reset to current Jakarta time
     const now = new Date();
-    const jakartaTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
+    const jakartaOffset = 7 * 60; // Jakarta is UTC+7
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const jakartaTime = new Date(utc + (jakartaOffset * 60000));
     setDropOffDate(jakartaTime);
   };
 
@@ -292,7 +297,7 @@ export const EnhancedLaundryPOS = () => {
   // Process payment
   const processPayment = async (paymentMethod: string = 'cash') => {
     if (currentOrder.length === 0 && dynamicItems.length === 0) {
-      toast.error("❌ No items in order", {
+      toast.error("❌ Tidak ada item dalam pesanan", {
         style: {
           minWidth: '320px',
           maxWidth: '500px',
@@ -307,7 +312,7 @@ export const EnhancedLaundryPOS = () => {
     }
 
     if (!customerName || !customerPhone) {
-      toast.error("❌ Please provide customer information", {
+      toast.error("❌ Mohon lengkapi informasi pelanggan", {
         style: {
           minWidth: '320px',
           maxWidth: '500px',
@@ -502,7 +507,7 @@ export const EnhancedLaundryPOS = () => {
   // Create draft order
   const createDraftOrder = async () => {
     if (currentOrder.length === 0 && dynamicItems.length === 0) {
-      toast.error("❌ No items in order", {
+      toast.error("❌ Tidak ada item dalam pesanan", {
         style: {
           minWidth: '320px',
           maxWidth: '500px',
@@ -517,7 +522,7 @@ export const EnhancedLaundryPOS = () => {
     }
 
     if (!customerName || !customerPhone) {
-      toast.error("❌ Please provide customer information", {
+      toast.error("❌ Mohon lengkapi informasi pelanggan", {
         style: {
           minWidth: '320px',
           maxWidth: '500px',
@@ -613,7 +618,7 @@ export const EnhancedLaundryPOS = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading services...</p>
+          <p className="text-muted-foreground">Memuat layanan...</p>
         </div>
       </div>
     );
@@ -625,9 +630,9 @@ export const EnhancedLaundryPOS = () => {
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-medium text-red-800">Error loading services</h3>
+              <h3 className="font-medium text-red-800">Gagal memuat layanan</h3>
               <p className="text-sm text-red-600">
-                Please try refreshing the page or contact support.
+                Silakan coba refresh halaman atau hubungi dukungan.
               </p>
             </div>
             <Button 
@@ -650,16 +655,16 @@ export const EnhancedLaundryPOS = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium text-orange-800">No services configured</h3>
+                <h3 className="font-medium text-orange-800">Belum ada layanan yang dikonfigurasi</h3>
                 <p className="text-sm text-orange-600">
-                  You need to create services first before accepting orders.
+                  Anda perlu membuat layanan terlebih dahulu sebelum menerima pesanan.
                 </p>
               </div>
               <Button 
                 onClick={() => navigate('/services')}
                 className="bg-orange-600 hover:bg-orange-700"
               >
-                Manage Services
+                Kelola Layanan
               </Button>
             </div>
           </CardContent>
@@ -671,7 +676,7 @@ export const EnhancedLaundryPOS = () => {
         <CardHeader>
           <CardTitle className="flex items-center text-lg">
             <User className="h-5 w-5 mr-2 text-primary" />
-            Customer Information
+            Informasi Pelanggan
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -679,7 +684,7 @@ export const EnhancedLaundryPOS = () => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm font-medium text-muted-foreground">
-                  Phone Number
+                  Nomor Telepon
                 </label>
                 {customerPhone && customerName && (
                   <Button
@@ -689,7 +694,7 @@ export const EnhancedLaundryPOS = () => {
                     className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
                   >
                     <X className="h-3 w-3 mr-1" />
-                    Clear
+                    Bersihkan
                   </Button>
                 )}
               </div>
@@ -699,7 +704,7 @@ export const EnhancedLaundryPOS = () => {
                   <CheckCircle className="h-4 w-4 absolute right-3 top-3 text-green-500" />
                 )}
                 <Input
-                  placeholder="Search by phone..."
+                  placeholder="Cari berdasarkan telepon/nama pelanggan..."
                   value={customerPhone}
                   onChange={(e) => {
                     const newValue = e.target.value;
@@ -737,26 +742,42 @@ export const EnhancedLaundryPOS = () => {
             </div>
             <div>
               <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                Customer Name
+                Nama Pelanggan
               </label>
               <Input
-                placeholder="Enter customer name..."
+                placeholder="Masukkan nama pelanggan..."
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
               />
             </div>
             <div className="md:col-span-2">
               <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                Drop-off Date & Time
+                Tanggal & Waktu Terima
               </label>
               <Input
                 type="datetime-local"
-                value={dropOffDate.toISOString().slice(0, 16)}
-                onChange={(e) => setDropOffDate(new Date(e.target.value))}
+                value={(() => {
+                  // Format the date for datetime-local input (should be in local timezone)
+                  const year = dropOffDate.getFullYear();
+                  const month = String(dropOffDate.getMonth() + 1).padStart(2, '0');
+                  const day = String(dropOffDate.getDate()).padStart(2, '0');
+                  const hours = String(dropOffDate.getHours()).padStart(2, '0');
+                  const minutes = String(dropOffDate.getMinutes()).padStart(2, '0');
+                  return `${year}-${month}-${day}T${hours}:${minutes}`;
+                })()}
+                onChange={(e) => {
+                  // Parse the datetime-local value as Jakarta time
+                  const inputValue = e.target.value;
+                  if (inputValue) {
+                    const localDate = new Date(inputValue);
+                    // Treat this as Jakarta time
+                    setDropOffDate(localDate);
+                  }
+                }}
                 className="w-full"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                This affects the estimated completion time for all services
+                Ini mempengaruhi estimasi waktu selesai untuk semua layanan
               </p>
             </div>
           </div>
