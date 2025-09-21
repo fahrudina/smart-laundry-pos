@@ -310,8 +310,9 @@ export const OrderHistory = () => {
   const handleExportReceiptPDF = useCallback(async (orderId: string, customerName: string) => {
     try {
       toast.loading('Generating PDF...', { id: `pdf-${orderId}` });
+      const order = filteredOrders.find(o => o.id === orderId);
       await generateReceiptPDFFromUrl(orderId, {
-        filename: `receipt-${sanitizeFilename(customerName)}-${orderId.slice(-6)}.pdf`
+        filename: `receipt-${sanitizeFilename(customerName)}-${order?.order_number || orderId.slice(-6)}.pdf`
       });
       toast.success('PDF exported successfully!', { id: `pdf-${orderId}` });
     } catch (error) {

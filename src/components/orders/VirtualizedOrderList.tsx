@@ -106,8 +106,8 @@ const OrderItem = memo(({ index, style, data }: {
                   {order.customer_phone}
                 </div>
                 <div className="truncate">
-                  <span className="font-medium">Order ID: </span>
-                  {order.id.slice(-8)}
+                  <span className="font-medium">Order #: </span>
+                  {order.order_number || order.id.slice(-8)}
                 </div>
                 <div className="truncate">
                   <span className="font-medium">Created: </span>

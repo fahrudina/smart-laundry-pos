@@ -76,6 +76,7 @@ export const useCreateOrderWithNotifications = () => {
           
           const notificationData: OrderCreatedData = {
             orderId: order.id,
+            orderNumber: order.order_number,
             customerName: orderData.customer_name,
             totalAmount: orderData.total_amount,
             subtotal: orderData.subtotal,
@@ -211,6 +212,7 @@ export const useUpdateOrderStatusWithNotifications = () => {
             
             const notificationData: OrderReadyForPickupData = {
               orderId: orderId,
+              orderNumber: orderData.order_number,
               customerName: orderData.customer_name,
               totalAmount: orderData.total_amount,
               readyAt: WhatsAppDataHelper.formatCompletionDate(new Date().toISOString()),

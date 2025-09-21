@@ -22,6 +22,7 @@ interface OrderItem {
 
 interface Order {
   id: string;
+  order_number?: string;
   customer_name: string;
   customer_phone: string;
   subtotal: number;

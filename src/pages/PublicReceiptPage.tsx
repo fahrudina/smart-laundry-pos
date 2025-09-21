@@ -7,6 +7,7 @@ import { StoreInfo } from '@/integrations/whatsapp/types';
 
 interface OrderData {
   id: string;
+  order_number?: string;
   customer_name: string;
   customer_phone: string;
   subtotal: number;
@@ -238,10 +239,10 @@ export const PublicReceiptPage: React.FC = () => {
               </div>
             )}
 
-            {/* Order ID */}
+            {/* Order Number */}
             <div className="bg-gray-50 px-3 py-2 rounded text-center mb-2">
               <p className="text-sm font-medium text-gray-800">
-                ID: {orderId}
+                Order #: {order.order_number || orderId}
               </p>
             </div>
 

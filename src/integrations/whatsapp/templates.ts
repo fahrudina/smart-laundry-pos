@@ -125,7 +125,7 @@ ${data.storeInfo.address}
 No. HP ${data.storeInfo.phone}
 ====================
 Tanggal Selesai : ${completedDate} - ${completedTime}
-No Nota : ${data.orderId.slice(-8).toUpperCase()}
+No Nota : ${data.orderNumber || data.orderId.slice(-8).toUpperCase()}
 Nama : ${data.customerName}
 ===================
 
@@ -178,7 +178,7 @@ Hai ${data.customerName},
 Cucian anda sudah selesai, silahkan ambil di ${data.storeInfo.name}
 
 ====================
-No Nota : ${data.orderId.slice(-8).toUpperCase()}
+No Nota : ${data.orderNumber || data.orderId.slice(-8).toUpperCase()}
 
 Total Bayar : Rp. ${data.totalAmount.toLocaleString('id-ID')},-
 Status Bayar: ${getPaymentStatusIndonesian(data.paymentStatus)}

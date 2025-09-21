@@ -42,6 +42,7 @@ export interface OrderItem {
 
 export interface OrderCreatedData {
   orderId: string;
+  orderNumber?: string;
   customerName: string;
   totalAmount: number;
   subtotal: number;
@@ -53,6 +54,7 @@ export interface OrderCreatedData {
 
 export interface OrderCompletedData {
   orderId: string;
+  orderNumber?: string;
   customerName: string;
   totalAmount: number;
   completedAt: string;
@@ -62,6 +64,7 @@ export interface OrderCompletedData {
 
 export interface OrderReadyForPickupData {
   orderId: string;
+  orderNumber?: string;
   customerName: string;
   totalAmount: number;
   readyAt: string;
