@@ -57,12 +57,21 @@ const THERMAL_PRINTER_SERVICES = [
   '000018f0-0000-1000-8000-00805f9b34fb', // Generic thermal printer
   '00001101-0000-1000-8000-00805f9b34fb', // Serial Port Profile (SPP)
   '0000ff00-0000-1000-8000-00805f9b34fb', // Custom thermal printer service
+  '0000fee0-0000-1000-8000-00805f9b34fb', // Common in MP-series printers
+  '0000fee1-0000-1000-8000-00805f9b34fb', // Alternative MP-series service
+  '49535343-fe7d-4ae5-8fa9-9fafd205e455', // Microchip RN4020 service (common in thermal printers)
+  '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART Service
 ];
 
 const THERMAL_PRINTER_CHARACTERISTICS = [
   '00002a00-0000-1000-8000-00805f9b34fb', // Generic write characteristic
   '0000ff01-0000-1000-8000-00805f9b34fb', // Custom write characteristic
   '000018f1-0000-1000-8000-00805f9b34fb', // Thermal printer data characteristic
+  '0000fee1-0000-1000-8000-00805f9b34fb', // MP-series write characteristic
+  '0000fee2-0000-1000-8000-00805f9b34fb', // MP-series data characteristic
+  '49535343-8841-43f4-a8d4-ecbe34729bb3', // Microchip write characteristic
+  '6e400002-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART TX characteristic
+  '6e400003-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART RX characteristic
 ];
 
 // ESC/POS Commands
@@ -71,11 +80,11 @@ const GS = 0x1d;
 
 const ESC_POS = {
   // Initialize printer
-  INIT: new Uint8Array([ESC, '@']),
+  INIT: new Uint8Array([ESC, 0x40]), // ESC @
   
   // Text formatting
-  BOLD_ON: new Uint8Array([ESC, 'E'.charCodeAt(0), 1]),
-  BOLD_OFF: new Uint8Array([ESC, 'E'.charCodeAt(0), 0]),
+  BOLD_ON: new Uint8Array([ESC, 0x45, 1]), // ESC E 1
+  BOLD_OFF: new Uint8Array([ESC, 0x45, 0]), // ESC E 0
   
   // Text alignment
   ALIGN_LEFT: new Uint8Array([ESC, 'a'.charCodeAt(0), 0]),
@@ -429,8 +438,9 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
     console.log('Requesting thermal printer device...');
     
     // Request thermal printer device with multiple service options
+    // For MP-80M, we'll try with acceptAllDevices to discover services
     const device = await navigator.bluetooth!.requestDevice({
-      filters: THERMAL_PRINTER_SERVICES.map(service => ({ services: [service] })),
+      acceptAllDevices: true,
       optionalServices: [...THERMAL_PRINTER_SERVICES, ...THERMAL_PRINTER_CHARACTERISTICS]
     });
 
@@ -446,7 +456,7 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
     
     console.log('Connected to GATT server, discovering services...');
     
-    // Try to find a compatible service
+    // Try to find a compatible service from our known list first
     let service: BluetoothRemoteGATTService | null = null;
     let characteristic: BluetoothRemoteGATTCharacteristic | null = null;
     
@@ -454,6 +464,14 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
       try {
         service = await server.getPrimaryService(serviceUuid);
         console.log(`Found service: ${serviceUuid}`);
+        
+        // Get all characteristics for this service
+        try {
+          const characteristics = await (service as any).getCharacteristics();
+          console.log(`Service ${serviceUuid} characteristics:`, characteristics.map((c: any) => c.uuid));
+        } catch (charListError) {
+          console.log('Could not list characteristics for service', serviceUuid);
+        }
         
         // Try to find a compatible characteristic
         for (const charUuid of THERMAL_PRINTER_CHARACTERISTICS) {
@@ -496,9 +514,10 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
       }
     }
 
+    // If no known service worked, log error with helpful information
     if (!service || !characteristic) {
       device.gatt.disconnect();
-      throw new Error('No compatible thermal printer service/characteristic found');
+      throw new Error(`No compatible thermal printer service/characteristic found for ${device.name || 'MP-80M'}. Please ensure the printer is in pairing mode and try again.`);
     }
 
     console.log('Successfully connected to thermal printer');
