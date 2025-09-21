@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,13 +18,11 @@ import { toast } from 'sonner';
 import { 
   isBluetoothSupported,
   isThermerAppAvailable,
-  connectThermalPrinter,
-  disconnectThermalPrinter,
   printToThermalPrinter,
   printToThermerApp,
-  fetchReceiptDataForThermal,
-  ThermalPrinterConnection
+  fetchReceiptDataForThermal
 } from '@/lib/printUtils';
+import { useThermalPrinter } from '@/contexts/ThermalPrinterContext';
 
 interface ThermalPrinterManagerProps {
   orderId?: string;
@@ -37,52 +35,27 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
   onPrintSuccess,
   onPrintError
 }) => {
-  const [printerConnection, setPrinterConnection] = useState<ThermalPrinterConnection | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
-  const [lastError, setLastError] = useState<string | null>(null);
-
-  // Check connection status on mount
-  useEffect(() => {
-    if (printerConnection?.server?.connected) {
-      setConnectionStatus('connected');
-    } else {
-      setConnectionStatus('disconnected');
-    }
-  }, [printerConnection]);
+  
+  // Use thermal printer context for global connection management
+  const { 
+    printerConnection, 
+    connectionStatus, 
+    isConnecting, 
+    lastError, 
+    connect: connectPrinter, 
+    disconnect: disconnectPrinter, 
+    clearError 
+  } = useThermalPrinter();
 
   const handleConnect = useCallback(async () => {
-    setIsConnecting(true);
-    setLastError(null);
-
-    try {
-      const connection = await connectThermalPrinter();
-      setPrinterConnection(connection);
-      setConnectionStatus('connected');
-      toast.success('✅ Connected to thermal printer!');
-    } catch (error) {
-      console.error('Connection failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      setLastError(errorMessage);
-      setConnectionStatus('error');
-      toast.error(`❌ Connection failed: ${errorMessage}`);
-      if (onPrintError) {
-        onPrintError(errorMessage);
-      }
-    } finally {
-      setIsConnecting(false);
-    }
-  }, [onPrintError]);
+    clearError();
+    await connectPrinter();
+  }, [clearError, connectPrinter]);
 
   const handleDisconnect = useCallback(() => {
-    if (printerConnection) {
-      disconnectThermalPrinter(printerConnection);
-      setPrinterConnection(null);
-      setConnectionStatus('disconnected');
-      toast.success('🔌 Disconnected from thermal printer');
-    }
-  }, [printerConnection]);
+    disconnectPrinter();
+  }, [disconnectPrinter]);
 
   const handlePrintBluetooth = useCallback(async () => {
     if (!printerConnection || !orderId) {
@@ -92,7 +65,7 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
 
     console.log('🖨️ Starting Bluetooth thermal print for order:', orderId);
     setIsPrinting(true);
-    setLastError(null);
+    clearError();
 
     try {
       // Fetch receipt data
@@ -115,7 +88,6 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
     } catch (error) {
       console.error('❌ Print failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Print failed';
-      setLastError(errorMessage);
       toast.error(`❌ Print failed: ${errorMessage}`);
       if (onPrintError) {
         onPrintError(errorMessage);
@@ -123,13 +95,13 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
     } finally {
       setIsPrinting(false);
     }
-  }, [printerConnection, orderId, onPrintSuccess, onPrintError]);
+  }, [printerConnection, orderId, onPrintSuccess, onPrintError, clearError]);
 
   const handlePrintThermer = useCallback(async () => {
     if (!orderId) return;
 
     setIsPrinting(true);
-    setLastError(null);
+    clearError();
 
     try {
       // Fetch receipt data
@@ -145,7 +117,6 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
     } catch (error) {
       console.error('Thermer print failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Thermer print failed';
-      setLastError(errorMessage);
       toast.error(`❌ Thermer print failed: ${errorMessage}`);
       if (onPrintError) {
         onPrintError(errorMessage);
@@ -153,7 +124,7 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
     } finally {
       setIsPrinting(false);
     }
-  }, [orderId, onPrintSuccess, onPrintError]);
+  }, [orderId, onPrintSuccess, onPrintError, clearError]);
 
   const bluetoothSupported = isBluetoothSupported();
   const thermerAvailable = isThermerAppAvailable();
