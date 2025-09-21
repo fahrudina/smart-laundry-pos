@@ -85,16 +85,23 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
   }, [printerConnection]);
 
   const handlePrintBluetooth = useCallback(async () => {
-    if (!printerConnection || !orderId) return;
+    if (!printerConnection || !orderId) {
+      console.log('❌ Missing requirements:', { printerConnection: !!printerConnection, orderId });
+      return;
+    }
 
+    console.log('🖨️ Starting Bluetooth thermal print for order:', orderId);
     setIsPrinting(true);
     setLastError(null);
 
     try {
       // Fetch receipt data
+      console.log('📥 Fetching receipt data...');
       const receiptData = await fetchReceiptDataForThermal(orderId);
+      console.log('✅ Receipt data received:', receiptData);
       
       // Print to thermal printer
+      console.log('🖨️ Sending to thermal printer...');
       await printToThermalPrinter(receiptData, printerConnection, {
         paperWidth: 32,
         cutPaper: true,
@@ -106,7 +113,7 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
         onPrintSuccess();
       }
     } catch (error) {
-      console.error('Print failed:', error);
+      console.error('❌ Print failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Print failed';
       setLastError(errorMessage);
       toast.error(`❌ Print failed: ${errorMessage}`);

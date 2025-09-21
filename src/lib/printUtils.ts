@@ -57,12 +57,21 @@ const THERMAL_PRINTER_SERVICES = [
   '000018f0-0000-1000-8000-00805f9b34fb', // Generic thermal printer
   '00001101-0000-1000-8000-00805f9b34fb', // Serial Port Profile (SPP)
   '0000ff00-0000-1000-8000-00805f9b34fb', // Custom thermal printer service
+  '0000fee0-0000-1000-8000-00805f9b34fb', // Common in MP-series printers
+  '0000fee1-0000-1000-8000-00805f9b34fb', // Alternative MP-series service
+  '49535343-fe7d-4ae5-8fa9-9fafd205e455', // Microchip RN4020 service (common in thermal printers)
+  '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART Service
 ];
 
 const THERMAL_PRINTER_CHARACTERISTICS = [
   '00002a00-0000-1000-8000-00805f9b34fb', // Generic write characteristic
   '0000ff01-0000-1000-8000-00805f9b34fb', // Custom write characteristic
   '000018f1-0000-1000-8000-00805f9b34fb', // Thermal printer data characteristic
+  '0000fee1-0000-1000-8000-00805f9b34fb', // MP-series write characteristic
+  '0000fee2-0000-1000-8000-00805f9b34fb', // MP-series data characteristic
+  '49535343-8841-43f4-a8d4-ecbe34729bb3', // Microchip write characteristic
+  '6e400002-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART TX characteristic
+  '6e400003-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART RX characteristic
 ];
 
 // ESC/POS Commands
@@ -71,11 +80,11 @@ const GS = 0x1d;
 
 const ESC_POS = {
   // Initialize printer
-  INIT: new Uint8Array([ESC, '@']),
+  INIT: new Uint8Array([ESC, 0x40]), // ESC @
   
   // Text formatting
-  BOLD_ON: new Uint8Array([ESC, 'E'.charCodeAt(0), 1]),
-  BOLD_OFF: new Uint8Array([ESC, 'E'.charCodeAt(0), 0]),
+  BOLD_ON: new Uint8Array([ESC, 0x45, 1]), // ESC E 1
+  BOLD_OFF: new Uint8Array([ESC, 0x45, 0]), // ESC E 0
   
   // Text alignment
   ALIGN_LEFT: new Uint8Array([ESC, 'a'.charCodeAt(0), 0]),
@@ -429,8 +438,9 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
     console.log('Requesting thermal printer device...');
     
     // Request thermal printer device with multiple service options
+    // For MP-80M, we'll try with acceptAllDevices to discover services
     const device = await navigator.bluetooth!.requestDevice({
-      filters: THERMAL_PRINTER_SERVICES.map(service => ({ services: [service] })),
+      acceptAllDevices: true,
       optionalServices: [...THERMAL_PRINTER_SERVICES, ...THERMAL_PRINTER_CHARACTERISTICS]
     });
 
@@ -446,7 +456,7 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
     
     console.log('Connected to GATT server, discovering services...');
     
-    // Try to find a compatible service
+    // Try to find a compatible service from our known list first
     let service: BluetoothRemoteGATTService | null = null;
     let characteristic: BluetoothRemoteGATTCharacteristic | null = null;
     
@@ -455,12 +465,44 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
         service = await server.getPrimaryService(serviceUuid);
         console.log(`Found service: ${serviceUuid}`);
         
+        // Get all characteristics for this service
+        try {
+          const characteristics = await (service as any).getCharacteristics();
+          console.log(`Service ${serviceUuid} characteristics:`, characteristics.map((c: any) => c.uuid));
+        } catch (charListError) {
+          console.log('Could not list characteristics for service', serviceUuid);
+        }
+        
         // Try to find a compatible characteristic
         for (const charUuid of THERMAL_PRINTER_CHARACTERISTICS) {
           try {
             characteristic = await service.getCharacteristic(charUuid);
             console.log(`Found characteristic: ${charUuid}`);
-            break;
+            
+            // Test if we can write to this characteristic
+            try {
+              // Try a small test write to check permissions
+              const testData = new Uint8Array([0x1B, 0x40]); // ESC @ (initialize printer)
+              await characteristic.writeValue(testData);
+              console.log('✅ Characteristic supports writeValue');
+              break;
+            } catch (writeError) {
+              console.log('❌ writeValue failed, trying writeValueWithoutResponse...');
+              try {
+                // Try writeValueWithoutResponse if available
+                if ('writeValueWithoutResponse' in characteristic) {
+                  const testData = new Uint8Array([0x1B, 0x40]);
+                  await (characteristic as any).writeValueWithoutResponse(testData);
+                  console.log('✅ Characteristic supports writeValueWithoutResponse');
+                  break;
+                } else {
+                  console.log('❌ writeValueWithoutResponse not available');
+                }
+              } catch (writeWithoutResponseError) {
+                console.log('❌ Both write methods failed, trying next characteristic...');
+                characteristic = null;
+              }
+            }
           } catch (charError) {
             console.log(`Characteristic ${charUuid} not found, trying next...`);
           }
@@ -472,9 +514,10 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
       }
     }
 
+    // If no known service worked, log error with helpful information
     if (!service || !characteristic) {
       device.gatt.disconnect();
-      throw new Error('No compatible thermal printer service/characteristic found');
+      throw new Error(`No compatible thermal printer service/characteristic found for ${device.name || 'MP-80M'}. Please ensure the printer is in pairing mode and try again.`);
     }
 
     console.log('Successfully connected to thermal printer');
@@ -531,7 +574,16 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   }
   
   if (receiptData.storePhone) {
-    commands.push(textToBytes(centerText(`Tel: ${receiptData.storePhone}`, paperWidth)));
+    commands.push(textToBytes(centerText(`No. HP ${receiptData.storePhone}`, paperWidth)));
+    commands.push(ESC_POS.CRLF);
+  }
+  
+  // QR Code notice (if enabled)
+  if (receiptData.enableQr) {
+    commands.push(ESC_POS.CRLF);
+    commands.push(textToBytes(centerText('[QR Code tersedia di nota digital]', paperWidth)));
+    commands.push(ESC_POS.CRLF);
+    commands.push(textToBytes(centerText('Scan untuk pembayaran digital', paperWidth)));
     commands.push(ESC_POS.CRLF);
   }
   
@@ -543,40 +595,94 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   // Order details
   commands.push(ESC_POS.ALIGN_LEFT);
   commands.push(ESC_POS.BOLD_ON);
-  commands.push(textToBytes(`Order #: ${receiptData.orderId || ''}`));
+  commands.push(textToBytes(`ORDER ID: ${receiptData.orderId || ''}`));
   commands.push(ESC_POS.CRLF);
   commands.push(ESC_POS.BOLD_OFF);
   
-  commands.push(textToBytes(`Customer: ${receiptData.customerName || ''}`));
+  // Customer Information
+  commands.push(ESC_POS.BOLD_ON);
+  commands.push(textToBytes('CUSTOMER INFO:'));
+  commands.push(ESC_POS.CRLF);
+  commands.push(ESC_POS.BOLD_OFF);
+  
+  commands.push(textToBytes(`Nama: ${receiptData.customerName || ''}`));
   commands.push(ESC_POS.CRLF);
   
   if (receiptData.customerPhone) {
-    commands.push(textToBytes(`Phone: ${receiptData.customerPhone}`));
+    // Mask phone number for privacy
+    const maskedPhone = receiptData.customerPhone.replace(/(\d{2,3})\d{4}(\d{2,3})/, '$1****$2');
+    commands.push(textToBytes(`No. HP: ${maskedPhone}`));
     commands.push(ESC_POS.CRLF);
   }
   
-  commands.push(textToBytes(`Date: ${receiptData.orderDate || new Date().toLocaleDateString()}`));
+  commands.push(ESC_POS.CRLF);
+  
+  // Service type
+  if (receiptData.items && receiptData.items.length > 0) {
+    const firstItem = receiptData.items[0];
+    commands.push(ESC_POS.ALIGN_CENTER);
+    commands.push(ESC_POS.BOLD_ON);
+    commands.push(ESC_POS.SIZE_DOUBLE_WIDTH);
+    commands.push(textToBytes(centerText(firstItem.service_name || 'LAYANAN KILOAN', paperWidth / 2)));
+    commands.push(ESC_POS.CRLF);
+    commands.push(ESC_POS.BOLD_OFF);
+    commands.push(ESC_POS.SIZE_NORMAL);
+    commands.push(textToBytes(centerText(`(${(firstItem.service_name || 'KILOAN REGULER').toUpperCase()})`, paperWidth)));
+    commands.push(ESC_POS.CRLF);
+    commands.push(ESC_POS.ALIGN_LEFT);
+  }
+  
+  commands.push(ESC_POS.CRLF);
+  
+  // Date and Time
+  const orderDate = new Date(receiptData.orderDate || new Date());
+  const formatDate = (date: Date) => {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${day} ${month} ${year}, ${hours}:${minutes} WIB`;
+  };
+  
+  commands.push(textToBytes(`Tanggal: ${formatDate(orderDate)}`));
   commands.push(ESC_POS.CRLF);
   
   // Status info
-  if (receiptData.executionStatus) {
-    commands.push(textToBytes(`Status: ${receiptData.executionStatus.replace('_', ' ').toUpperCase()}`));
-    commands.push(ESC_POS.CRLF);
-  }
+  commands.push(ESC_POS.BOLD_ON);
+  commands.push(textToBytes('STATUS LAYANAN:'));
+  commands.push(ESC_POS.CRLF);
+  commands.push(ESC_POS.BOLD_OFF);
+  
+  const statusMap: { [key: string]: string } = {
+    'completed': 'SUDAH DIAMBIL',
+    'ready_for_pickup': 'SIAP DIAMBIL',
+    'in_progress': 'SEDANG DIKERJAKAN',
+    'in_queue': 'DALAM ANTRIAN'
+  };
+  
+  const statusText = statusMap[receiptData.executionStatus] || 'DALAM ANTRIAN';
+  commands.push(textToBytes(`Status: ${statusText}`));
+  commands.push(ESC_POS.CRLF);
   
   if (receiptData.estimatedCompletion) {
-    const completionDate = new Date(receiptData.estimatedCompletion).toLocaleDateString('id-ID');
-    commands.push(textToBytes(`Ready: ${completionDate}`));
+    const completionDate = new Date(receiptData.estimatedCompletion);
+    commands.push(textToBytes(`Siap Diambil: ${formatDate(completionDate)}`));
     commands.push(ESC_POS.CRLF);
   }
   
   // Separator
+  commands.push(ESC_POS.CRLF);
   commands.push(textToBytes(createLine('-', paperWidth)));
   commands.push(ESC_POS.CRLF);
   
   // Items header
   commands.push(ESC_POS.BOLD_ON);
-  commands.push(textToBytes('ITEMS:'));
+  commands.push(textToBytes('DETAIL TRANSAKSI:'));
   commands.push(ESC_POS.CRLF);
   commands.push(ESC_POS.BOLD_OFF);
   
@@ -598,6 +704,13 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
       commands.push(textToBytes(priceLine));
       commands.push(ESC_POS.CRLF);
       
+      // Add price per kg info if applicable
+      if (item.service_type === 'kilo' && item.weight_kg && item.weight_kg > 0) {
+        const pricePerKg = Math.round(price / item.weight_kg);
+        commands.push(textToBytes(`  @ Rp ${pricePerKg.toLocaleString('id-ID')}/kg`));
+        commands.push(ESC_POS.CRLF);
+      }
+      
       // Add extra line for readability
       commands.push(ESC_POS.LF);
     });
@@ -616,7 +729,7 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   }
   
   if (receiptData.taxAmount && receiptData.taxAmount > 0) {
-    const taxText = `Tax: Rp ${receiptData.taxAmount.toLocaleString('id-ID')}`;
+    const taxText = `Pajak: Rp ${receiptData.taxAmount.toLocaleString('id-ID')}`;
     const spacesToAdd = Math.max(0, paperWidth - taxText.length);
     commands.push(textToBytes(' '.repeat(spacesToAdd) + taxText));
     commands.push(ESC_POS.CRLF);
@@ -631,38 +744,69 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   commands.push(ESC_POS.BOLD_OFF);
   commands.push(ESC_POS.SIZE_NORMAL);
   
-  // Payment info
+  // Payment info section
+  commands.push(ESC_POS.CRLF);
+  commands.push(textToBytes(createLine('=', paperWidth)));
+  commands.push(ESC_POS.CRLF);
+  
+  commands.push(ESC_POS.BOLD_ON);
+  commands.push(textToBytes('PEMBAYARAN:'));
+  commands.push(ESC_POS.CRLF);
+  commands.push(ESC_POS.BOLD_OFF);
+  
+  // Payment status
+  const paymentStatusText = receiptData.paymentStatus === 'completed' ? 'LUNAS' : 'BELUM LUNAS';
+  commands.push(textToBytes(`Status: ${paymentStatusText}`));
+  commands.push(ESC_POS.CRLF);
+  
+  // Payment method
   if (receiptData.paymentMethod) {
-    commands.push(ESC_POS.CRLF);
-    commands.push(textToBytes(`Payment: ${receiptData.paymentMethod.toUpperCase()}`));
+    commands.push(textToBytes(`Metode: ${receiptData.paymentMethod.toUpperCase()}`));
     commands.push(ESC_POS.CRLF);
     
-    if (receiptData.paymentMethod === 'cash' && receiptData.cashReceived) {
-      commands.push(textToBytes(`Cash: Rp ${receiptData.cashReceived.toLocaleString('id-ID')}`));
+    // Cash payment details
+    if (receiptData.paymentMethod === 'cash' && receiptData.cashReceived && receiptData.paymentStatus === 'completed') {
+      commands.push(textToBytes(`Uang Diterima: Rp ${receiptData.cashReceived.toLocaleString('id-ID')}`));
       commands.push(ESC_POS.CRLF);
       
       const change = receiptData.cashReceived - receiptData.totalAmount;
       if (change > 0) {
-        commands.push(textToBytes(`Change: Rp ${change.toLocaleString('id-ID')}`));
+        commands.push(ESC_POS.BOLD_ON);
+        commands.push(textToBytes(`Kembalian: Rp ${change.toLocaleString('id-ID')}`));
         commands.push(ESC_POS.CRLF);
+        commands.push(ESC_POS.BOLD_OFF);
       }
     }
   }
   
-  // Footer
+  // Footer section
   commands.push(ESC_POS.CRLF);
-  commands.push(ESC_POS.ALIGN_CENTER);
-  commands.push(textToBytes(centerText('Thank you!', paperWidth)));
-  commands.push(ESC_POS.CRLF);
-  commands.push(textToBytes(centerText('Please come again', paperWidth)));
+  commands.push(textToBytes(createLine('=', paperWidth)));
   commands.push(ESC_POS.CRLF);
   
-  // QR Code note (if enabled)
-  if (receiptData.enableQr) {
-    commands.push(ESC_POS.CRLF);
-    commands.push(textToBytes(centerText('Scan QR code for receipt', paperWidth)));
-    commands.push(ESC_POS.CRLF);
-  }
+  commands.push(ESC_POS.ALIGN_CENTER);
+  commands.push(ESC_POS.BOLD_ON);
+  commands.push(textToBytes(centerText('TERIMA KASIH!', paperWidth)));
+  commands.push(ESC_POS.CRLF);
+  commands.push(ESC_POS.BOLD_OFF);
+  commands.push(textToBytes(centerText('Semoga puas dengan layanan kami', paperWidth)));
+  commands.push(ESC_POS.CRLF);
+  
+  // Important notes
+  commands.push(ESC_POS.CRLF);
+  commands.push(textToBytes(centerText('--- PENTING ---', paperWidth)));
+  commands.push(ESC_POS.CRLF);
+  commands.push(textToBytes(centerText('Simpan nota ini sebagai bukti', paperWidth)));
+  commands.push(ESC_POS.CRLF);
+  commands.push(textToBytes(centerText('pengambilan laundry', paperWidth)));
+  commands.push(ESC_POS.CRLF);
+  
+  // Digital receipt info
+  commands.push(ESC_POS.CRLF);
+  commands.push(textToBytes(centerText('Nota digital tersedia di:', paperWidth)));
+  commands.push(ESC_POS.CRLF);
+  commands.push(textToBytes(centerText(`/receipt/${receiptData.orderId}`, paperWidth)));
+  commands.push(ESC_POS.CRLF);
   
   // Feed and cut
   if (options.feedLines && options.feedLines > 0) {
@@ -693,6 +837,15 @@ export const printToThermalPrinter = async (
   }
 
   try {
+    // Validate connection state before printing
+    if (!connection.server?.connected) {
+      throw new Error('Bluetooth connection is not active. Please reconnect to the printer.');
+    }
+
+    if (!connection.characteristic) {
+      throw new Error('Printer characteristic is not available. Please reconnect to the printer.');
+    }
+
     console.log('Formatting receipt for thermal printing...');
     const printData = formatReceiptForThermal(receiptData, {
       paperWidth: 32,
@@ -701,14 +854,68 @@ export const printToThermalPrinter = async (
       ...options
     });
 
-    console.log('Sending data to thermal printer...');
+    console.log('Sending data to thermal printer in chunks...');
+    console.log('Total data size:', printData.byteLength, 'bytes');
     
-    // Send data to printer
-    await connection.characteristic.writeValue(printData);
+    // Split data into chunks to respect Bluetooth characteristic 512-byte limit
+    const CHUNK_SIZE = 512;
+    const chunks = [];
+    
+    for (let i = 0; i < printData.byteLength; i += CHUNK_SIZE) {
+      const chunk = printData.slice(i, i + CHUNK_SIZE);
+      chunks.push(chunk);
+    }
+    
+    console.log(`Sending ${chunks.length} chunks to printer...`);
+    
+    // Send chunks with small delays to prevent overwhelming the printer
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      console.log(`Sending chunk ${i + 1}/${chunks.length} (${chunk.byteLength} bytes)`);
+      
+      try {
+        // Check connection before each chunk
+        if (!connection.server?.connected) {
+          throw new Error('Connection lost during printing. Please reconnect and try again.');
+        }
+        
+        // Try writeValue first, then writeValueWithoutResponse if it fails
+        try {
+          await connection.characteristic.writeValue(chunk);
+        } catch (writeError) {
+          console.log('writeValue failed, trying writeValueWithoutResponse...');
+          if ('writeValueWithoutResponse' in connection.characteristic) {
+            await (connection.characteristic as any).writeValueWithoutResponse(chunk);
+          } else {
+            throw writeError;
+          }
+        }
+        
+        // Small delay between chunks to prevent overwhelming the printer
+        if (i < chunks.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100)); // Increased delay
+        }
+      } catch (chunkError) {
+        console.error(`Error sending chunk ${i + 1}:`, chunkError);
+        
+        // If it's a GATT error, provide specific guidance
+        if (chunkError.message?.includes('GATT') || chunkError.message?.includes('not permitted')) {
+          throw new Error('Printer connection error. Please disconnect and reconnect to the thermal printer, then try again.');
+        }
+        
+        throw chunkError;
+      }
+    }
     
     console.log('Receipt sent to thermal printer successfully');
   } catch (error) {
     console.error('Error printing to thermal printer:', error);
+    
+    // Provide more specific error messages for common issues
+    if (error.message?.includes('GATT') || error.message?.includes('not permitted')) {
+      throw new Error('Printer connection error. Please disconnect and reconnect to the thermal printer, then try again.');
+    }
+    
     throw new Error(`Failed to print to thermal printer: ${error.message}`);
   }
 };
@@ -722,7 +929,7 @@ export const fetchReceiptDataForThermal = async (orderId: string): Promise<any> 
     
     // Fetch order data using the same RPC function as the receipt page
     const { data: receiptData, error } = await supabase.rpc('get_receipt_data', {
-      order_id: orderId
+      order_id_param: orderId
     });
 
     if (error) {
