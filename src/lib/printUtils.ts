@@ -437,10 +437,24 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
   try {
     console.log('Requesting thermal printer device...');
     
-    // Request thermal printer device with multiple service options
-    // For MP-80M, we'll try with acceptAllDevices to discover services
+    // Request thermal printer device with specific filters for MP-80M and similar printers
     const device = await navigator.bluetooth!.requestDevice({
-      acceptAllDevices: true,
+      filters: [
+        // Filter by device name patterns (common thermal printer names)
+        { namePrefix: 'RPP' },
+        { namePrefix: 'MP-' },
+        { namePrefix: 'PRINTER' },
+        { namePrefix: 'POS' },
+        { namePrefix: 'THERMAL' },
+        { name: 'RPP02N' }, // Your specific printer
+        // Filter by services
+        { services: ['000018f0-0000-1000-8000-00805f9b34fb'] },
+        { services: ['00001101-0000-1000-8000-00805f9b34fb'] },
+        { services: ['0000ff00-0000-1000-8000-00805f9b34fb'] },
+        { services: ['0000fee0-0000-1000-8000-00805f9b34fb'] },
+        { services: ['49535343-fe7d-4ae5-8fa9-9fafd205e455'] },
+        { services: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e'] }
+      ],
       optionalServices: [...THERMAL_PRINTER_SERVICES, ...THERMAL_PRINTER_CHARACTERISTICS]
     });
 
@@ -579,13 +593,13 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   }
   
   // QR Code notice (if enabled)
-  if (receiptData.enableQr) {
-    commands.push(ESC_POS.CRLF);
-    commands.push(textToBytes(centerText('[QR Code tersedia di nota digital]', paperWidth)));
-    commands.push(ESC_POS.CRLF);
-    commands.push(textToBytes(centerText('Scan untuk pembayaran digital', paperWidth)));
-    commands.push(ESC_POS.CRLF);
-  }
+  // if (receiptData.enableQr) {
+  //   commands.push(ESC_POS.CRLF);
+  //   commands.push(textToBytes(centerText('[QR Code tersedia di nota digital]', paperWidth)));
+  //   commands.push(ESC_POS.CRLF);
+  //   commands.push(textToBytes(centerText('Scan untuk pembayaran digital', paperWidth)));
+  //   commands.push(ESC_POS.CRLF);
+  // }
   
   // Separator
   commands.push(ESC_POS.CRLF);
@@ -605,8 +619,13 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   commands.push(ESC_POS.CRLF);
   commands.push(ESC_POS.BOLD_OFF);
   
-  commands.push(textToBytes(`Nama: ${receiptData.customerName || ''}`));
+  // Customer name - make it more prominent
+  commands.push(ESC_POS.BOLD_ON);
+  commands.push(ESC_POS.SIZE_DOUBLE_WIDTH);
+  commands.push(textToBytes(`${receiptData.customerName || 'CUSTOMER'}`));
   commands.push(ESC_POS.CRLF);
+  commands.push(ESC_POS.BOLD_OFF);
+  commands.push(ESC_POS.SIZE_NORMAL);
   
   if (receiptData.customerPhone) {
     // Mask phone number for privacy
@@ -615,6 +634,10 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
     commands.push(ESC_POS.CRLF);
   }
   
+  // Add extra line break and ensure we're back to normal formatting
+  commands.push(ESC_POS.ALIGN_LEFT);
+  commands.push(ESC_POS.SIZE_NORMAL);
+  commands.push(ESC_POS.BOLD_OFF);
   commands.push(ESC_POS.CRLF);
   
   // Service type
@@ -635,12 +658,18 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   commands.push(ESC_POS.CRLF);
   
   // Date and Time
-  const orderDate = new Date(receiptData.orderDate || new Date());
+  const orderDate = receiptData.orderDate ? new Date(receiptData.orderDate) : new Date();
   const formatDate = (date: Date) => {
     const months = [
       'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
+    
+    // Ensure we have a valid date
+    if (isNaN(date.getTime())) {
+      date = new Date(); // Fallback to current date if invalid
+    }
+    
     const day = date.getDate().toString().padStart(2, '0');
     const month = months[date.getMonth()];
     const year = date.getFullYear();
@@ -649,7 +678,7 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
     return `${day} ${month} ${year}, ${hours}:${minutes} WIB`;
   };
   
-  commands.push(textToBytes(`Tanggal: ${formatDate(orderDate)}`));
+  commands.push(textToBytes(`Diterima: ${formatDate(orderDate)}`));
   commands.push(ESC_POS.CRLF);
   
   // Status info
@@ -802,11 +831,11 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   commands.push(ESC_POS.CRLF);
   
   // Digital receipt info
-  commands.push(ESC_POS.CRLF);
-  commands.push(textToBytes(centerText('Nota digital tersedia di:', paperWidth)));
-  commands.push(ESC_POS.CRLF);
-  commands.push(textToBytes(centerText(`/receipt/${receiptData.orderId}`, paperWidth)));
-  commands.push(ESC_POS.CRLF);
+  // commands.push(ESC_POS.CRLF);
+  // commands.push(textToBytes(centerText('Nota digital tersedia di:', paperWidth)));
+  // commands.push(ESC_POS.CRLF);
+  // commands.push(textToBytes(centerText(`/receipt/${receiptData.orderId}`, paperWidth)));
+  // commands.push(ESC_POS.CRLF);
   
   // Feed and cut
   if (options.feedLines && options.feedLines > 0) {
@@ -857,8 +886,8 @@ export const printToThermalPrinter = async (
     console.log('Sending data to thermal printer in chunks...');
     console.log('Total data size:', printData.byteLength, 'bytes');
     
-    // Split data into chunks to respect Bluetooth characteristic 512-byte limit
-    const CHUNK_SIZE = 512;
+    // Split data into smaller chunks to be more conservative with Bluetooth
+    const CHUNK_SIZE = 128; // Reduced from 512 to be more conservative
     const chunks = [];
     
     for (let i = 0; i < printData.byteLength; i += CHUNK_SIZE) {
@@ -868,7 +897,7 @@ export const printToThermalPrinter = async (
     
     console.log(`Sending ${chunks.length} chunks to printer...`);
     
-    // Send chunks with small delays to prevent overwhelming the printer
+    // Send chunks with longer delays to ensure printer can process
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
       console.log(`Sending chunk ${i + 1}/${chunks.length} (${chunk.byteLength} bytes)`);
@@ -882,21 +911,23 @@ export const printToThermalPrinter = async (
         // Try writeValue first, then writeValueWithoutResponse if it fails
         try {
           await connection.characteristic.writeValue(chunk);
+          console.log(`✅ Chunk ${i + 1} sent successfully with writeValue`);
         } catch (writeError) {
           console.log('writeValue failed, trying writeValueWithoutResponse...');
           if ('writeValueWithoutResponse' in connection.characteristic) {
             await (connection.characteristic as any).writeValueWithoutResponse(chunk);
+            console.log(`✅ Chunk ${i + 1} sent successfully with writeValueWithoutResponse`);
           } else {
             throw writeError;
           }
         }
         
-        // Small delay between chunks to prevent overwhelming the printer
+        // Longer delay between chunks to prevent overwhelming the printer
         if (i < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 100)); // Increased delay
+          await new Promise(resolve => setTimeout(resolve, 200)); // Increased from 100ms to 200ms
         }
       } catch (chunkError) {
-        console.error(`Error sending chunk ${i + 1}:`, chunkError);
+        console.error(`❌ Error sending chunk ${i + 1}:`, chunkError);
         
         // If it's a GATT error, provide specific guidance
         if (chunkError.message?.includes('GATT') || chunkError.message?.includes('not permitted')) {
@@ -907,7 +938,10 @@ export const printToThermalPrinter = async (
       }
     }
     
-    console.log('Receipt sent to thermal printer successfully');
+    // Add a final delay to ensure all data is processed by the printer
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    console.log('✅ Receipt sent to thermal printer successfully');
   } catch (error) {
     console.error('Error printing to thermal printer:', error);
     
@@ -962,7 +996,7 @@ export const fetchReceiptDataForThermal = async (orderId: string): Promise<any> 
       customerName: orderData.customer_name || '',
       customerPhone: orderData.customer_phone || '',
       orderId: orderData.id || orderId,
-      orderDate: orderData.order_date ? new Date(orderData.order_date).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID'),
+      orderDate: orderData.order_date || orderData.created_at || new Date().toISOString(),
       items: orderItems,
       totalAmount: orderData.total_amount || 0,
       subtotal: orderData.subtotal || 0,
