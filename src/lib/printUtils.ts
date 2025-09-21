@@ -736,25 +736,29 @@ export const fetchReceiptDataForThermal = async (orderId: string): Promise<any> 
 
     console.log('📄 Receipt data fetched for thermal printing:', receiptData);
 
-    // Transform the data for thermal printing
+    // Transform the data for thermal printing - handle nested structure from RPC function
+    const orderData = receiptData.order || {};
+    const storeData = receiptData.store || {};
+    const orderItems = receiptData.order_items || [];
+
     return {
-      storeName: receiptData.store_name || 'SMART LAUNDRY POS',
-      storeAddress: receiptData.store_address || '',
-      storePhone: receiptData.store_phone || '',
-      customerName: receiptData.customer_name || '',
-      customerPhone: receiptData.customer_phone || '',
-      orderId: receiptData.id || orderId,
-      orderDate: receiptData.order_date ? new Date(receiptData.order_date).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID'),
-      items: receiptData.order_items || [],
-      totalAmount: receiptData.total_amount || 0,
-      subtotal: receiptData.subtotal || 0,
-      taxAmount: receiptData.tax_amount || 0,
-      paymentMethod: receiptData.payment_method || 'cash',
-      paymentStatus: receiptData.payment_status || 'pending',
-      executionStatus: receiptData.execution_status || 'in_queue',
-      estimatedCompletion: receiptData.estimated_completion || null,
-      cashReceived: receiptData.cash_received || null,
-      enableQr: receiptData.enable_qr || false,
+      storeName: storeData.name || 'SMART LAUNDRY POS',
+      storeAddress: storeData.address || '',
+      storePhone: storeData.phone || '',
+      customerName: orderData.customer_name || '',
+      customerPhone: orderData.customer_phone || '',
+      orderId: orderData.id || orderId,
+      orderDate: orderData.order_date ? new Date(orderData.order_date).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID'),
+      items: orderItems,
+      totalAmount: orderData.total_amount || 0,
+      subtotal: orderData.subtotal || 0,
+      taxAmount: orderData.tax_amount || 0,
+      paymentMethod: orderData.payment_method || 'cash',
+      paymentStatus: orderData.payment_status || 'pending',
+      executionStatus: orderData.execution_status || 'in_queue',
+      estimatedCompletion: orderData.estimated_completion || null,
+      cashReceived: orderData.cash_received || null,
+      enableQr: storeData.enable_qr || false,
     };
   } catch (error) {
     console.error('Error fetching receipt data for thermal printing:', error);
