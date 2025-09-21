@@ -574,7 +574,16 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   }
   
   if (receiptData.storePhone) {
-    commands.push(textToBytes(centerText(`Tel: ${receiptData.storePhone}`, paperWidth)));
+    commands.push(textToBytes(centerText(`No. HP ${receiptData.storePhone}`, paperWidth)));
+    commands.push(ESC_POS.CRLF);
+  }
+  
+  // QR Code notice (if enabled)
+  if (receiptData.enableQr) {
+    commands.push(ESC_POS.CRLF);
+    commands.push(textToBytes(centerText('[QR Code tersedia di nota digital]', paperWidth)));
+    commands.push(ESC_POS.CRLF);
+    commands.push(textToBytes(centerText('Scan untuk pembayaran digital', paperWidth)));
     commands.push(ESC_POS.CRLF);
   }
   
@@ -586,40 +595,94 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   // Order details
   commands.push(ESC_POS.ALIGN_LEFT);
   commands.push(ESC_POS.BOLD_ON);
-  commands.push(textToBytes(`Order #: ${receiptData.orderId || ''}`));
+  commands.push(textToBytes(`ORDER ID: ${receiptData.orderId || ''}`));
   commands.push(ESC_POS.CRLF);
   commands.push(ESC_POS.BOLD_OFF);
   
-  commands.push(textToBytes(`Customer: ${receiptData.customerName || ''}`));
+  // Customer Information
+  commands.push(ESC_POS.BOLD_ON);
+  commands.push(textToBytes('CUSTOMER INFO:'));
+  commands.push(ESC_POS.CRLF);
+  commands.push(ESC_POS.BOLD_OFF);
+  
+  commands.push(textToBytes(`Nama: ${receiptData.customerName || ''}`));
   commands.push(ESC_POS.CRLF);
   
   if (receiptData.customerPhone) {
-    commands.push(textToBytes(`Phone: ${receiptData.customerPhone}`));
+    // Mask phone number for privacy
+    const maskedPhone = receiptData.customerPhone.replace(/(\d{2,3})\d{4}(\d{2,3})/, '$1****$2');
+    commands.push(textToBytes(`No. HP: ${maskedPhone}`));
     commands.push(ESC_POS.CRLF);
   }
   
-  commands.push(textToBytes(`Date: ${receiptData.orderDate || new Date().toLocaleDateString()}`));
+  commands.push(ESC_POS.CRLF);
+  
+  // Service type
+  if (receiptData.items && receiptData.items.length > 0) {
+    const firstItem = receiptData.items[0];
+    commands.push(ESC_POS.ALIGN_CENTER);
+    commands.push(ESC_POS.BOLD_ON);
+    commands.push(ESC_POS.SIZE_DOUBLE_WIDTH);
+    commands.push(textToBytes(centerText(firstItem.service_name || 'LAYANAN KILOAN', paperWidth / 2)));
+    commands.push(ESC_POS.CRLF);
+    commands.push(ESC_POS.BOLD_OFF);
+    commands.push(ESC_POS.SIZE_NORMAL);
+    commands.push(textToBytes(centerText(`(${(firstItem.service_name || 'KILOAN REGULER').toUpperCase()})`, paperWidth)));
+    commands.push(ESC_POS.CRLF);
+    commands.push(ESC_POS.ALIGN_LEFT);
+  }
+  
+  commands.push(ESC_POS.CRLF);
+  
+  // Date and Time
+  const orderDate = new Date(receiptData.orderDate || new Date());
+  const formatDate = (date: Date) => {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${day} ${month} ${year}, ${hours}:${minutes} WIB`;
+  };
+  
+  commands.push(textToBytes(`Tanggal: ${formatDate(orderDate)}`));
   commands.push(ESC_POS.CRLF);
   
   // Status info
-  if (receiptData.executionStatus) {
-    commands.push(textToBytes(`Status: ${receiptData.executionStatus.replace('_', ' ').toUpperCase()}`));
-    commands.push(ESC_POS.CRLF);
-  }
+  commands.push(ESC_POS.BOLD_ON);
+  commands.push(textToBytes('STATUS LAYANAN:'));
+  commands.push(ESC_POS.CRLF);
+  commands.push(ESC_POS.BOLD_OFF);
+  
+  const statusMap: { [key: string]: string } = {
+    'completed': 'SUDAH DIAMBIL',
+    'ready_for_pickup': 'SIAP DIAMBIL',
+    'in_progress': 'SEDANG DIKERJAKAN',
+    'in_queue': 'DALAM ANTRIAN'
+  };
+  
+  const statusText = statusMap[receiptData.executionStatus] || 'DALAM ANTRIAN';
+  commands.push(textToBytes(`Status: ${statusText}`));
+  commands.push(ESC_POS.CRLF);
   
   if (receiptData.estimatedCompletion) {
-    const completionDate = new Date(receiptData.estimatedCompletion).toLocaleDateString('id-ID');
-    commands.push(textToBytes(`Ready: ${completionDate}`));
+    const completionDate = new Date(receiptData.estimatedCompletion);
+    commands.push(textToBytes(`Siap Diambil: ${formatDate(completionDate)}`));
     commands.push(ESC_POS.CRLF);
   }
   
   // Separator
+  commands.push(ESC_POS.CRLF);
   commands.push(textToBytes(createLine('-', paperWidth)));
   commands.push(ESC_POS.CRLF);
   
   // Items header
   commands.push(ESC_POS.BOLD_ON);
-  commands.push(textToBytes('ITEMS:'));
+  commands.push(textToBytes('DETAIL TRANSAKSI:'));
   commands.push(ESC_POS.CRLF);
   commands.push(ESC_POS.BOLD_OFF);
   
@@ -641,6 +704,13 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
       commands.push(textToBytes(priceLine));
       commands.push(ESC_POS.CRLF);
       
+      // Add price per kg info if applicable
+      if (item.service_type === 'kilo' && item.weight_kg && item.weight_kg > 0) {
+        const pricePerKg = Math.round(price / item.weight_kg);
+        commands.push(textToBytes(`  @ Rp ${pricePerKg.toLocaleString('id-ID')}/kg`));
+        commands.push(ESC_POS.CRLF);
+      }
+      
       // Add extra line for readability
       commands.push(ESC_POS.LF);
     });
@@ -659,7 +729,7 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   }
   
   if (receiptData.taxAmount && receiptData.taxAmount > 0) {
-    const taxText = `Tax: Rp ${receiptData.taxAmount.toLocaleString('id-ID')}`;
+    const taxText = `Pajak: Rp ${receiptData.taxAmount.toLocaleString('id-ID')}`;
     const spacesToAdd = Math.max(0, paperWidth - taxText.length);
     commands.push(textToBytes(' '.repeat(spacesToAdd) + taxText));
     commands.push(ESC_POS.CRLF);
@@ -674,38 +744,69 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   commands.push(ESC_POS.BOLD_OFF);
   commands.push(ESC_POS.SIZE_NORMAL);
   
-  // Payment info
+  // Payment info section
+  commands.push(ESC_POS.CRLF);
+  commands.push(textToBytes(createLine('=', paperWidth)));
+  commands.push(ESC_POS.CRLF);
+  
+  commands.push(ESC_POS.BOLD_ON);
+  commands.push(textToBytes('PEMBAYARAN:'));
+  commands.push(ESC_POS.CRLF);
+  commands.push(ESC_POS.BOLD_OFF);
+  
+  // Payment status
+  const paymentStatusText = receiptData.paymentStatus === 'completed' ? 'LUNAS' : 'BELUM LUNAS';
+  commands.push(textToBytes(`Status: ${paymentStatusText}`));
+  commands.push(ESC_POS.CRLF);
+  
+  // Payment method
   if (receiptData.paymentMethod) {
-    commands.push(ESC_POS.CRLF);
-    commands.push(textToBytes(`Payment: ${receiptData.paymentMethod.toUpperCase()}`));
+    commands.push(textToBytes(`Metode: ${receiptData.paymentMethod.toUpperCase()}`));
     commands.push(ESC_POS.CRLF);
     
-    if (receiptData.paymentMethod === 'cash' && receiptData.cashReceived) {
-      commands.push(textToBytes(`Cash: Rp ${receiptData.cashReceived.toLocaleString('id-ID')}`));
+    // Cash payment details
+    if (receiptData.paymentMethod === 'cash' && receiptData.cashReceived && receiptData.paymentStatus === 'completed') {
+      commands.push(textToBytes(`Uang Diterima: Rp ${receiptData.cashReceived.toLocaleString('id-ID')}`));
       commands.push(ESC_POS.CRLF);
       
       const change = receiptData.cashReceived - receiptData.totalAmount;
       if (change > 0) {
-        commands.push(textToBytes(`Change: Rp ${change.toLocaleString('id-ID')}`));
+        commands.push(ESC_POS.BOLD_ON);
+        commands.push(textToBytes(`Kembalian: Rp ${change.toLocaleString('id-ID')}`));
         commands.push(ESC_POS.CRLF);
+        commands.push(ESC_POS.BOLD_OFF);
       }
     }
   }
   
-  // Footer
+  // Footer section
   commands.push(ESC_POS.CRLF);
-  commands.push(ESC_POS.ALIGN_CENTER);
-  commands.push(textToBytes(centerText('Thank you!', paperWidth)));
-  commands.push(ESC_POS.CRLF);
-  commands.push(textToBytes(centerText('Please come again', paperWidth)));
+  commands.push(textToBytes(createLine('=', paperWidth)));
   commands.push(ESC_POS.CRLF);
   
-  // QR Code note (if enabled)
-  if (receiptData.enableQr) {
-    commands.push(ESC_POS.CRLF);
-    commands.push(textToBytes(centerText('Scan QR code for receipt', paperWidth)));
-    commands.push(ESC_POS.CRLF);
-  }
+  commands.push(ESC_POS.ALIGN_CENTER);
+  commands.push(ESC_POS.BOLD_ON);
+  commands.push(textToBytes(centerText('TERIMA KASIH!', paperWidth)));
+  commands.push(ESC_POS.CRLF);
+  commands.push(ESC_POS.BOLD_OFF);
+  commands.push(textToBytes(centerText('Semoga puas dengan layanan kami', paperWidth)));
+  commands.push(ESC_POS.CRLF);
+  
+  // Important notes
+  commands.push(ESC_POS.CRLF);
+  commands.push(textToBytes(centerText('--- PENTING ---', paperWidth)));
+  commands.push(ESC_POS.CRLF);
+  commands.push(textToBytes(centerText('Simpan nota ini sebagai bukti', paperWidth)));
+  commands.push(ESC_POS.CRLF);
+  commands.push(textToBytes(centerText('pengambilan laundry', paperWidth)));
+  commands.push(ESC_POS.CRLF);
+  
+  // Digital receipt info
+  commands.push(ESC_POS.CRLF);
+  commands.push(textToBytes(centerText('Nota digital tersedia di:', paperWidth)));
+  commands.push(ESC_POS.CRLF);
+  commands.push(textToBytes(centerText(`/receipt/${receiptData.orderId}`, paperWidth)));
+  commands.push(ESC_POS.CRLF);
   
   // Feed and cut
   if (options.feedLines && options.feedLines > 0) {
