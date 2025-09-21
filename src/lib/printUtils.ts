@@ -437,10 +437,24 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
   try {
     console.log('Requesting thermal printer device...');
     
-    // Request thermal printer device with multiple service options
-    // For MP-80M, we'll try with acceptAllDevices to discover services
+    // Request thermal printer device with specific filters for MP-80M and similar printers
     const device = await navigator.bluetooth!.requestDevice({
-      acceptAllDevices: true,
+      filters: [
+        // Filter by device name patterns (common thermal printer names)
+        { namePrefix: 'RPP' },
+        { namePrefix: 'MP-' },
+        { namePrefix: 'PRINTER' },
+        { namePrefix: 'POS' },
+        { namePrefix: 'THERMAL' },
+        { name: 'RPP02N' }, // Your specific printer
+        // Filter by services
+        { services: ['000018f0-0000-1000-8000-00805f9b34fb'] },
+        { services: ['00001101-0000-1000-8000-00805f9b34fb'] },
+        { services: ['0000ff00-0000-1000-8000-00805f9b34fb'] },
+        { services: ['0000fee0-0000-1000-8000-00805f9b34fb'] },
+        { services: ['49535343-fe7d-4ae5-8fa9-9fafd205e455'] },
+        { services: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e'] }
+      ],
       optionalServices: [...THERMAL_PRINTER_SERVICES, ...THERMAL_PRINTER_CHARACTERISTICS]
     });
 
@@ -605,8 +619,13 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   commands.push(ESC_POS.CRLF);
   commands.push(ESC_POS.BOLD_OFF);
   
-  commands.push(textToBytes(`Nama: ${receiptData.customerName || ''}`));
+  // Customer name - make it more prominent
+  commands.push(ESC_POS.BOLD_ON);
+  commands.push(ESC_POS.SIZE_DOUBLE_WIDTH);
+  commands.push(textToBytes(`${receiptData.customerName || 'CUSTOMER'}`));
   commands.push(ESC_POS.CRLF);
+  commands.push(ESC_POS.BOLD_OFF);
+  commands.push(ESC_POS.SIZE_NORMAL);
   
   if (receiptData.customerPhone) {
     // Mask phone number for privacy
