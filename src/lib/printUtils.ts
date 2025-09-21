@@ -460,7 +460,31 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
           try {
             characteristic = await service.getCharacteristic(charUuid);
             console.log(`Found characteristic: ${charUuid}`);
-            break;
+            
+            // Test if we can write to this characteristic
+            try {
+              // Try a small test write to check permissions
+              const testData = new Uint8Array([0x1B, 0x40]); // ESC @ (initialize printer)
+              await characteristic.writeValue(testData);
+              console.log('✅ Characteristic supports writeValue');
+              break;
+            } catch (writeError) {
+              console.log('❌ writeValue failed, trying writeValueWithoutResponse...');
+              try {
+                // Try writeValueWithoutResponse if available
+                if ('writeValueWithoutResponse' in characteristic) {
+                  const testData = new Uint8Array([0x1B, 0x40]);
+                  await (characteristic as any).writeValueWithoutResponse(testData);
+                  console.log('✅ Characteristic supports writeValueWithoutResponse');
+                  break;
+                } else {
+                  console.log('❌ writeValueWithoutResponse not available');
+                }
+              } catch (writeWithoutResponseError) {
+                console.log('❌ Both write methods failed, trying next characteristic...');
+                characteristic = null;
+              }
+            }
           } catch (charError) {
             console.log(`Characteristic ${charUuid} not found, trying next...`);
           }
@@ -693,6 +717,15 @@ export const printToThermalPrinter = async (
   }
 
   try {
+    // Validate connection state before printing
+    if (!connection.server?.connected) {
+      throw new Error('Bluetooth connection is not active. Please reconnect to the printer.');
+    }
+
+    if (!connection.characteristic) {
+      throw new Error('Printer characteristic is not available. Please reconnect to the printer.');
+    }
+
     console.log('Formatting receipt for thermal printing...');
     const printData = formatReceiptForThermal(receiptData, {
       paperWidth: 32,
@@ -720,17 +753,49 @@ export const printToThermalPrinter = async (
       const chunk = chunks[i];
       console.log(`Sending chunk ${i + 1}/${chunks.length} (${chunk.byteLength} bytes)`);
       
-      await connection.characteristic.writeValue(chunk);
-      
-      // Small delay between chunks to prevent overwhelming the printer
-      if (i < chunks.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 50));
+      try {
+        // Check connection before each chunk
+        if (!connection.server?.connected) {
+          throw new Error('Connection lost during printing. Please reconnect and try again.');
+        }
+        
+        // Try writeValue first, then writeValueWithoutResponse if it fails
+        try {
+          await connection.characteristic.writeValue(chunk);
+        } catch (writeError) {
+          console.log('writeValue failed, trying writeValueWithoutResponse...');
+          if ('writeValueWithoutResponse' in connection.characteristic) {
+            await (connection.characteristic as any).writeValueWithoutResponse(chunk);
+          } else {
+            throw writeError;
+          }
+        }
+        
+        // Small delay between chunks to prevent overwhelming the printer
+        if (i < chunks.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100)); // Increased delay
+        }
+      } catch (chunkError) {
+        console.error(`Error sending chunk ${i + 1}:`, chunkError);
+        
+        // If it's a GATT error, provide specific guidance
+        if (chunkError.message?.includes('GATT') || chunkError.message?.includes('not permitted')) {
+          throw new Error('Printer connection error. Please disconnect and reconnect to the thermal printer, then try again.');
+        }
+        
+        throw chunkError;
       }
     }
     
     console.log('Receipt sent to thermal printer successfully');
   } catch (error) {
     console.error('Error printing to thermal printer:', error);
+    
+    // Provide more specific error messages for common issues
+    if (error.message?.includes('GATT') || error.message?.includes('not permitted')) {
+      throw new Error('Printer connection error. Please disconnect and reconnect to the thermal printer, then try again.');
+    }
+    
     throw new Error(`Failed to print to thermal printer: ${error.message}`);
   }
 };
