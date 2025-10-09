@@ -136,8 +136,8 @@ export const HomePage: React.FC = () => {
     },
     {
       id: 'orders',
-      title: 'Pesanan',
-      icon: ShoppingCart,
+      title: 'Buat Pesanan',
+      icon: Plus,
       active: false,
       onClick: () => navigate('/pos')
     },
@@ -153,9 +153,10 @@ export const HomePage: React.FC = () => {
       title: 'Pengaturan',
       icon: Settings,
       active: false,
-      onClick: () => isOwner ? navigate('/stores') : navigate('/home')
+      onClick: () => navigate('/stores'),
+      hidden: !isOwner
     }
-  ];
+  ].filter(item => !item.hidden);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
