@@ -18,7 +18,8 @@ import {
   X,
   TrendingUp,
   TrendingDown,
-  RefreshCcw
+  QrCode,
+  Wallet
 } from 'lucide-react';
 
 const formatCurrency = (amount: number) => {
@@ -97,7 +98,7 @@ export const HomePage: React.FC = () => {
     {
       id: 'qr-code',
       title: 'Scan Kode QR',
-      icon: RefreshCcw,
+      icon: QrCode,
       color: 'text-purple-500',
       bgColor: 'bg-purple-50',
       onClick: () => navigate('/pos')
@@ -105,7 +106,7 @@ export const HomePage: React.FC = () => {
     {
       id: 'payment',
       title: 'Metode Pembayaran',
-      icon: CreditCard,
+      icon: Wallet,
       color: 'text-teal-500',
       bgColor: 'bg-teal-50',
       onClick: () => navigate('/services')
@@ -175,7 +176,7 @@ export const HomePage: React.FC = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-gray-600">Pendapatan Hari Ini</span>
-                <TrendingDown className="h-4 w-4 text-green-500" />
+                <TrendingUp className="h-4 w-4 text-green-500" />
               </div>
               <p className="text-lg font-bold text-gray-900">
                 {loading ? '...' : formatCurrency(metrics?.todayRevenue?.amount || 0).replace('Rp', 'Rp ')}
@@ -188,7 +189,7 @@ export const HomePage: React.FC = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-gray-600">Pengeluaran Hari Ini</span>
-                <TrendingUp className="h-4 w-4 text-red-500" />
+                <TrendingDown className="h-4 w-4 text-red-500" />
               </div>
               <p className="text-lg font-bold text-gray-900">
                 Rp 0
