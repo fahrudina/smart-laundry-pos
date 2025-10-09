@@ -240,12 +240,12 @@ export const HomePage: React.FC = () => {
 
       {/* Bottom Navigation Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
-        <div className="grid grid-cols-4 max-w-md mx-auto">
+        <div className={`flex justify-center gap-4 max-w-md mx-auto px-4`}>
           {bottomNavItems.map((item) => (
             <button
               key={item.id}
               onClick={item.onClick}
-              className={`flex flex-col items-center justify-center py-3 px-2 transition-colors ${
+              className={`flex flex-col items-center justify-center py-3 px-4 transition-colors flex-1 max-w-[120px] ${
                 item.active 
                   ? 'text-rose-500' 
                   : 'text-gray-400 hover:text-gray-600'
