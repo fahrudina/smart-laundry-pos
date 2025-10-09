@@ -3,7 +3,6 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
   Building2, 
@@ -14,7 +13,6 @@ import {
   QrCode,
   Package,
   XCircle,
-  History,
   TrendingUp,
   TrendingDown,
   Home as HomeIcon,
@@ -22,12 +20,10 @@ import {
   BarChart3,
   Settings
 } from 'lucide-react';
-import { AddCustomerDialog } from '@/components/pos/AddCustomerDialog';
 
 export const HomePage: React.FC = () => {
   usePageTitle('Beranda - Smart Laundry POS');
   const { currentStore, isOwner } = useStore();
-  const { user } = useAuth();
   const { metrics, loading } = useDashboard();
   const navigate = useNavigate();
 
@@ -99,7 +95,8 @@ export const HomePage: React.FC = () => {
       icon: Package,
       color: 'text-rose-400',
       bgColor: 'bg-rose-50',
-      onClick: () => {} // Placeholder
+      onClick: () => navigate('/order-history'), // Navigate to order history for now
+      disabled: true // Mark as coming soon
     },
     {
       id: 'scan-qr',
@@ -107,7 +104,8 @@ export const HomePage: React.FC = () => {
       icon: QrCode,
       color: 'text-rose-400',
       bgColor: 'bg-rose-50',
-      onClick: () => {} // Placeholder
+      onClick: () => navigate('/order-history'), // Navigate to order history for now
+      disabled: true // Mark as coming soon
     },
     {
       id: 'payment-methods',
@@ -115,7 +113,8 @@ export const HomePage: React.FC = () => {
       icon: CreditCard,
       color: 'text-rose-400',
       bgColor: 'bg-rose-50',
-      onClick: () => {} // Placeholder
+      onClick: () => navigate('/order-history'), // Navigate to order history for now
+      disabled: true // Mark as coming soon
     },
     {
       id: 'cancelled-orders',
@@ -176,9 +175,9 @@ export const HomePage: React.FC = () => {
               <div className="flex-1 min-w-0">
                 <h2 className="text-xl font-bold text-gray-900 mb-1">{currentStore.store_name}</h2>
                 <p className="text-sm text-gray-600 line-clamp-2 mb-1">
-                  {currentStore.store_address || 'Jalan | Gusti Ngurah Rai Bali'}
+                  {currentStore.store_address || 'Alamat tidak tersedia'}
                 </p>
-                <p className="text-sm text-gray-600">{currentStore.store_phone || '08123456789'}</p>
+                <p className="text-sm text-gray-600">{currentStore.store_phone || 'Telepon tidak tersedia'}</p>
               </div>
             </div>
           </CardContent>
@@ -222,7 +221,10 @@ export const HomePage: React.FC = () => {
             <button
               key={action.id}
               onClick={action.onClick}
-              className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow active:scale-95"
+              disabled={action.disabled}
+              className={`flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow active:scale-95 ${
+                action.disabled ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
               <div className={`w-12 h-12 ${action.bgColor} rounded-xl flex items-center justify-center mb-2`}>
                 <action.icon className={`h-6 w-6 ${action.color}`} />
