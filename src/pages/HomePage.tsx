@@ -66,8 +66,8 @@ export const HomePage: React.FC = () => {
       id: 'new-order',
       title: 'Buat Pesanan',
       icon: Plus,
-      color: 'text-red-500',
-      bgColor: 'bg-red-50',
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
       onClick: () => navigate('/pos')
     },
     {
@@ -90,8 +90,8 @@ export const HomePage: React.FC = () => {
       id: 'expenses',
       title: 'Pengeluaran',
       icon: CreditCard,
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-50',
+      color: 'text-indigo-500',
+      bgColor: 'bg-indigo-50',
       onClick: () => navigate('/order-history')
     },
     {
@@ -121,11 +121,11 @@ export const HomePage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-24">
       {/* Header Card with Store Info */}
-      <div className="bg-gradient-to-r from-red-400 to-red-300 px-4 pt-4 pb-6 shadow-md">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-400 px-4 pt-4 pb-6 shadow-md">
         <div className="max-w-lg mx-auto">
-          <h1 className="text-center text-xl font-semibold text-gray-800 mb-4">
+          <h1 className="text-center text-xl font-semibold text-white mb-4">
             Beranda
           </h1>
           
@@ -135,8 +135,8 @@ export const HomePage: React.FC = () => {
               <div className="flex items-start gap-4">
                 {/* Avatar Circle */}
                 <div className="flex-shrink-0">
-                  <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center border-2 border-red-200">
-                    <span className="text-2xl font-bold text-red-500">{userInitials}</span>
+                  <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center border-2 border-blue-200">
+                    <span className="text-2xl font-bold text-blue-600">{userInitials}</span>
                   </div>
                 </div>
                 
