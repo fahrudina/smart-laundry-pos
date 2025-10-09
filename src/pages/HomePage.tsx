@@ -19,7 +19,8 @@ import {
   TrendingUp,
   TrendingDown,
   QrCode,
-  Wallet
+  Wallet,
+  RefreshCcw
 } from 'lucide-react';
 
 const formatCurrency = (amount: number) => {
