@@ -10,6 +10,7 @@ interface PaymentSummaryCardsProps {
 
 export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({ orders }) => {
   // Calculate payment metrics from filtered orders
+  // These metrics update automatically when filters change
   const metrics = useMemo(() => {
     let totalPaid = 0;
     let totalPending = 0;
@@ -19,25 +20,27 @@ export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({ orders
     orders.forEach(order => {
       const amount = order.payment_amount || order.total_amount || 0;
 
-      // Total paid (completed payments)
+      // Total paid: sum of all completed payments
       if (order.payment_status === 'completed') {
         totalPaid += amount;
 
-        // Break down by payment method
+        // Break down by payment method for completed payments
         if (order.payment_method === 'qris') {
           totalQris += amount;
         } else if (order.payment_method === 'cash') {
           totalCash += amount;
         }
+        // Note: Transfer payments are included in totalPaid but not shown separately
       }
 
-      // Total pending (pending + down_payment)
+      // Total pending: includes fully pending orders + remaining balance for down_payment orders
       if (order.payment_status === 'pending' || order.payment_status === 'down_payment') {
-        // For down_payment, calculate remaining amount
         if (order.payment_status === 'down_payment') {
+          // For down_payment, only count the remaining unpaid amount
           const remaining = order.total_amount - (order.payment_amount || 0);
           totalPending += remaining;
         } else {
+          // For fully pending orders, count the entire amount
           totalPending += order.total_amount;
         }
       }
@@ -97,7 +100,7 @@ export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({ orders
           align: "start",
           loop: false,
         }}
-        className="w-full"
+        className="w-full relative"
       >
         <CarouselContent className="-ml-2 sm:-ml-4">
           {summaryCards.map((card, index) => {
@@ -106,14 +109,14 @@ export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({ orders
               <CarouselItem key={index} className="pl-2 sm:pl-4 basis-[85%] sm:basis-1/2 lg:basis-1/4">
                 <Card className={`${card.bgColor} border-0 shadow-md hover:shadow-lg transition-shadow`}>
                   <CardContent className="p-4 sm:p-6">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">{card.title}</p>
-                        <p className={`text-lg sm:text-2xl font-bold ${card.textColor}`}>
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs sm:text-sm font-medium text-gray-600 mb-2">{card.title}</p>
+                        <p className={`text-base sm:text-xl lg:text-2xl font-bold ${card.textColor} truncate`}>
                           {formatCurrency(card.value)}
                         </p>
                       </div>
-                      <div className={`p-2 sm:p-3 rounded-full ${card.bgColor} ring-2 ring-white`}>
+                      <div className={`p-2 sm:p-3 rounded-full ${card.bgColor} ring-2 ring-white flex-shrink-0 ml-2`}>
                         <IconComponent className={`h-5 w-5 sm:h-6 sm:w-6 ${card.iconColor}`} />
                       </div>
                     </div>
@@ -123,10 +126,10 @@ export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({ orders
             );
           })}
         </CarouselContent>
-        {/* Navigation buttons - hidden on mobile for cleaner swipe experience */}
-        <div className="hidden lg:block">
-          <CarouselPrevious className="left-0 -translate-x-12" />
-          <CarouselNext className="right-0 translate-x-12" />
+        {/* Navigation buttons - visible on desktop */}
+        <div className="hidden lg:flex">
+          <CarouselPrevious className="-left-4 lg:-left-12" />
+          <CarouselNext className="-right-4 lg:-right-12" />
         </div>
       </Carousel>
     </div>
