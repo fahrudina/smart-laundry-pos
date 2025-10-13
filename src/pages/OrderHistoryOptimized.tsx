@@ -13,9 +13,11 @@ import { OrderDetailsDialog } from '@/components/pos/OrderDetailsDialog';
 import { CashPaymentDialog } from '@/components/pos/CashPaymentDialog';
 import { ThermalPrintDialog } from '@/components/thermal/ThermalPrintDialog';
 import { VirtualizedOrderList } from '@/components/orders/VirtualizedOrderList';
+import { PaymentSummaryCards } from '@/components/orders/PaymentSummaryCards';
 import { formatDate, isDateOverdue } from '@/lib/utils';
 import { openReceiptForView, openReceiptForPrint, generateReceiptPDFFromUrl, sanitizeFilename } from '@/lib/printUtils';
 import { usePageTitle, updatePageTitleWithCount } from '@/hooks/usePageTitle';
+import { useStore } from '@/contexts/StoreContext';
 import { toast } from 'sonner';
 
 interface FilterState {
@@ -34,6 +36,7 @@ interface SortState {
 export const OrderHistory = () => {
   const navigate = useNavigate();
   usePageTitle('Order History');
+  const { isOwner } = useStore();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -543,6 +546,9 @@ export const OrderHistory = () => {
                 </Popover>
               </div>
             </div>
+
+            {/* Payment Summary Cards - Owner Only */}
+            {isOwner && <PaymentSummaryCards orders={filteredOrders} />}
 
             {/* Mobile-Optimized Orders List */}
             <Card>
