@@ -37,7 +37,8 @@ export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({ orders
       if (order.payment_status === 'pending' || order.payment_status === 'down_payment') {
         if (order.payment_status === 'down_payment') {
           // For down_payment, only count the remaining unpaid amount
-          const remaining = order.total_amount - (order.payment_amount || 0);
+          // Ensure no negative values if payment exceeds total
+          const remaining = Math.max(0, order.total_amount - (order.payment_amount || 0));
           totalPending += remaining;
         } else {
           // For fully pending orders, count the entire amount
@@ -116,7 +117,7 @@ export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({ orders
                           {formatCurrency(card.value)}
                         </p>
                       </div>
-                      <div className={`p-2 sm:p-3 rounded-full ${card.bgColor} ring-2 ring-white flex-shrink-0 ml-2`}>
+                      <div className={`p-2 sm:p-3 rounded-full bg-white ring-2 ring-offset-2 ${card.bgColor.replace('bg-', 'ring-')} flex-shrink-0 ml-2`}>
                         <IconComponent className={`h-5 w-5 sm:h-6 sm:w-6 ${card.iconColor}`} />
                       </div>
                     </div>
