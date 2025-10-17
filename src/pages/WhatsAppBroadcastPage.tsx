@@ -52,6 +52,19 @@ interface BroadcastResult {
 const MESSAGE_DELAY_MS = 1000; // Delay between messages to avoid rate limiting
 const MAX_RECIPIENTS_PREVIEW = 5; // Maximum number of recipients to show in preview
 
+/**
+ * Replace variables in message with customer data
+ * Supported variables: {{userName}}, {{customerName}}, {{name}}, {{phone}}, {{email}}
+ */
+const replaceMessageVariables = (message: string, customer: Customer): string => {
+  return message
+    .replace(/\{\{userName\}\}/gi, customer.name)
+    .replace(/\{\{customerName\}\}/gi, customer.name)
+    .replace(/\{\{name\}\}/gi, customer.name)
+    .replace(/\{\{phone\}\}/gi, customer.phone)
+    .replace(/\{\{email\}\}/gi, customer.email || '');
+};
+
 export const WhatsAppBroadcastPage: React.FC = () => {
   const { currentStore } = useStore();
   const { toast } = useToast();
@@ -175,7 +188,9 @@ export const WhatsAppBroadcastPage: React.FC = () => {
       // For large customer lists, consider implementing batch processing with configurable delays
       for (const customer of selectedCustomers) {
         try {
-          const result = await sendCustomMessage(customer.phone, message);
+          // Replace variables in message with customer-specific data
+          const personalizedMessage = replaceMessageVariables(message, customer);
+          const result = await sendCustomMessage(customer.phone, personalizedMessage);
           
           broadcastResults.push({
             customerId: customer.id,
@@ -383,15 +398,25 @@ export const WhatsAppBroadcastPage: React.FC = () => {
             <CardContent className="space-y-4">
               <div>
                 <Textarea
-                  placeholder="Type your message here..."
+                  placeholder="Type your message here... Use {{userName}} for customer name"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   rows={8}
                   className="resize-none"
                 />
-                <p className="text-xs text-gray-500 mt-2">
-                  {message.length} characters
-                </p>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs text-gray-500">
+                    {message.length} characters
+                  </p>
+                </div>
+                <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-200">
+                  <p className="text-xs font-medium text-gray-700 mb-1">Available variables:</p>
+                  <div className="flex flex-wrap gap-2">
+                    <code className="text-xs bg-white px-2 py-1 rounded border border-gray-300">{'{{userName}}'}</code>
+                    <code className="text-xs bg-white px-2 py-1 rounded border border-gray-300">{'{{phone}}'}</code>
+                    <code className="text-xs bg-white px-2 py-1 rounded border border-gray-300">{'{{email}}'}</code>
+                  </div>
+                </div>
               </div>
 
               {selectedCustomerIds.size > 0 && (
