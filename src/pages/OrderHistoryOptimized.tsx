@@ -54,7 +54,7 @@ export const OrderHistory = () => {
     executionStatus: 'all',
     paymentStatus: 'all',
     paymentMethod: 'all',
-    dateRange: 'all',
+    dateRange: 'today', // Default to today for better performance on initial load
     isOverdue: false,
   });
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
@@ -64,7 +64,7 @@ export const OrderHistory = () => {
     executionStatus: 'all',
     paymentStatus: 'all',
     paymentMethod: 'all',
-    dateRange: 'all',
+    dateRange: 'today', // Default to today for better performance on initial load
     isOverdue: false,
   });
   const [pendingCustomDateRange, setPendingCustomDateRange] = useState<DateRange | undefined>();
