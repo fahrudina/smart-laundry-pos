@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useNavigate } from 'react-router-dom';
 import { useOrders, useUpdatePaymentStatus, OrderFilters, Order } from '@/hooks/useOrdersOptimized';
 import { useUpdateOrderStatusWithNotifications } from '@/hooks/useOrdersWithNotifications';
@@ -19,6 +20,8 @@ import { openReceiptForView, openReceiptForPrint, generateReceiptPDFFromUrl, san
 import { usePageTitle, updatePageTitleWithCount } from '@/hooks/usePageTitle';
 import { useStore } from '@/contexts/StoreContext';
 import { toast } from 'sonner';
+import { DateRange } from 'react-day-picker';
+import { startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 
 interface FilterState {
   executionStatus: string;
@@ -54,6 +57,7 @@ export const OrderHistory = () => {
     dateRange: 'all',
     isOverdue: false,
   });
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
   const [sortBy, setSortBy] = useState<SortState>({
     field: 'created_at',
     direction: 'desc',
@@ -120,6 +124,18 @@ export const OrderHistory = () => {
             monthAgo.setMonth(monthAgo.getMonth() - 1);
             if (orderDate < monthAgo) return false;
             break;
+          case 'custom':
+            // Custom date range filter
+            if (customDateRange?.from) {
+              const orderDate = new Date(order.created_at);
+              const fromDate = startOfDay(customDateRange.from);
+              const toDate = customDateRange.to ? endOfDay(customDateRange.to) : endOfDay(customDateRange.from);
+              
+              if (!isWithinInterval(orderDate, { start: fromDate, end: toDate })) {
+                return false;
+              }
+            }
+            break;
         }
       }
 
@@ -167,7 +183,7 @@ export const OrderHistory = () => {
       if (aValue > bValue) return sortBy.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [orders, filters, sortBy]);
+  }, [orders, filters, sortBy, customDateRange]);
 
   // Clear all filters
   const clearFilters = useCallback(() => {
@@ -178,6 +194,7 @@ export const OrderHistory = () => {
       dateRange: 'all',
       isOverdue: false,
     });
+    setCustomDateRange(undefined);
     setSearchTerm('');
     setDebouncedSearchTerm('');
     setSortBy({
@@ -195,7 +212,8 @@ export const OrderHistory = () => {
     (filters.paymentMethod && filters.paymentMethod !== 'all') ||
     (filters.dateRange && filters.dateRange !== 'all') ||
     filters.isOverdue ||
-    debouncedSearchTerm.trim().length > 0;
+    debouncedSearchTerm.trim().length > 0 ||
+    (customDateRange?.from !== undefined);
 
   // Update page title with order count
   useEffect(() => {
@@ -513,7 +531,13 @@ export const OrderHistory = () => {
                       <label className="text-sm font-medium mb-2 block">Date Range</label>
                       <Select
                         value={filters.dateRange}
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, dateRange: value }))}
+                        onValueChange={(value) => {
+                          setFilters(prev => ({ ...prev, dateRange: value }));
+                          // Clear custom date range when switching to predefined option
+                          if (value !== 'custom') {
+                            setCustomDateRange(undefined);
+                          }
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -524,9 +548,21 @@ export const OrderHistory = () => {
                           <SelectItem value="yesterday">Yesterday</SelectItem>
                           <SelectItem value="week">This Week</SelectItem>
                           <SelectItem value="month">This Month</SelectItem>
+                          <SelectItem value="custom">Custom Range</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Custom Date Range Picker - shown when custom is selected */}
+                    {filters.dateRange === 'custom' && (
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Select Date Range</label>
+                        <DateRangePicker
+                          date={customDateRange}
+                          onDateChange={setCustomDateRange}
+                        />
+                      </div>
+                    )}
 
                     <div className="flex items-center space-x-2">
                       <input
