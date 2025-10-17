@@ -58,6 +58,16 @@ export const OrderHistory = () => {
     isOverdue: false,
   });
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
+  
+  // Pending filters (before Apply button is clicked)
+  const [pendingFilters, setPendingFilters] = useState<FilterState>({
+    executionStatus: 'all',
+    paymentStatus: 'all',
+    paymentMethod: 'all',
+    dateRange: 'all',
+    isOverdue: false,
+  });
+  const [pendingCustomDateRange, setPendingCustomDateRange] = useState<DateRange | undefined>();
   const [sortBy, setSortBy] = useState<SortState>({
     field: 'created_at',
     direction: 'desc',
@@ -185,16 +195,26 @@ export const OrderHistory = () => {
     });
   }, [orders, filters, sortBy, customDateRange]);
 
+  // Apply pending filters
+  const applyFilters = useCallback(() => {
+    setFilters(pendingFilters);
+    setCustomDateRange(pendingCustomDateRange);
+    setShowFilters(false);
+  }, [pendingFilters, pendingCustomDateRange]);
+
   // Clear all filters
   const clearFilters = useCallback(() => {
-    setFilters({
+    const clearedFilters = {
       executionStatus: 'all',
       paymentStatus: 'all',
       paymentMethod: 'all',
       dateRange: 'all',
       isOverdue: false,
-    });
+    };
+    setFilters(clearedFilters);
+    setPendingFilters(clearedFilters);
     setCustomDateRange(undefined);
+    setPendingCustomDateRange(undefined);
     setSearchTerm('');
     setDebouncedSearchTerm('');
     setSortBy({
@@ -204,6 +224,14 @@ export const OrderHistory = () => {
     // Refresh orders when clearing filters
     refresh();
   }, [refresh]);
+
+  // Sync pending filters when filter panel opens
+  useEffect(() => {
+    if (showFilters) {
+      setPendingFilters(filters);
+      setPendingCustomDateRange(customDateRange);
+    }
+  }, [showFilters, filters, customDateRange]);
 
   // Check if any filters are active
   const hasActiveFilters = 
@@ -473,8 +501,8 @@ export const OrderHistory = () => {
                     <div>
                       <label className="text-sm font-medium mb-2 block">Execution Status</label>
                       <Select
-                        value={filters.executionStatus}
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, executionStatus: value }))}
+                        value={pendingFilters.executionStatus}
+                        onValueChange={(value) => setPendingFilters(prev => ({ ...prev, executionStatus: value }))}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -493,8 +521,8 @@ export const OrderHistory = () => {
                     <div>
                       <label className="text-sm font-medium mb-2 block">Payment Status</label>
                       <Select
-                        value={filters.paymentStatus}
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, paymentStatus: value }))}
+                        value={pendingFilters.paymentStatus}
+                        onValueChange={(value) => setPendingFilters(prev => ({ ...prev, paymentStatus: value }))}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -512,8 +540,8 @@ export const OrderHistory = () => {
                     <div>
                       <label className="text-sm font-medium mb-2 block">Payment Method</label>
                       <Select
-                        value={filters.paymentMethod}
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, paymentMethod: value }))}
+                        value={pendingFilters.paymentMethod}
+                        onValueChange={(value) => setPendingFilters(prev => ({ ...prev, paymentMethod: value }))}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -530,12 +558,12 @@ export const OrderHistory = () => {
                     <div>
                       <label className="text-sm font-medium mb-2 block">Date Range</label>
                       <Select
-                        value={filters.dateRange}
+                        value={pendingFilters.dateRange}
                         onValueChange={(value) => {
-                          setFilters(prev => ({ ...prev, dateRange: value }));
+                          setPendingFilters(prev => ({ ...prev, dateRange: value }));
                           // Clear custom date range when switching to predefined option
                           if (value !== 'custom') {
-                            setCustomDateRange(undefined);
+                            setPendingCustomDateRange(undefined);
                           }
                         }}
                       >
@@ -554,12 +582,12 @@ export const OrderHistory = () => {
                     </div>
 
                     {/* Custom Date Range Picker - shown when custom is selected */}
-                    {filters.dateRange === 'custom' && (
+                    {pendingFilters.dateRange === 'custom' && (
                       <div>
                         <label className="text-sm font-medium mb-2 block">Select Date Range</label>
                         <DateRangePicker
-                          date={customDateRange}
-                          onDateChange={setCustomDateRange}
+                          date={pendingCustomDateRange}
+                          onDateChange={setPendingCustomDateRange}
                         />
                       </div>
                     )}
@@ -568,8 +596,8 @@ export const OrderHistory = () => {
                       <input
                         type="checkbox"
                         id="overdue"
-                        checked={filters.isOverdue}
-                        onChange={(e) => setFilters(prev => ({ ...prev, isOverdue: e.target.checked }))}
+                        checked={pendingFilters.isOverdue}
+                        onChange={(e) => setPendingFilters(prev => ({ ...prev, isOverdue: e.target.checked }))}
                         className="rounded"
                       />
                       <label htmlFor="overdue" className="text-sm font-medium">
@@ -577,6 +605,16 @@ export const OrderHistory = () => {
                       </label>
                     </div>
                   </div>
+                      
+                      {/* Apply Button */}
+                      <div className="pt-3 border-t">
+                        <Button 
+                          onClick={applyFilters} 
+                          className="w-full"
+                        >
+                          Apply Filters
+                        </Button>
+                      </div>
                     </div>
                   </PopoverContent>
                 </Popover>
