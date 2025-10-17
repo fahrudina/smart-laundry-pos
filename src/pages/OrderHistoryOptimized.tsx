@@ -125,9 +125,8 @@ export const OrderHistory = () => {
             if (orderDate < monthAgo) return false;
             break;
           case 'custom':
-            // Custom date range filter
+            // Custom date range filter - only apply if date range is selected
             if (customDateRange?.from) {
-              const orderDate = new Date(order.created_at);
               const fromDate = startOfDay(customDateRange.from);
               const toDate = customDateRange.to ? endOfDay(customDateRange.to) : endOfDay(customDateRange.from);
               
@@ -135,6 +134,7 @@ export const OrderHistory = () => {
                 return false;
               }
             }
+            // If custom is selected but no date range set, show all orders
             break;
         }
       }
