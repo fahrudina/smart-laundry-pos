@@ -23,6 +23,7 @@ import { queryClient } from "./lib/queryClient";
 import { PublicReceiptPage } from "./pages/PublicReceiptPage";
 import { PWAManagementPage } from "./pages/PWAManagementPage";
 import { CustomersPage } from "./pages/CustomersPage";
+import { WhatsAppBroadcastPage } from "./pages/WhatsAppBroadcastPage";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -114,6 +115,18 @@ const App = () => (
                       <OwnerRoute>
                         <AppLayout>
                           <StoreManagementPage />
+                        </AppLayout>
+                      </OwnerRoute>
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/whatsapp-broadcast" 
+                  element={
+                    <ProtectedRoute>
+                      <OwnerRoute>
+                        <AppLayout>
+                          <WhatsAppBroadcastPage />
                         </AppLayout>
                       </OwnerRoute>
                     </ProtectedRoute>
