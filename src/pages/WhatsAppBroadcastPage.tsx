@@ -48,6 +48,10 @@ interface BroadcastResult {
   error?: string;
 }
 
+// Constants
+const MESSAGE_DELAY_MS = 1000; // Delay between messages to avoid rate limiting
+const MAX_RECIPIENTS_PREVIEW = 5; // Maximum number of recipients to show in preview
+
 export const WhatsAppBroadcastPage: React.FC = () => {
   const { currentStore } = useStore();
   const { toast } = useToast();
@@ -167,6 +171,8 @@ export const WhatsAppBroadcastPage: React.FC = () => {
     try {
       const selectedCustomers = customers.filter(c => selectedCustomerIds.has(c.id));
 
+      // Process messages sequentially to respect API rate limits and ensure delivery order
+      // For large customer lists, consider implementing batch processing with configurable delays
       for (const customer of selectedCustomers) {
         try {
           const result = await sendCustomMessage(customer.phone, message);
@@ -180,7 +186,7 @@ export const WhatsAppBroadcastPage: React.FC = () => {
           });
 
           // Small delay between messages to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, MESSAGE_DELAY_MS));
         } catch (error) {
           broadcastResults.push({
             customerId: customer.id,
@@ -394,14 +400,14 @@ export const WhatsAppBroadcastPage: React.FC = () => {
                     Selected Recipients ({selectedCustomerIds.size})
                   </p>
                   <div className="space-y-1 max-h-32 overflow-y-auto">
-                    {selectedCustomers.slice(0, 5).map((customer) => (
+                    {selectedCustomers.slice(0, MAX_RECIPIENTS_PREVIEW).map((customer) => (
                       <p key={customer.id} className="text-xs text-blue-700">
                         • {customer.name}
                       </p>
                     ))}
-                    {selectedCustomers.length > 5 && (
+                    {selectedCustomers.length > MAX_RECIPIENTS_PREVIEW && (
                       <p className="text-xs text-blue-600">
-                        + {selectedCustomers.length - 5} more
+                        + {selectedCustomers.length - MAX_RECIPIENTS_PREVIEW} more
                       </p>
                     )}
                   </div>
