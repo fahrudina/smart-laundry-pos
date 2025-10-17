@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useNavigate } from 'react-router-dom';
 import { useOrders, useUpdatePaymentStatus, OrderFilters, Order } from '@/hooks/useOrdersOptimized';
 import { useUpdateOrderStatusWithNotifications } from '@/hooks/useOrdersWithNotifications';
@@ -19,6 +20,8 @@ import { openReceiptForView, openReceiptForPrint, generateReceiptPDFFromUrl, san
 import { usePageTitle, updatePageTitleWithCount } from '@/hooks/usePageTitle';
 import { useStore } from '@/contexts/StoreContext';
 import { toast } from 'sonner';
+import { DateRange } from 'react-day-picker';
+import { startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 
 interface FilterState {
   executionStatus: string;
@@ -51,9 +54,20 @@ export const OrderHistory = () => {
     executionStatus: 'all',
     paymentStatus: 'all',
     paymentMethod: 'all',
-    dateRange: 'all',
+    dateRange: 'today', // Default to today for better performance on initial load
     isOverdue: false,
   });
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
+  
+  // Pending filters (before Apply button is clicked)
+  const [pendingFilters, setPendingFilters] = useState<FilterState>({
+    executionStatus: 'all',
+    paymentStatus: 'all',
+    paymentMethod: 'all',
+    dateRange: 'today', // Default to today for better performance on initial load
+    isOverdue: false,
+  });
+  const [pendingCustomDateRange, setPendingCustomDateRange] = useState<DateRange | undefined>();
   const [sortBy, setSortBy] = useState<SortState>({
     field: 'created_at',
     direction: 'desc',
@@ -120,6 +134,18 @@ export const OrderHistory = () => {
             monthAgo.setMonth(monthAgo.getMonth() - 1);
             if (orderDate < monthAgo) return false;
             break;
+          case 'custom':
+            // Custom date range filter - only apply if date range is selected
+            if (customDateRange?.from) {
+              const fromDate = startOfDay(customDateRange.from);
+              const toDate = customDateRange.to ? endOfDay(customDateRange.to) : endOfDay(customDateRange.from);
+              
+              if (!isWithinInterval(orderDate, { start: fromDate, end: toDate })) {
+                return false;
+              }
+            }
+            // If custom is selected but no date range set, show all orders
+            break;
         }
       }
 
@@ -167,17 +193,28 @@ export const OrderHistory = () => {
       if (aValue > bValue) return sortBy.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [orders, filters, sortBy]);
+  }, [orders, filters, sortBy, customDateRange]);
+
+  // Apply pending filters
+  const applyFilters = useCallback(() => {
+    setFilters(pendingFilters);
+    setCustomDateRange(pendingCustomDateRange);
+    setShowFilters(false);
+  }, [pendingFilters, pendingCustomDateRange]);
 
   // Clear all filters
   const clearFilters = useCallback(() => {
-    setFilters({
+    const clearedFilters = {
       executionStatus: 'all',
       paymentStatus: 'all',
       paymentMethod: 'all',
       dateRange: 'all',
       isOverdue: false,
-    });
+    };
+    setFilters(clearedFilters);
+    setPendingFilters(clearedFilters);
+    setCustomDateRange(undefined);
+    setPendingCustomDateRange(undefined);
     setSearchTerm('');
     setDebouncedSearchTerm('');
     setSortBy({
@@ -188,6 +225,14 @@ export const OrderHistory = () => {
     refresh();
   }, [refresh]);
 
+  // Sync pending filters when filter panel opens
+  useEffect(() => {
+    if (showFilters) {
+      setPendingFilters(filters);
+      setPendingCustomDateRange(customDateRange);
+    }
+  }, [showFilters, filters, customDateRange]);
+
   // Check if any filters are active
   const hasActiveFilters = 
     (filters.executionStatus && filters.executionStatus !== 'all') ||
@@ -195,7 +240,8 @@ export const OrderHistory = () => {
     (filters.paymentMethod && filters.paymentMethod !== 'all') ||
     (filters.dateRange && filters.dateRange !== 'all') ||
     filters.isOverdue ||
-    debouncedSearchTerm.trim().length > 0;
+    debouncedSearchTerm.trim().length > 0 ||
+    (customDateRange?.from !== undefined);
 
   // Update page title with order count
   useEffect(() => {
@@ -455,8 +501,8 @@ export const OrderHistory = () => {
                     <div>
                       <label className="text-sm font-medium mb-2 block">Execution Status</label>
                       <Select
-                        value={filters.executionStatus}
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, executionStatus: value }))}
+                        value={pendingFilters.executionStatus}
+                        onValueChange={(value) => setPendingFilters(prev => ({ ...prev, executionStatus: value }))}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -475,8 +521,8 @@ export const OrderHistory = () => {
                     <div>
                       <label className="text-sm font-medium mb-2 block">Payment Status</label>
                       <Select
-                        value={filters.paymentStatus}
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, paymentStatus: value }))}
+                        value={pendingFilters.paymentStatus}
+                        onValueChange={(value) => setPendingFilters(prev => ({ ...prev, paymentStatus: value }))}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -494,8 +540,8 @@ export const OrderHistory = () => {
                     <div>
                       <label className="text-sm font-medium mb-2 block">Payment Method</label>
                       <Select
-                        value={filters.paymentMethod}
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, paymentMethod: value }))}
+                        value={pendingFilters.paymentMethod}
+                        onValueChange={(value) => setPendingFilters(prev => ({ ...prev, paymentMethod: value }))}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -512,8 +558,14 @@ export const OrderHistory = () => {
                     <div>
                       <label className="text-sm font-medium mb-2 block">Date Range</label>
                       <Select
-                        value={filters.dateRange}
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, dateRange: value }))}
+                        value={pendingFilters.dateRange}
+                        onValueChange={(value) => {
+                          setPendingFilters(prev => ({ ...prev, dateRange: value }));
+                          // Clear custom date range when switching to predefined option
+                          if (value !== 'custom') {
+                            setPendingCustomDateRange(undefined);
+                          }
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -524,16 +576,28 @@ export const OrderHistory = () => {
                           <SelectItem value="yesterday">Yesterday</SelectItem>
                           <SelectItem value="week">This Week</SelectItem>
                           <SelectItem value="month">This Month</SelectItem>
+                          <SelectItem value="custom">Custom Range</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Custom Date Range Picker - shown when custom is selected */}
+                    {pendingFilters.dateRange === 'custom' && (
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Select Date Range</label>
+                        <DateRangePicker
+                          date={pendingCustomDateRange}
+                          onDateChange={setPendingCustomDateRange}
+                        />
+                      </div>
+                    )}
 
                     <div className="flex items-center space-x-2">
                       <input
                         type="checkbox"
                         id="overdue"
-                        checked={filters.isOverdue}
-                        onChange={(e) => setFilters(prev => ({ ...prev, isOverdue: e.target.checked }))}
+                        checked={pendingFilters.isOverdue}
+                        onChange={(e) => setPendingFilters(prev => ({ ...prev, isOverdue: e.target.checked }))}
                         className="rounded"
                       />
                       <label htmlFor="overdue" className="text-sm font-medium">
@@ -541,6 +605,16 @@ export const OrderHistory = () => {
                       </label>
                     </div>
                   </div>
+                      
+                      {/* Apply Button */}
+                      <div className="pt-3 border-t">
+                        <Button 
+                          onClick={applyFilters} 
+                          className="w-full"
+                        >
+                          Apply Filters
+                        </Button>
+                      </div>
                     </div>
                   </PopoverContent>
                 </Popover>
