@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users, Check } from 'lucide-react';
+import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users, Check, MessageSquare } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,6 +65,12 @@ export const AppHeader: React.FC = () => {
     }
   };
 
+  const handleWhatsAppBroadcastNavigation = () => {
+    if (location.pathname !== '/whatsapp-broadcast') {
+      navigate('/whatsapp-broadcast');
+    }
+  };
+
   if (!user) return null;
 
   const userInitials = user.full_name 
@@ -117,6 +123,10 @@ export const AppHeader: React.FC = () => {
                       <DropdownMenuItem onClick={handleStoresNavigation}>
                         <Building2 className="h-4 w-4 mr-2" />
                         Store Management
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleWhatsAppBroadcastNavigation}>
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        WhatsApp Broadcast
                       </DropdownMenuItem>
                     </>
                   )}
@@ -222,6 +232,20 @@ export const AppHeader: React.FC = () => {
                 >
                   <Building2 className="h-4 w-4" />
                   <span className="hidden lg:inline">Stores</span>
+                </Button>
+                
+                <Button
+                  variant={location.pathname === '/whatsapp-broadcast' ? "default" : "ghost"}
+                  size="sm"
+                  onClick={handleWhatsAppBroadcastNavigation}
+                  className={`flex items-center gap-2 ${
+                    location.pathname === '/whatsapp-broadcast'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  <span className="hidden xl:inline">Broadcast</span>
                 </Button>
               </>
             )}
