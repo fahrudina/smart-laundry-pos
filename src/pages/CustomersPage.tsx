@@ -23,6 +23,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -44,9 +54,11 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  ArrowLeft
+  ArrowLeft,
+  Eye
 } from 'lucide-react';
 import { AddCustomerDialog } from '@/components/pos/AddCustomerDialog';
+import { EditCustomerDialog } from '@/components/pos/EditCustomerDialog';
 import { useNavigate } from 'react-router-dom';
 
 interface Customer {
@@ -82,6 +94,9 @@ export const CustomersPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showCustomerDetails, setShowCustomerDetails] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [pagination, setPagination] = useState<PaginationInfo>({
     currentPage: 1,
     totalPages: 1,
@@ -182,14 +197,24 @@ export const CustomersPage: React.FC = () => {
     setShowCustomerDetails(true);
   };
 
-  const handleDeleteCustomer = async (customerId: string) => {
-    if (!currentStore) return;
+  const handleEditCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setShowEditDialog(true);
+  };
+
+  const handleDeleteClick = (customer: Customer) => {
+    setCustomerToDelete(customer);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteCustomer = async () => {
+    if (!currentStore || !customerToDelete) return;
 
     try {
       const { error } = await supabase
         .from('customers')
         .delete()
-        .eq('id', customerId)
+        .eq('id', customerToDelete.id)
         .eq('store_id', currentStore.store_id);
 
       if (error) throw error;
@@ -199,6 +224,9 @@ export const CustomersPage: React.FC = () => {
         description: "Customer deleted successfully",
       });
 
+      setDeleteDialogOpen(false);
+      setCustomerToDelete(null);
+      
       // Refresh the current page
       fetchCustomers(pagination.currentPage, debouncedSearchQuery);
     } catch (error: any) {
@@ -250,19 +278,20 @@ export const CustomersPage: React.FC = () => {
     }
 
     return (
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-500">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="text-sm text-gray-500 text-center sm:text-left">
           Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to{' '}
           {Math.min(currentPage * ITEMS_PER_PAGE, pagination.totalCount)} of{' '}
           {pagination.totalCount} customers
         </div>
         
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1 sm:space-x-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => handlePageChange(1)}
             disabled={currentPage === 1}
+            className="h-8 w-8 p-0 hidden sm:flex"
           >
             <ChevronsLeft className="h-4 w-4" />
           </Button>
@@ -271,6 +300,7 @@ export const CustomersPage: React.FC = () => {
             size="sm"
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
+            className="h-8 w-8 p-0"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -282,7 +312,7 @@ export const CustomersPage: React.FC = () => {
               size="sm"
               onClick={() => typeof page === 'number' ? handlePageChange(page) : undefined}
               disabled={typeof page !== 'number'}
-              className="min-w-[40px]"
+              className="h-8 min-w-[32px] px-2"
             >
               {page}
             </Button>
@@ -293,6 +323,7 @@ export const CustomersPage: React.FC = () => {
             size="sm"
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
+            className="h-8 w-8 p-0"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -301,6 +332,7 @@ export const CustomersPage: React.FC = () => {
             size="sm"
             onClick={() => handlePageChange(totalPages)}
             disabled={currentPage === totalPages}
+            className="h-8 w-8 p-0 hidden sm:flex"
           >
             <ChevronsRight className="h-4 w-4" />
           </Button>
@@ -320,7 +352,7 @@ export const CustomersPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
@@ -331,13 +363,13 @@ export const CustomersPage: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
-            <p className="text-gray-600">Manage your customer database</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Customers</h1>
+            <p className="text-sm sm:text-base text-gray-600">Manage your customer database</p>
           </div>
         </div>
         <AddCustomerDialog
           trigger={
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Add Customer
             </Button>
@@ -380,9 +412,9 @@ export const CustomersPage: React.FC = () => {
       {/* Search and Filters */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4 flex-1">
-              <div className="relative flex-1 max-w-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
+              <div className="relative flex-1 sm:max-w-sm">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search customers..."
@@ -391,7 +423,7 @@ export const CustomersPage: React.FC = () => {
                   className="pl-10"
                 />
               </div>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
                 <Filter className="h-4 w-4 mr-2" />
                 Filter
               </Button>
@@ -419,9 +451,9 @@ export const CustomersPage: React.FC = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Orders</TableHead>
-                    <TableHead>Joined</TableHead>
+                    <TableHead className="hidden md:table-cell">Contact</TableHead>
+                    <TableHead className="hidden sm:table-cell">Orders</TableHead>
+                    <TableHead className="hidden lg:table-cell">Joined</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -435,12 +467,16 @@ export const CustomersPage: React.FC = () => {
                       <TableCell>
                         <div>
                           <div className="font-medium">{customer.name}</div>
+                          <div className="text-sm text-gray-500 md:hidden flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {customer.phone}
+                          </div>
                           {customer.email && (
-                            <div className="text-sm text-gray-500">{customer.email}</div>
+                            <div className="text-sm text-gray-500 hidden md:block">{customer.email}</div>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <div className="flex items-center space-x-2">
                           <Phone className="h-4 w-4 text-gray-400" />
                           <span>{customer.phone}</span>
@@ -452,12 +488,12 @@ export const CustomersPage: React.FC = () => {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <Badge variant="secondary">
                           {customer._count?.orders || 0} orders
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-gray-500">
+                      <TableCell className="text-sm text-gray-500 hidden lg:table-cell">
                         {formatDate(customer.created_at)}
                       </TableCell>
                       <TableCell className="text-right">
@@ -467,19 +503,34 @@ export const CustomersPage: React.FC = () => {
                               variant="ghost" 
                               size="sm"
                               onClick={(e) => e.stopPropagation()}
+                              className="h-8 w-8 p-0"
                             >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleCustomerClick(customer)}>
-                              <Edit className="h-4 w-4 mr-2" />
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCustomerClick(customer);
+                              }}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDeleteCustomer(customer.id);
+                                handleEditCustomer(customer);
+                              }}
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(customer);
                               }}
                               className="text-red-600"
                             >
@@ -548,10 +599,65 @@ export const CustomersPage: React.FC = () => {
                   {selectedCustomer._count?.orders || 0} total orders
                 </Badge>
               </div>
+
+              <div className="flex gap-2 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => {
+                    setShowCustomerDetails(false);
+                    handleEditCustomer(selectedCustomer);
+                  }}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  className="flex-1"
+                  onClick={() => {
+                    setShowCustomerDetails(false);
+                    handleDeleteClick(selectedCustomer);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Customer Dialog */}
+      <EditCustomerDialog
+        customer={selectedCustomer}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onCustomerUpdated={() => fetchCustomers(pagination.currentPage, debouncedSearchQuery)}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="w-[95vw] max-w-[425px] mx-4">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {customerToDelete?.name}'s information.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteCustomer}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
