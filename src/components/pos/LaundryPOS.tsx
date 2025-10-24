@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 import { ServiceSelectionPopup } from './ServiceSelectionPopup';
 import { FloatingOrderSummary } from './FloatingOrderSummary';
 import { CashPaymentDialog } from './CashPaymentDialog';
+import { OrderSuccessDialog } from './OrderSuccessDialog';
+import { ThermalPrintDialog } from '@/components/thermal/ThermalPrintDialog';
 
 interface Service {
   id: string;
@@ -131,6 +133,16 @@ export const LaundryPOS = () => {
   const [isServicePopupOpen, setIsServicePopupOpen] = useState(false);
   const [dropOffDate, setDropOffDate] = useState(() => getJakartaTime());
   const [showCashPaymentDialog, setShowCashPaymentDialog] = useState(false);
+  const [showOrderSuccessDialog, setShowOrderSuccessDialog] = useState(false);
+  const [showThermalPrintDialog, setShowThermalPrintDialog] = useState(false);
+  const [lastCreatedOrder, setLastCreatedOrder] = useState<{
+    id: string;
+    orderNumber: string;
+    totalAmount: number;
+    paymentMethod: string;
+    customerName: string;
+    whatsAppSent: boolean;
+  } | null>(null);
   
   const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading } = useCustomers();
@@ -500,44 +512,26 @@ export const LaundryPOS = () => {
         estimated_completion: completionDate?.toISOString(),
       };
 
-      await createOrderMutation.mutateAsync(orderData);
+      const createdOrder = await createOrderMutation.mutateAsync(orderData);
 
-      // Close cash payment dialog and clear the current order
+      // Close cash payment dialog
       setShowCashPaymentDialog(false);
+      
+      // Store order info for success dialog
+      setLastCreatedOrder({
+        id: createdOrder.id,
+        orderNumber: createdOrder.id,
+        totalAmount: totalAmount,
+        paymentMethod: 'cash',
+        customerName: customerName,
+        whatsAppSent: true, // Assuming WhatsApp notification is sent
+      });
+      
+      // Clear the current order
       setCurrentOrder([]);
-      setCustomerName('');
-      setCustomerPhone('');
       
-      // Enhanced success message with change information
-      const change = cashReceived - totalAmount;
-      const changeMessage = change > 0 ? ` | Kembalian: Rp ${change.toLocaleString('id-ID')}` : '';
-      
-      toast.success(
-        <div className="flex items-start space-x-3 py-2">
-          <CheckCircle2 className="h-7 w-7 text-green-600 mt-1 flex-shrink-0" />
-          <div className="flex-1">
-            <div className="text-lg font-bold text-green-800 mb-1">✅ Order berhasil dibuat!</div>
-            <div className="text-sm text-green-700 leading-relaxed">
-              <div className="font-medium">Pembayaran tunai berhasil{changeMessage}</div>
-              <div className="mt-1">Selesai: <span className="font-semibold">{completionDate ? formatDate(completionDate) : 'segera'}</span></div>
-            </div>
-          </div>
-        </div>,
-        { 
-          duration: 6000,
-          style: {
-            background: '#f0fdf4',
-            border: '2px solid #22c55e',
-            color: '#166534',
-            minWidth: '320px',
-            maxWidth: '500px',
-            width: '90vw',
-            padding: '20px',
-            borderRadius: '16px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-          }
-        }
-      );
+      // Show success dialog
+      setShowOrderSuccessDialog(true);
     } catch (error) {
       // Error is already handled in the hook
       setShowCashPaymentDialog(false);
@@ -573,39 +567,23 @@ export const LaundryPOS = () => {
         estimated_completion: completionDate?.toISOString(),
       };
 
-      await createOrderMutation.mutateAsync(orderData);
+      const createdOrder = await createOrderMutation.mutateAsync(orderData);
 
-      // Clear the current order after successful payment
-      setCurrentOrder([]);
-      setCustomerName('');
-      setCustomerPhone('');
+      // Store order info for success dialog
+      setLastCreatedOrder({
+        id: createdOrder.id,
+        orderNumber: createdOrder.id,
+        totalAmount: totalAmount,
+        paymentMethod: paymentMethod,
+        customerName: customerName,
+        whatsAppSent: true, // Assuming WhatsApp notification is sent
+      });
       
-      toast.success(
-        <div className="flex items-start space-x-3 py-2">
-          <CheckCircle2 className="h-7 w-7 text-green-600 mt-1 flex-shrink-0" />
-          <div className="flex-1">
-            <div className="text-lg font-bold text-green-800 mb-1">✅ Order berhasil dibuat!</div>
-            <div className="text-sm text-green-700 leading-relaxed">
-              <div className="font-medium">Pembayaran {paymentMethod.toUpperCase()} berhasil</div>
-              <div className="mt-1">Selesai: <span className="font-semibold">{completionDate ? formatDate(completionDate) : 'segera'}</span></div>
-            </div>
-          </div>
-        </div>,
-        { 
-          duration: 6000,
-          style: {
-            background: '#f0fdf4',
-            border: '2px solid #22c55e',
-            color: '#166534',
-            minWidth: '320px',
-            maxWidth: '500px',
-            width: '90vw',
-            padding: '20px',
-            borderRadius: '16px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-          }
-        }
-      );
+      // Clear the current order
+      setCurrentOrder([]);
+      
+      // Show success dialog
+      setShowOrderSuccessDialog(true);
     } catch (error) {
       // Error is already handled in the hook
     }
@@ -704,6 +682,29 @@ export const LaundryPOS = () => {
     } catch (error) {
       // Error is already handled in the hook
     }
+  };
+
+  // Handle print receipt from success dialog
+  const handlePrintReceipt = () => {
+    if (lastCreatedOrder) {
+      setShowThermalPrintDialog(true);
+    }
+  };
+
+  // Handle new transaction from success dialog
+  const handleNewTransaction = () => {
+    // Close success dialog
+    setShowOrderSuccessDialog(false);
+    
+    // Clear customer information
+    setCustomerName('');
+    setCustomerPhone('');
+    
+    // Reset last created order
+    setLastCreatedOrder(null);
+    
+    // Reset drop off date to current time
+    setDropOffDate(getJakartaTime());
   };
 
   return (
@@ -903,6 +904,32 @@ export const LaundryPOS = () => {
         totalAmount={getTotalPrice()} // No tax
         onSubmit={processCashPayment}
       />
+
+      {/* Order Success Dialog */}
+      {lastCreatedOrder && (
+        <OrderSuccessDialog
+          isOpen={showOrderSuccessDialog}
+          onClose={() => setShowOrderSuccessDialog(false)}
+          orderId={lastCreatedOrder.id}
+          orderNumber={lastCreatedOrder.orderNumber}
+          totalAmount={lastCreatedOrder.totalAmount}
+          paymentMethod={lastCreatedOrder.paymentMethod}
+          customerName={lastCreatedOrder.customerName}
+          whatsAppSent={lastCreatedOrder.whatsAppSent}
+          onPrintReceipt={handlePrintReceipt}
+          onNewTransaction={handleNewTransaction}
+        />
+      )}
+
+      {/* Thermal Print Dialog */}
+      {lastCreatedOrder && (
+        <ThermalPrintDialog
+          isOpen={showThermalPrintDialog}
+          onClose={() => setShowThermalPrintDialog(false)}
+          orderId={lastCreatedOrder.id}
+          customerName={lastCreatedOrder.customerName}
+        />
+      )}
     </div>
   );
 };
