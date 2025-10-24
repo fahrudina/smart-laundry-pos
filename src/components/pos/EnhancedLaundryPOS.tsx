@@ -395,22 +395,8 @@ export const EnhancedLaundryPOS = () => {
       // Close cash payment dialog
       setShowCashPaymentDialog(false);
       
-      // Store order info for success dialog
-      setLastCreatedOrder({
-        id: createdOrder.id,
-        orderNumber: createdOrder.id,
-        totalAmount: totalAmount,
-        paymentMethod: 'cash',
-        customerName: customerName,
-        whatsAppSent: true, // Assuming WhatsApp notification is sent
-      });
-      
-      // Clear the current order
-      setCurrentOrder([]);
-      setDynamicItems([]);
-      
-      // Show success dialog
-      setShowOrderSuccessDialog(true);
+      // Show order success dialog
+      showOrderSuccess(createdOrder, totalAmount, 'cash');
     } catch (error) {
       // Error is already handled in the hook
       setShowCashPaymentDialog(false);
@@ -461,22 +447,8 @@ export const EnhancedLaundryPOS = () => {
 
       const createdOrder = await createOrderMutation.mutateAsync(orderData);
 
-      // Store order info for success dialog
-      setLastCreatedOrder({
-        id: createdOrder.id,
-        orderNumber: createdOrder.id,
-        totalAmount: totalAmount,
-        paymentMethod: paymentMethod,
-        customerName: customerName,
-        whatsAppSent: true, // Assuming WhatsApp notification is sent
-      });
-      
-      // Clear the current order
-      setCurrentOrder([]);
-      setDynamicItems([]);
-      
-      // Show success dialog
-      setShowOrderSuccessDialog(true);
+      // Show order success dialog
+      showOrderSuccess(createdOrder, totalAmount, paymentMethod);
     } catch (error) {
       // Error is already handled in the hook
     }
@@ -591,6 +563,26 @@ export const EnhancedLaundryPOS = () => {
     }
   };
 
+  // Helper function to store order info and show success dialog
+  const showOrderSuccess = (createdOrder: any, totalAmount: number, paymentMethod: string) => {
+    // Store order info for success dialog
+    setLastCreatedOrder({
+      id: createdOrder.id,
+      orderNumber: createdOrder.id,
+      totalAmount: totalAmount,
+      paymentMethod: paymentMethod,
+      customerName: customerName,
+      whatsAppSent: true, // WhatsApp notification is sent asynchronously
+    });
+    
+    // Clear the current order
+    setCurrentOrder([]);
+    setDynamicItems([]);
+    
+    // Show success dialog
+    setShowOrderSuccessDialog(true);
+  };
+
   // Handle print receipt from success dialog
   const handlePrintReceipt = () => {
     if (lastCreatedOrder) {
@@ -603,7 +595,7 @@ export const EnhancedLaundryPOS = () => {
     // Close success dialog
     setShowOrderSuccessDialog(false);
     
-    // Clear customer information
+    // Clear customer information for new transaction
     setCustomerName('');
     setCustomerPhone('');
     
@@ -616,6 +608,15 @@ export const EnhancedLaundryPOS = () => {
     const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
     const jakartaTime = new Date(utc + (jakartaOffset * 60000));
     setDropOffDate(jakartaTime);
+  };
+
+  // Handle dialog close - clear customer info
+  const handleDialogClose = () => {
+    setShowOrderSuccessDialog(false);
+    // Clear customer info when closing dialog
+    setCustomerName('');
+    setCustomerPhone('');
+    setLastCreatedOrder(null);
   };
 
   if (servicesLoading) {
@@ -841,7 +842,7 @@ export const EnhancedLaundryPOS = () => {
       {lastCreatedOrder && (
         <OrderSuccessDialog
           isOpen={showOrderSuccessDialog}
-          onClose={() => setShowOrderSuccessDialog(false)}
+          onClose={handleDialogClose}
           orderId={lastCreatedOrder.id}
           orderNumber={lastCreatedOrder.orderNumber}
           totalAmount={lastCreatedOrder.totalAmount}
