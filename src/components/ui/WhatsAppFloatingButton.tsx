@@ -26,38 +26,16 @@ export const WhatsAppFloatingButton: React.FC<WhatsAppFloatingButtonProps> = ({
     : 'bottom-6 left-6';
 
   return (
-    <>
-      <style>{`
-        @keyframes bounce {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-10px);
-          }
-        }
-
-        .whatsapp-floating-button {
-          animation: bounce 2s ease-in-out infinite;
-        }
-
-        .whatsapp-floating-button:hover {
-          animation: none;
-          transform: scale(1.05);
-        }
-      `}</style>
-      
-      <div className={`fixed ${positionClasses} z-50 ${className}`}>
-        <Button
-          onClick={handleWhatsAppClick}
-          size="lg"
-          className="whatsapp-floating-button w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center p-0"
-          aria-label="Chat on WhatsApp"
-          title="Chat with us on WhatsApp"
-        >
-          <MessageCircle className="h-7 w-7" />
-        </Button>
-      </div>
-    </>
+    <div className={`fixed ${positionClasses} z-50 ${className}`}>
+      <Button
+        onClick={handleWhatsAppClick}
+        size="lg"
+        className="w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center p-0 animate-bounce-slow hover:animate-none hover:scale-105"
+        aria-label="Chat on WhatsApp"
+        title="Chat with us on WhatsApp"
+      >
+        <MessageCircle className="h-7 w-7" />
+      </Button>
+    </div>
   );
 };
