@@ -486,7 +486,7 @@ export const LandingPage: React.FC = () => {
 
       {/* WhatsApp Floating Button */}
       <WhatsAppFloatingButton 
-        phoneNumber="6281234567890"
+        phoneNumber="6281280272326"
         message="Halo, saya tertarik dengan Smart Laundry POS dan ingin bertanya lebih lanjut!"
         position="bottom-right"
       />
