@@ -103,6 +103,10 @@ export default {
 					'0%': { opacity: '0', transform: 'translateX(-10px)' },
 					'100%': { opacity: '1', transform: 'translateX(0)' }
 				},
+				'bounce-slow': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-10px)' }
+				},
 				'accordion-down': {
 					from: {
 						height: '0'
@@ -129,6 +133,7 @@ export default {
 				'fade-in': 'fade-in 0.3s ease-out',
 				'scale-in': 'scale-in 0.2s ease-out',
 				'slide-in': 'slide-in 0.3s ease-out',
+				'bounce-slow': 'bounce-slow 2s ease-in-out infinite',
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
 			}

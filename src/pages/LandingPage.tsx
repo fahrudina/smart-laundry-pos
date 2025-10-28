@@ -17,9 +17,11 @@ import {
   ArrowRight,
   Download,
   Globe,
-  Wifi
+  Wifi,
+  Monitor
 } from 'lucide-react';
 import { PWAInstallButton } from '@/components/ui/PWAInstallButton';
+import { WhatsAppFloatingButton } from '@/components/ui/WhatsAppFloatingButton';
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -150,6 +152,150 @@ export const LandingPage: React.FC = () => {
                 <Download className="h-4 w-4" />
                 <span>Install sebagai aplikasi mobile</span>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* App Screenshots Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge variant="secondary" className="mb-6 bg-indigo-100 text-indigo-800">
+              <Monitor className="h-3 w-3 mr-1" />
+              Tampilan Aplikasi
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Lihat Smart Laundry POS dalam Aksi
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Antarmuka intuitif yang dirancang untuk kemudahan penggunaan di semua perangkat
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Mobile View */}
+            <div className="relative">
+              <div className="absolute -inset-4 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-3xl blur-2xl opacity-20"></div>
+              <div className="relative bg-white rounded-3xl shadow-2xl p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="h-6 w-6 text-blue-600" />
+                    <h3 className="text-xl font-bold text-gray-900">Tampilan Mobile</h3>
+                  </div>
+                  <Badge className="bg-blue-600">Responsif</Badge>
+                </div>
+                <div className="relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl overflow-hidden border-8 border-gray-800 shadow-xl aspect-[9/19]">
+                  <img 
+                    src="/screenshots/mobile-1.png" 
+                    alt="Smart Laundry POS Mobile View"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback to a placeholder if image doesn't load
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `
+                          <div class="flex flex-col items-center justify-center h-full text-gray-500 p-8">
+                            <svg class="w-24 h-24 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-center text-lg font-medium">Aplikasi POS Mobile</p>
+                            <p class="text-center text-sm mt-2">Kelola pesanan dari smartphone Anda</p>
+                          </div>
+                        `;
+                      }
+                    }}
+                  />
+                </div>
+                <div className="mt-6 grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-blue-600">⚡</div>
+                    <div className="text-sm text-gray-600 mt-1">Super Cepat</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-600">📱</div>
+                    <div className="text-sm text-gray-600 mt-1">Touch Friendly</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-indigo-600">💾</div>
+                    <div className="text-sm text-gray-600 mt-1">Offline Mode</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop View */}
+            <div className="relative">
+              <div className="absolute -inset-4 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-3xl blur-2xl opacity-20"></div>
+              <div className="relative bg-white rounded-3xl shadow-2xl p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <Monitor className="h-6 w-6 text-indigo-600" />
+                    <h3 className="text-xl font-bold text-gray-900">Tampilan Desktop</h3>
+                  </div>
+                  <Badge className="bg-indigo-600">Optimal</Badge>
+                </div>
+                <div className="relative bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl overflow-hidden border-4 border-gray-300 shadow-xl aspect-video">
+                  <img 
+                    src="/favicon-512.png" 
+                    alt="Smart Laundry POS Desktop View"
+                    className="w-full h-full object-contain p-12"
+                    onError={(e) => {
+                      // Fallback to a placeholder if image doesn't load
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `
+                          <div class="flex flex-col items-center justify-center h-full text-gray-500 p-8">
+                            <svg class="w-32 h-32 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-center text-xl font-medium">Dashboard Desktop</p>
+                            <p class="text-center text-sm mt-2">Kelola bisnis dengan tampilan penuh</p>
+                          </div>
+                        `;
+                      }
+                    }}
+                  />
+                </div>
+                <div className="mt-6 grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-blue-600">📊</div>
+                    <div className="text-sm text-gray-600 mt-1">Dashboard</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-600">⌨️</div>
+                    <div className="text-sm text-gray-600 mt-1">Keyboard Nav</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-indigo-600">🖨️</div>
+                    <div className="text-sm text-gray-600 mt-1">Print Ready</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-16 text-center">
+            <p className="text-lg text-gray-600 mb-6">
+              Berfungsi sempurna di smartphone, tablet, dan komputer desktop
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Badge variant="secondary" className="px-4 py-2">
+                <Smartphone className="h-4 w-4 mr-2" />
+                iOS & Android
+              </Badge>
+              <Badge variant="secondary" className="px-4 py-2">
+                <Monitor className="h-4 w-4 mr-2" />
+                Windows & Mac
+              </Badge>
+              <Badge variant="secondary" className="px-4 py-2">
+                <Globe className="h-4 w-4 mr-2" />
+                Chrome, Safari, Firefox
+              </Badge>
             </div>
           </div>
         </div>
@@ -337,6 +483,13 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* WhatsApp Floating Button */}
+      <WhatsAppFloatingButton 
+        phoneNumber="6281280272326"
+        message="Halo, saya tertarik dengan Smart Laundry POS dan ingin bertanya lebih lanjut!"
+        position="bottom-right"
+      />
     </div>
   );
 };
