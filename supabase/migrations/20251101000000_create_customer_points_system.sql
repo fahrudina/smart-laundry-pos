@@ -39,6 +39,7 @@ FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
 -- Create function to calculate points based on order items
+-- This can be called from application layer after order items are inserted
 CREATE OR REPLACE FUNCTION calculate_order_points(order_id_param UUID)
 RETURNS INTEGER AS $$
 DECLARE
@@ -75,43 +76,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create function to award points when payment is successful
-CREATE OR REPLACE FUNCTION award_points_on_payment()
-RETURNS TRIGGER AS $$
-DECLARE
-  calculated_points INTEGER;
-BEGIN
-  -- Only award points when payment status changes to 'paid' and points haven't been awarded yet
-  IF NEW.payment_status = 'paid' AND OLD.payment_status != 'paid' AND (OLD.points_earned IS NULL OR OLD.points_earned = 0) THEN
-    -- Calculate points for this order
-    calculated_points := calculate_order_points(NEW.id);
-    
-    -- Update the order with points earned
-    NEW.points_earned := calculated_points;
-    
-    -- Update or insert customer points
-    INSERT INTO public.customer_points (customer_phone, total_points, store_id)
-    VALUES (NEW.customer_phone, calculated_points, NEW.store_id)
-    ON CONFLICT (customer_phone, store_id)
-    DO UPDATE SET 
-      total_points = customer_points.total_points + calculated_points,
-      updated_at = now();
-  END IF;
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create trigger to award points on payment
-DROP TRIGGER IF EXISTS award_points_on_payment_trigger ON public.orders;
-CREATE TRIGGER award_points_on_payment_trigger
-BEFORE UPDATE ON public.orders
-FOR EACH ROW
-EXECUTE FUNCTION award_points_on_payment();
-
 -- Add comments for documentation
 COMMENT ON TABLE public.customer_points IS 'Tracks loyalty points earned by customers per store';
 COMMENT ON COLUMN public.customer_points.total_points IS 'Total accumulated points for this customer at this store';
 COMMENT ON COLUMN public.orders.points_earned IS 'Points earned from this specific order (1 point per KG or unit)';
 COMMENT ON FUNCTION calculate_order_points IS 'Calculates points for an order: 1 point per KG for kilo services, 1 point per unit for unit services';
-COMMENT ON FUNCTION award_points_on_payment IS 'Automatically awards points when payment status changes to paid';

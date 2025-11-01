@@ -63,14 +63,63 @@ export const useCreateOrderWithNotifications = () => {
 
       if (itemsError) throw itemsError;
 
-      // Fetch the order again to get points_earned (calculated by database trigger)
-      const { data: updatedOrder } = await supabase
-        .from('orders')
-        .select('points_earned')
-        .eq('id', order.id)
-        .single();
+      // Calculate and award points if payment is successful
+      let pointsEarned = 0;
+      if (orderData.payment_status === 'paid') {
+        // Calculate points from order items
+        orderData.items.forEach(item => {
+          if (item.service_type === 'kilo' && item.weight_kg) {
+            // 1 point per kg (rounded)
+            pointsEarned += Math.round(item.weight_kg);
+          } else if (item.service_type === 'unit') {
+            // 1 point per unit
+            pointsEarned += Math.ceil(item.quantity);
+          } else if (item.service_type === 'combined') {
+            // For combined, count both weight and units
+            if (item.weight_kg) {
+              pointsEarned += Math.round(item.weight_kg);
+            }
+            pointsEarned += Math.ceil(item.quantity);
+          }
+        });
 
-      const pointsEarned = updatedOrder?.points_earned || 0;
+        if (pointsEarned > 0) {
+          // Update order with points earned
+          await supabase
+            .from('orders')
+            .update({ points_earned: pointsEarned })
+            .eq('id', order.id);
+
+          // Update customer points
+          const { data: existingPoints } = await supabase
+            .from('customer_points')
+            .select('total_points')
+            .eq('customer_phone', orderData.customer_phone)
+            .eq('store_id', currentStore?.store_id)
+            .single();
+
+          if (existingPoints) {
+            // Add to existing points
+            await supabase
+              .from('customer_points')
+              .update({ 
+                total_points: existingPoints.total_points + pointsEarned,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('customer_phone', orderData.customer_phone)
+              .eq('store_id', currentStore?.store_id);
+          } else {
+            // Create new customer points record
+            await supabase
+              .from('customer_points')
+              .insert({
+                customer_phone: orderData.customer_phone,
+                total_points: pointsEarned,
+                store_id: currentStore?.store_id,
+              });
+          }
+        }
+      }
 
       // Send WhatsApp notification (non-blocking)
       // We don't await this to avoid blocking the order creation
