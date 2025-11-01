@@ -68,6 +68,11 @@ export const messageTemplates: MessageTemplate = {
         }).join('\n\n')
       : 'Tipe Laundry : Regular';
 
+    // Build points message if points were earned
+    const pointsMessage = data.pointsEarned && data.pointsEarned > 0 && data.paymentStatus === 'paid'
+      ? `\n🎉 Selamat! Anda mendapatkan ${data.pointsEarned} poin laundry! 🎉\n(1 poin per kg/unit)\n====================`
+      : '';
+
     return `${data.storeInfo.name}
 ${data.storeInfo.address}
 No. HP ${data.storeInfo.phone}
@@ -85,6 +90,7 @@ Perkiraan Selesai :
 ${estimatedDate}
 ====================
 Status : ${getPaymentStatusIndonesian(data.paymentStatus)}
+${pointsMessage}
 
 Terima kasih telah menggunakan layanan kami! 🙏
 ====================
