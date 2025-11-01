@@ -8,18 +8,42 @@ The laundry points system rewards customers with loyalty points for each transac
 
 ## Database Schema
 
-### customer_points Table
+This implementation uses the existing `points` and `point_transactions` tables in the database.
+
+### points Table
 Tracks accumulated points for each customer at each store (multi-tenant support).
 
 ```sql
-CREATE TABLE customer_points (
-  id UUID PRIMARY KEY,
-  customer_phone TEXT NOT NULL,
-  total_points INTEGER DEFAULT 0,
-  store_id UUID REFERENCES stores(id),
+-- Existing table structure (enhanced with new columns)
+CREATE TABLE points (
+  point_id SERIAL PRIMARY KEY,
+  member_id INTEGER,
+  accumulated_points INTEGER NOT NULL,  -- Total points earned over lifetime
+  current_points INTEGER NOT NULL,      -- Available points after redemptions
+  customer_phone TEXT,                  -- Added for POS integration
+  store_id UUID REFERENCES stores(id),  -- Added for multi-tenant support
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   UNIQUE(customer_phone, store_id)
+);
+```
+
+### point_transactions Table
+Records all point earning and redemption transactions.
+
+```sql
+-- Existing table structure (enhanced with order_id)
+CREATE TABLE point_transactions (
+  transaction_id SERIAL PRIMARY KEY,
+  point_id INTEGER REFERENCES points(point_id),
+  receipt_id INTEGER,
+  points_changed INTEGER NOT NULL,
+  transaction_type VARCHAR NOT NULL,    -- 'earning' or 'redemption'
+  transaction_date TIMESTAMP NOT NULL,
+  notes TEXT,
+  order_id UUID REFERENCES orders(id),  -- Added to link transactions to orders
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
 );
 ```
 
@@ -59,10 +83,13 @@ if (service_type === 'combined') {
 2. Order and order_items are inserted into database
 3. Points are calculated from order items
 4. `orders.points_earned` is updated with calculated points
-5. `customer_points` table is updated:
-   - If customer exists: `total_points` += `points_earned`
-   - If new customer: new record created with `points_earned`
-6. WhatsApp notification is sent including points earned
+5. `points` table is updated:
+   - If customer exists: `accumulated_points` and `current_points` += `points_earned`
+   - If new customer: new record created with initial points
+6. `point_transactions` table gets a new record:
+   - Records the earning transaction with `transaction_type: 'earning'`
+   - Links to the order via `order_id`
+7. WhatsApp notification is sent including points earned
 
 ### Code Location
 - **Hook**: `src/hooks/useOrdersWithNotifications.ts` - `useCreateOrderWithNotifications()`
@@ -97,10 +124,11 @@ The system is automatically enabled and requires no configuration. Points are:
 
 The system is designed to be extensible for:
 - Variable point rates (e.g., 2 points per kg for premium services)
-- Point redemption system
+- Point redemption system (using `transaction_type: 'redemption'` in point_transactions)
 - Point expiration
 - Promotional point multipliers
-- Loyalty tiers based on total points
+- Loyalty tiers based on `accumulated_points`
+- Point balance tracking via `current_points` vs `accumulated_points`
 
 ## Database Function
 
@@ -130,4 +158,5 @@ To test the points system:
 Points are isolated per store:
 - Each customer can have different point balances at different stores
 - Points earned at Store A don't affect balance at Store B
-- Managed via `customer_points.store_id` foreign key
+- Managed via `points.store_id` foreign key
+- Transaction history is maintained separately via `point_transactions` table
