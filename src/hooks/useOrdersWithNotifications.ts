@@ -90,32 +90,55 @@ export const useCreateOrderWithNotifications = () => {
             .update({ points_earned: pointsEarned })
             .eq('id', order.id);
 
-          // Update customer points
+          // Update points table (existing table in the database)
           const { data: existingPoints } = await supabase
-            .from('customer_points')
-            .select('total_points')
+            .from('points')
+            .select('point_id, accumulated_points, current_points')
             .eq('customer_phone', orderData.customer_phone)
             .eq('store_id', currentStore?.store_id)
             .single();
 
+          let pointId: number;
+
           if (existingPoints) {
             // Add to existing points
             await supabase
-              .from('customer_points')
+              .from('points')
               .update({ 
-                total_points: existingPoints.total_points + pointsEarned,
+                accumulated_points: existingPoints.accumulated_points + pointsEarned,
+                current_points: existingPoints.current_points + pointsEarned,
                 updated_at: new Date().toISOString(),
               })
-              .eq('customer_phone', orderData.customer_phone)
-              .eq('store_id', currentStore?.store_id);
+              .eq('point_id', existingPoints.point_id);
+            
+            pointId = existingPoints.point_id;
           } else {
             // Create new customer points record
-            await supabase
-              .from('customer_points')
+            const { data: newPoint } = await supabase
+              .from('points')
               .insert({
                 customer_phone: orderData.customer_phone,
-                total_points: pointsEarned,
+                accumulated_points: pointsEarned,
+                current_points: pointsEarned,
                 store_id: currentStore?.store_id,
+              })
+              .select('point_id')
+              .single();
+            
+            pointId = newPoint?.point_id;
+          }
+
+          // Create point transaction record for earning points
+          if (pointId) {
+            await supabase
+              .from('point_transactions')
+              .insert({
+                point_id: pointId,
+                order_id: order.id,
+                points_changed: pointsEarned,
+                transaction_type: 'earning',
+                transaction_date: new Date().toISOString(),
+                notes: `Points earned from order ${order.id.slice(0, 8)}`,
               });
           }
         }
