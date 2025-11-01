@@ -49,6 +49,7 @@ export interface OrderCreatedData {
   paymentStatus: string;
   orderItems: OrderItem[];
   storeInfo: StoreInfo;
+  pointsEarned?: number;
 }
 
 export interface OrderCompletedData {
