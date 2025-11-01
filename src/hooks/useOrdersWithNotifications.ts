@@ -63,6 +63,15 @@ export const useCreateOrderWithNotifications = () => {
 
       if (itemsError) throw itemsError;
 
+      // Fetch the order again to get points_earned (calculated by database trigger)
+      const { data: updatedOrder } = await supabase
+        .from('orders')
+        .select('points_earned')
+        .eq('id', order.id)
+        .single();
+
+      const pointsEarned = updatedOrder?.points_earned || 0;
+
       // Send WhatsApp notification (non-blocking)
       // We don't await this to avoid blocking the order creation
       (async () => {
@@ -73,6 +82,7 @@ export const useCreateOrderWithNotifications = () => {
           
           console.log('🏪 Current store context:', currentStore);
           console.log('📋 Store info for notification:', storeInfo);
+          console.log('🎁 Points earned:', pointsEarned);
           
           const notificationData: OrderCreatedData = {
             orderId: order.id,
@@ -83,6 +93,7 @@ export const useCreateOrderWithNotifications = () => {
             paymentStatus: orderData.payment_status || 'pending',
             orderItems,
             storeInfo,
+            pointsEarned: pointsEarned > 0 ? pointsEarned : undefined,
           };
 
           await notifyOrderCreated(orderData.customer_phone, notificationData);
