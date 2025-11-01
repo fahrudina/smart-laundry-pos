@@ -66,20 +66,20 @@ export const useCreateOrderWithNotifications = () => {
       // Calculate and award points if payment is successful
       let pointsEarned = 0;
       if (orderData.payment_status === 'paid') {
-        // Calculate points from order items
-        orderData.items.forEach(item => {
+        // Calculate points from the orderItems that were actually inserted
+        orderItems.forEach(item => {
           if (item.service_type === 'kilo' && item.weight_kg) {
             // 1 point per kg (rounded)
             pointsEarned += Math.round(item.weight_kg);
           } else if (item.service_type === 'unit') {
-            // 1 point per unit
-            pointsEarned += Math.ceil(item.quantity);
+            // 1 point per unit (quantity is already rounded up at line 52)
+            pointsEarned += item.quantity;
           } else if (item.service_type === 'combined') {
             // For combined, count both weight and units
             if (item.weight_kg) {
               pointsEarned += Math.round(item.weight_kg);
             }
-            pointsEarned += Math.ceil(item.quantity);
+            pointsEarned += item.quantity;
           }
         });
 
