@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Star, TrendingUp, Award, Clock } from 'lucide-react';
 import { useCustomerPoints, useCustomerPointTransactions } from '@/hooks/useCustomerPoints';
+import { useStore } from '@/contexts/StoreContext';
 
 interface CustomerPointsCardProps {
   customerPhone: string;
@@ -16,11 +17,17 @@ export const CustomerPointsCard: React.FC<CustomerPointsCardProps> = ({
   showTransactions = false,
   compact = false,
 }) => {
+  const { currentStore } = useStore();
   const { data: points, isLoading: pointsLoading } = useCustomerPoints(customerPhone);
   const { data: transactions, isLoading: transactionsLoading } = useCustomerPointTransactions(
     customerPhone,
     5
   );
+
+  // Don't show points card if store doesn't have points enabled
+  if (!currentStore?.enable_points) {
+    return null;
+  }
 
   if (pointsLoading) {
     return (

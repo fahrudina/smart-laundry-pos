@@ -63,9 +63,9 @@ export const useCreateOrderWithNotifications = () => {
 
       if (itemsError) throw itemsError;
 
-      // Calculate and award points if payment is successful
+      // Calculate and award points if payment is successful AND store has points enabled
       let pointsEarned = 0;
-      if (orderData.payment_status === 'paid') {
+      if (orderData.payment_status === 'paid' && currentStore?.enable_points) {
         // Calculate points from the orderItems that were actually inserted
         orderItems.forEach(item => {
           if (item.service_type === 'kilo' && item.weight_kg) {
