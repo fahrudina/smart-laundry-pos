@@ -9,6 +9,7 @@ export interface Store {
   owner_id: string;
   is_active: boolean;
   enable_qr: boolean;
+  enable_points: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -35,6 +36,7 @@ export interface StoreWithOwnershipInfo {
   is_owner: boolean;
   is_active: boolean;
   enable_qr: boolean;
+  enable_points: boolean;
 }
 
 export interface StoreContextType {

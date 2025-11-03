@@ -2,13 +2,20 @@ import React from 'react';
 import { Star } from 'lucide-react';
 import { useCustomerPoints } from '@/hooks/useCustomerPoints';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useStore } from '@/contexts/StoreContext';
 
 interface CustomerPointsBadgeProps {
   customerPhone: string;
 }
 
 export const CustomerPointsBadge: React.FC<CustomerPointsBadgeProps> = ({ customerPhone }) => {
+  const { currentStore } = useStore();
   const { data: points, isLoading } = useCustomerPoints(customerPhone);
+
+  // Don't show badge if store doesn't have points enabled
+  if (!currentStore?.enable_points) {
+    return null;
+  }
 
   if (isLoading) {
     return <Skeleton className="h-6 w-16" />;

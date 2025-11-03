@@ -29,6 +29,7 @@ export interface StoreInfo {
   address: string;
   phone: string;
   enable_qr?: boolean;
+  enable_points?: boolean;
 }
 
 export interface OrderItem {

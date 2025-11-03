@@ -258,17 +258,25 @@ The application supports three service types defined in the database:
 - Always create/fetch customers with current store context
 
 ### Working with the Points System
+- **Configurable per store:** Each store can enable/disable points via Store Settings
 - Points are automatically calculated and awarded in `useCreateOrderWithNotifications` hook
-- Only awarded when `payment_status === 'paid'`
+- Only awarded when `payment_status === 'paid'` AND `store.enable_points === true`
 - SQL function `calculate_order_points(order_id)` available for manual calculations
 - Points are linked to customers via `customer_phone`
 - Points stored per customer per store in `points` table
 - All transactions logged in `point_transactions` for audit trail
 
+**Configuration:**
+- Store owners toggle points in Store Settings UI
+- Default: Disabled (`enable_points = false`)
+- UI components automatically hide when disabled
+- See `POINTS_CONFIGURATION_GUIDE.md` for full configuration details
+
 **Quick Reference:**
 - See `POINTS_QUICK_REFERENCE.md` for code examples and common queries
 - See `POINTS_DEPLOYMENT_GUIDE.md` for deployment instructions
 - See `POINTS_UI_COMPONENTS.md` for UI component documentation
+- See `POINTS_CONFIGURATION_GUIDE.md` for enable/disable points per store
 - Verify installation: Run `script/verify-points-tables.sql`
 
 **UI Components:**
@@ -276,6 +284,7 @@ The application supports three service types defined in the database:
 - `<CustomerPointsCard>` - Full points display card with statistics
 - `<CustomerPointsBadge>` - Inline badge for tables/lists
 - Integrated in: CustomersPage, PublicReceiptPage, OrderSuccessDialog
+- All components check `currentStore.enable_points` before rendering
 
 ### Adding a New Database Table
 1. Create migration file in `supabase/migrations/` with timestamp prefix

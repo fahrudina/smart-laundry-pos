@@ -339,8 +339,8 @@ export const PublicReceiptPage: React.FC = () => {
                 </span>
               </div>
 
-              {/* Points Earned - Only show if payment is completed and points earned */}
-              {order.payment_status === 'completed' && order.points_earned && order.points_earned > 0 && (
+              {/* Points Earned - Only show if store has points enabled, payment is completed and points earned */}
+              {storeInfo?.enable_points && order.payment_status === 'completed' && order.points_earned && order.points_earned > 0 && (
                 <div className="flex justify-between items-center bg-amber-50 -mx-3 px-3 py-2 rounded">
                   <div className="flex items-center gap-2">
                     <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
@@ -472,8 +472,8 @@ export const PublicReceiptPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Customer Points Card - Only show if payment is completed */}
-          {order.payment_status === 'completed' && (
+          {/* Customer Points Card - Only show if store has points enabled and payment is completed */}
+          {storeInfo?.enable_points && order.payment_status === 'completed' && (
             <div className="p-4 border-t border-gray-200">
               <CustomerPointsCard
                 customerPhone={order.customer_phone}
