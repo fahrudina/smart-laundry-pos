@@ -396,8 +396,8 @@ export const LandingPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="overflow-x-auto bg-white rounded-2xl shadow-2xl -mx-4 sm:mx-0">
-            <div className="min-w-[640px]">
+          <div className="overflow-x-auto bg-white rounded-2xl shadow-2xl sm:rounded-2xl -mx-4 sm:mx-0 px-4 sm:px-0">
+            <div className="min-w-[640px] sm:min-w-0">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
