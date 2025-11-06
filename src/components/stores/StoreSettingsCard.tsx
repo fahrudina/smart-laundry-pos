@@ -6,16 +6,18 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
-import { QrCode, Settings, Save } from 'lucide-react';
+import { QrCode, Settings, Save, Star } from 'lucide-react';
 
 interface StoreSettings {
   enable_qr: boolean;
+  enable_points: boolean;
 }
 
 export const StoreSettingsCard: React.FC = () => {
   const { currentStore, isOwner } = useStore();
   const [settings, setSettings] = useState<StoreSettings>({
     enable_qr: false,
+    enable_points: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,7 +35,7 @@ export const StoreSettingsCard: React.FC = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('stores')
-        .select('enable_qr')
+        .select('enable_qr, enable_points')
         .eq('id', currentStore.store_id)
         .single();
 
@@ -50,6 +52,7 @@ export const StoreSettingsCard: React.FC = () => {
       if (data) {
         setSettings({
           enable_qr: data.enable_qr || false,
+          enable_points: data.enable_points || false,
         });
       }
     } catch (error) {
@@ -73,6 +76,7 @@ export const StoreSettingsCard: React.FC = () => {
         .from('stores')
         .update({
           enable_qr: settings.enable_qr,
+          enable_points: settings.enable_points,
           updated_at: new Date().toISOString(),
         })
         .eq('id', currentStore.store_id);
@@ -107,6 +111,13 @@ export const StoreSettingsCard: React.FC = () => {
     setSettings(prev => ({
       ...prev,
       enable_qr: checked,
+    }));
+  };
+
+  const handlePointsToggle = (checked: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      enable_points: checked,
     }));
   };
 
@@ -183,6 +194,52 @@ export const StoreSettingsCard: React.FC = () => {
                         Make sure to upload your payment QR code image as <code>/qrcode.png</code> in the public folder.
                         The QR code will be displayed on all digital receipts when enabled.
                       </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Points Rewards Settings */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Star className="h-5 w-5 text-amber-500" />
+                <Label htmlFor="enable-points" className="text-base font-medium">
+                  Loyalty Points System
+                </Label>
+              </div>
+
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <Label htmlFor="enable-points" className="font-normal">
+                    Enable Points Rewards
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Reward customers with points for each paid order (1 point per kg/unit)
+                  </p>
+                </div>
+                <Switch
+                  id="enable-points"
+                  checked={settings.enable_points}
+                  onCheckedChange={handlePointsToggle}
+                  disabled={saving}
+                />
+              </div>
+
+              {settings.enable_points && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <Star className="h-5 w-5 text-amber-600 mt-0.5 fill-amber-500" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-amber-900">
+                        Points System Active
+                      </p>
+                      <ul className="text-sm text-amber-700 space-y-1">
+                        <li>• Customers earn 1 point per kilogram for weight-based services</li>
+                        <li>• Customers earn 1 point per unit for count-based services</li>
+                        <li>• Points are automatically awarded when payment is completed</li>
+                        <li>• Points balance is visible on receipts and customer profiles</li>
+                      </ul>
                     </div>
                   </div>
                 </div>

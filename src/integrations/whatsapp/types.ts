@@ -29,6 +29,7 @@ export interface StoreInfo {
   address: string;
   phone: string;
   enable_qr?: boolean;
+  enable_points?: boolean;
 }
 
 export interface OrderItem {
@@ -49,6 +50,7 @@ export interface OrderCreatedData {
   paymentStatus: string;
   orderItems: OrderItem[];
   storeInfo: StoreInfo;
+  pointsEarned?: number;
 }
 
 export interface OrderCompletedData {

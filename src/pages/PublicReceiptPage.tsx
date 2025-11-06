@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Receipt, ChevronDown, ChevronUp } from 'lucide-react';
+import { Receipt, ChevronDown, ChevronUp, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { WhatsAppDataHelper } from '@/integrations/whatsapp/data-helper';
 import { StoreInfo } from '@/integrations/whatsapp/types';
+import { CustomerPointsCard } from '@/components/customers/CustomerPointsCard';
 
 interface OrderData {
   id: string;
@@ -16,6 +17,7 @@ interface OrderData {
   payment_status: string;
   payment_method: string;
   cash_received?: number;
+  points_earned?: number;
   order_date: string;
   estimated_completion: string;
   created_at: string;
@@ -337,6 +339,19 @@ export const PublicReceiptPage: React.FC = () => {
                 </span>
               </div>
 
+              {/* Points Earned - Only show if store has points enabled, payment is completed and points earned */}
+              {storeInfo?.enable_points && order.payment_status === 'completed' && order.points_earned && order.points_earned > 0 && (
+                <div className="flex justify-between items-center bg-amber-50 -mx-3 px-3 py-2 rounded">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                    <span className="text-gray-600 font-medium">Poin Didapat</span>
+                  </div>
+                  <span className="text-amber-600 font-bold">
+                    +{order.points_earned} poin
+                  </span>
+                </div>
+              )}
+
               {/* Show cash details only for cash payments */}
               {order.payment_method === 'cash' && order.cash_received && order.payment_status === 'completed' && (
                 <>
@@ -456,6 +471,20 @@ export const PublicReceiptPage: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Customer Points Card - Only show if store has points enabled and payment is completed */}
+          {storeInfo?.enable_points && order.payment_status === 'completed' && (
+            <div className="p-4 border-t border-gray-200">
+              <CustomerPointsCard
+                customerPhone={order.customer_phone}
+                showTransactions={false}
+                compact={true}
+              />
+              <p className="text-xs text-gray-500 text-center mt-2">
+                Poin dapat digunakan untuk diskon pada transaksi berikutnya
+              </p>
+            </div>
+          )}
 
           {/* Catatan Section */}
           <div className="p-4 bg-gray-50 border-t border-gray-200">
