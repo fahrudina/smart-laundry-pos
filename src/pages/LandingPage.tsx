@@ -411,7 +411,7 @@ export const LandingPage: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {[
-                  { feature: "Optimized untuk bisnis laundry", smart: "✅", qasir: "❌ POS umum", pawoon: "❌ POS umum", majoo: "❌ POS umum" },
+                  { feature: "Dioptimalkan untuk bisnis laundry", smart: "✅", qasir: "❌ POS umum", pawoon: "❌ POS umum", majoo: "❌ POS umum" },
                   { feature: "Input laundry cepat (by kg/item)", smart: "✅", qasir: "❌", pawoon: "❌", majoo: "❌" },
                   { feature: "Struk + e-Struk laundry", smart: "✅", qasir: "⚠️ Basic", pawoon: "⚠️ Basic", majoo: "⚠️ Basic" },
                   { feature: "Loyalty khusus laundry (Smart Point)", smart: "✅", qasir: "❌", pawoon: "❌", majoo: "✅ (general)" },
@@ -581,7 +581,7 @@ export const LandingPage: React.FC = () => {
           <Button 
             size="lg" 
             onClick={() => navigate('/login')}
-            className="bg-white text-blue-600 hover:bg-gray-100 px-12 py-6 text-xl font-bold shadow-2xl transform hover:scale-110 transition-all duration-300 hover:shadow-yellow-400/50"
+            className="bg-white text-blue-600 hover:bg-gray-100 px-12 py-6 text-xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-300 hover:shadow-yellow-400/50"
           >
             👉 Coba Smart Laundry POS Sekarang!
             <ArrowRight className="ml-2 h-6 w-6" />
