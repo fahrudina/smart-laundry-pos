@@ -558,7 +558,6 @@ export const LandingPage: React.FC = () => {
 
           {/* Bonus Features */}
           <div className="bg-white/10 backdrop-blur-sm border-2 border-white/30 rounded-3xl p-8 mb-10">
-            <h3 className="text-2xl font-bold text-yellow-300 mb-6">🎁 Bonus CTA</h3>
             <div className="grid md:grid-cols-3 gap-6 text-white">
               <div className="bg-white/10 rounded-xl p-6 transform hover:scale-105 transition-all duration-300">
                 <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-300" />
