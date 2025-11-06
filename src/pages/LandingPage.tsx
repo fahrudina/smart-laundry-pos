@@ -118,16 +118,16 @@ export const LandingPage: React.FC = () => {
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center mr-3">
-                <span className="text-white font-bold text-lg">SL</span>
+            <div className="flex items-center min-w-0 flex-1">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
+                <span className="text-white font-bold text-base sm:text-lg">SL</span>
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Smart Laundry POS</h1>
-                <p className="text-xs text-gray-500">Sistem Kasir Laundry Profesional</p>
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-xl font-bold text-gray-900 truncate">Smart Laundry POS</h1>
+                <p className="text-xs text-gray-500 hidden sm:block">Sistem Kasir Laundry Profesional</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
               <PWAInstallButton />
               <Button 
                 variant="outline"
@@ -139,7 +139,7 @@ export const LandingPage: React.FC = () => {
               </Button>
               <Button 
                 onClick={() => navigate('/login')}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base px-3 sm:px-4"
               >
                 Masuk
               </Button>
@@ -176,10 +176,10 @@ export const LandingPage: React.FC = () => {
               <Button 
                 size="lg" 
                 onClick={() => navigate('/login')}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-10 py-6 text-xl font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105"
+                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 sm:px-10 py-5 sm:py-6 text-lg sm:text-xl font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105"
               >
-                👉 Coba Smart Laundry POS Sekarang!
-                <ArrowRight className="ml-2 h-6 w-6" />
+                <span className="truncate">👉 Coba Smart Laundry POS Sekarang!</span>
+                <ArrowRight className="ml-2 h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
               </Button>
             </div>
             <div className="mt-6 text-center space-y-2">
@@ -391,22 +391,26 @@ export const LandingPage: React.FC = () => {
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-4">
               Lihat mengapa Smart Laundry POS adalah pilihan terbaik untuk bisnis laundry
             </p>
+            <p className="text-sm text-gray-500 md:hidden">
+              💡 Geser tabel ke kiri/kanan untuk melihat lebih banyak
+            </p>
           </div>
 
-          <div className="overflow-x-auto bg-white rounded-2xl shadow-2xl">
+          <div className="overflow-x-auto bg-white rounded-2xl shadow-2xl sm:rounded-2xl -mx-4 sm:mx-0 px-4 sm:px-0">
+            <div className="min-w-[640px] sm:min-w-0">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-                  <th className="px-6 py-4 text-lg font-bold border-r border-blue-500">Fitur</th>
-                  <th className="px-6 py-4 text-lg font-bold text-center border-r border-blue-500 bg-blue-700">
-                    <div className="flex items-center justify-center gap-2">
-                      <Star className="h-5 w-5 text-yellow-300" />
-                      Smart Laundry POS
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-sm sm:text-lg font-bold border-r border-blue-500">Fitur</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-sm sm:text-lg font-bold text-center border-r border-blue-500 bg-blue-700">
+                    <div className="flex items-center justify-center gap-1 sm:gap-2">
+                      <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-300 flex-shrink-0" />
+                      <span className="whitespace-nowrap">Smart Laundry POS</span>
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-lg font-bold text-center border-r border-blue-500">Qasir</th>
-                  <th className="px-6 py-4 text-lg font-bold text-center border-r border-blue-500">Pawoon</th>
-                  <th className="px-6 py-4 text-lg font-bold text-center">Majoo</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-sm sm:text-lg font-bold text-center border-r border-blue-500">Qasir</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-sm sm:text-lg font-bold text-center border-r border-blue-500">Pawoon</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-sm sm:text-lg font-bold text-center">Majoo</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -423,18 +427,19 @@ export const LandingPage: React.FC = () => {
                   { feature: "Harga untuk UMKM", smart: "✅ Ramah UMKM", qasir: "✅", pawoon: "❌ Lebih mahal", majoo: "❌ Lebih mahal" },
                 ].map((row, index) => (
                   <tr key={index} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                    <td className="px-6 py-4 font-medium text-gray-900 border-r border-gray-200">{row.feature}</td>
-                    <td className="px-6 py-4 text-center font-bold bg-blue-50 border-r border-gray-200">{row.smart}</td>
-                    <td className="px-6 py-4 text-center border-r border-gray-200">{row.qasir}</td>
-                    <td className="px-6 py-4 text-center border-r border-gray-200">{row.pawoon}</td>
-                    <td className="px-6 py-4 text-center">{row.majoo}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-base font-medium text-gray-900 border-r border-gray-200">{row.feature}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-base text-center font-bold bg-blue-50 border-r border-gray-200">{row.smart}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-base text-center border-r border-gray-200">{row.qasir}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-base text-center border-r border-gray-200">{row.pawoon}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-base text-center">{row.majoo}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
 
-          <div className="mt-8 grid md:grid-cols-2 gap-6">
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6">
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0 mt-1" />
@@ -480,10 +485,10 @@ export const LandingPage: React.FC = () => {
           <Button 
             size="lg" 
             onClick={() => navigate('/login')}
-            className="bg-white text-blue-600 hover:bg-gray-100 px-12 py-6 text-xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-300"
+            className="w-full sm:w-auto bg-white text-blue-600 hover:bg-gray-100 px-8 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-300"
           >
             Mulai Transformasi Sekarang
-            <ArrowRight className="ml-2 h-6 w-6" />
+            <ArrowRight className="ml-2 h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
         </div>
       </section>
@@ -580,10 +585,10 @@ export const LandingPage: React.FC = () => {
           <Button 
             size="lg" 
             onClick={() => navigate('/login')}
-            className="bg-white text-blue-600 hover:bg-gray-100 px-12 py-6 text-xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-300 hover:shadow-yellow-400/50"
+            className="w-full sm:w-auto bg-white text-blue-600 hover:bg-gray-100 px-8 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-300 hover:shadow-yellow-400/50"
           >
-            👉 Coba Smart Laundry POS Sekarang!
-            <ArrowRight className="ml-2 h-6 w-6" />
+            <span className="truncate">👉 Coba Smart Laundry POS Sekarang!</span>
+            <ArrowRight className="ml-2 h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
           </Button>
 
           <p className="mt-6 text-lg text-white font-semibold">
@@ -607,12 +612,12 @@ export const LandingPage: React.FC = () => {
                 Sistem point of sale modern yang dirancang khusus untuk bisnis laundry. 
                 Sederhanakan operasional, tingkatkan efisiensi, dan kembangkan bisnis Anda.
               </p>
-              <div className="flex space-x-4 mb-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
                 <PWAInstallButton variant="outline" />
                 <Button 
                   variant="outline"
                   onClick={() => navigate('/install')}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  className="border-gray-600 text-gray-300 hover:bg-gray-700 w-full sm:w-auto"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Install Guide
