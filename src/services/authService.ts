@@ -309,7 +309,7 @@ class AuthService {
     }
 
     console.log('getUserStores: calling RPC with user_id:', this.session!.user.id);
-    const { data, error } = await supabase.rpc('get_user_stores', {
+    const { data, error } = await supabase.rpc('get_user_stores_by_userid', {
       user_id: this.session!.user.id
     });
 
