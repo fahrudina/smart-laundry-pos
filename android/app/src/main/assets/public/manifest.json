@@ -1,0 +1,58 @@
+{
+  "name": "Smart Laundry POS - Sistem Kasir Laundry Modern",
+  "short_name": "Smart Laundry POS",
+  "description": "Sistem Point of Sale modern untuk bisnis laundry Indonesia. Kelola pesanan, pelanggan, dan pembayaran dengan mudah.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon-512.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "finance"],
+  "lang": "id",
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "Pesanan Baru",
+      "short_name": "Pesanan Baru",
+      "description": "Buat pesanan laundry baru",
+      "url": "/pos?action=new-order",
+      "icons": [{ "src": "/favicon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Riwayat Pesanan",
+      "short_name": "Riwayat",
+      "description": "Lihat riwayat pesanan",
+      "url": "/order-history",
+      "icons": [{ "src": "/favicon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-1.png",
+      "sizes": "640x1136",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Antarmuka POS"
+    }
+  ]
+}
