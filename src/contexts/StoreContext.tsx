@@ -64,7 +64,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setLoading(true);
       const stores = await authService.getUserStores();
       console.log('Stores fetched:', stores);
-      
+
+      // Debug: Check if enable_points is present
+      if (stores && stores.length > 0) {
+        console.log('🔍 DEBUG: First store data:', {
+          store_name: stores[0].store_name,
+          has_enable_points: 'enable_points' in stores[0],
+          enable_points_value: stores[0].enable_points,
+          has_enable_qr: 'enable_qr' in stores[0],
+          enable_qr_value: stores[0].enable_qr,
+        });
+      }
+
       setUserStores(stores);
 
       // Try to restore previously selected store
