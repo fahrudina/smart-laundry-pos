@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Printer, X } from 'lucide-react';
+import { CheckCircle, Printer, X, Star } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +16,7 @@ interface OrderSuccessDialogProps {
   paymentMethod: string;
   customerName: string;
   whatsAppSent: boolean;
+  pointsEarned?: number;
   onPrintReceipt: () => void;
   onNewTransaction: () => void;
 }
@@ -29,6 +30,7 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
   paymentMethod,
   customerName,
   whatsAppSent,
+  pointsEarned,
   onPrintReceipt,
   onNewTransaction,
 }) => {
@@ -98,6 +100,24 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
                   Receipt sent to member via WhatsApp
                 </span>
               </div>
+            </div>
+          )}
+
+          {/* Points Earned */}
+          {pointsEarned && pointsEarned > 0 && (
+            <div className="mt-6 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-lg p-4">
+              <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-amber-500 rounded-full">
+                  <Star className="h-5 w-5 text-white fill-white" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-amber-700 font-medium">Pelanggan mendapat</p>
+                  <p className="text-2xl font-bold text-amber-600">+{pointsEarned} Poin</p>
+                </div>
+              </div>
+              <p className="text-xs text-amber-600 text-center mt-2">
+                🎉 Poin dapat digunakan untuk diskon pada transaksi berikutnya
+              </p>
             </div>
           )}
         </DialogHeader>

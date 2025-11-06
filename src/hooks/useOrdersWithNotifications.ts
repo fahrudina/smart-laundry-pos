@@ -63,6 +63,87 @@ export const useCreateOrderWithNotifications = () => {
 
       if (itemsError) throw itemsError;
 
+      // Calculate and award points if payment is successful AND store has points enabled
+      let pointsEarned = 0;
+      if (orderData.payment_status === 'paid' && currentStore?.enable_points) {
+        // Calculate points from the orderItems that were actually inserted
+        orderItems.forEach(item => {
+          if (item.service_type === 'kilo' && item.weight_kg) {
+            // 1 point per kg (rounded)
+            pointsEarned += Math.round(item.weight_kg);
+          } else if (item.service_type === 'unit') {
+            // 1 point per unit (quantity is already rounded up at line 52)
+            pointsEarned += item.quantity;
+          } else if (item.service_type === 'combined') {
+            // For combined, count both weight and units
+            if (item.weight_kg) {
+              pointsEarned += Math.round(item.weight_kg);
+            }
+            pointsEarned += item.quantity;
+          }
+        });
+
+        if (pointsEarned > 0) {
+          // Update order with points earned
+          await supabase
+            .from('orders')
+            .update({ points_earned: pointsEarned })
+            .eq('id', order.id);
+
+          // Update points table (existing table in the database)
+          const { data: existingPoints } = await supabase
+            .from('points')
+            .select('point_id, accumulated_points, current_points')
+            .eq('customer_phone', orderData.customer_phone)
+            .eq('store_id', currentStore?.store_id)
+            .single();
+
+          let pointId: number;
+
+          if (existingPoints) {
+            // Add to existing points
+            await supabase
+              .from('points')
+              .update({ 
+                accumulated_points: existingPoints.accumulated_points + pointsEarned,
+                current_points: existingPoints.current_points + pointsEarned,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('point_id', existingPoints.point_id);
+            
+            pointId = existingPoints.point_id;
+          } else {
+            // Create new customer points record
+            const { data: newPoint } = await supabase
+              .from('points')
+              .insert({
+                customer_phone: orderData.customer_phone,
+                accumulated_points: pointsEarned,
+                current_points: pointsEarned,
+                store_id: currentStore?.store_id,
+              })
+              .select('point_id')
+              .single();
+            
+            pointId = newPoint?.point_id;
+          }
+
+          // Create point transaction record for earning points
+          if (pointId) {
+            await supabase
+              .from('point_transactions')
+              .insert({
+                point_id: pointId,
+                order_id: order.id,
+                points_changed: pointsEarned,
+                transaction_type: 'earning',
+                transaction_date: new Date().toISOString(),
+                notes: `Points earned from order ${order.id.slice(0, 8)}`,
+              });
+          }
+        }
+      }
+
       // Send WhatsApp notification (non-blocking)
       // We don't await this to avoid blocking the order creation
       (async () => {
@@ -73,6 +154,7 @@ export const useCreateOrderWithNotifications = () => {
           
           console.log('🏪 Current store context:', currentStore);
           console.log('📋 Store info for notification:', storeInfo);
+          console.log('🎁 Points earned:', pointsEarned);
           
           const notificationData: OrderCreatedData = {
             orderId: order.id,
@@ -83,6 +165,7 @@ export const useCreateOrderWithNotifications = () => {
             paymentStatus: orderData.payment_status || 'pending',
             orderItems,
             storeInfo,
+            pointsEarned: pointsEarned > 0 ? pointsEarned : undefined,
           };
 
           await notifyOrderCreated(orderData.customer_phone, notificationData);

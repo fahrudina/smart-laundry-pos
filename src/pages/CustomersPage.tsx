@@ -59,6 +59,8 @@ import {
 } from 'lucide-react';
 import { AddCustomerDialog } from '@/components/pos/AddCustomerDialog';
 import { EditCustomerDialog } from '@/components/pos/EditCustomerDialog';
+import { CustomerPointsCard } from '@/components/customers/CustomerPointsCard';
+import { CustomerPointsBadge } from '@/components/customers/CustomerPointsBadge';
 import { useNavigate } from 'react-router-dom';
 
 interface Customer {
@@ -489,9 +491,12 @@ export const CustomersPage: React.FC = () => {
                         )}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <Badge variant="secondary">
-                          {customer._count?.orders || 0} orders
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="secondary">
+                            {customer._count?.orders || 0} orders
+                          </Badge>
+                          <CustomerPointsBadge customerPhone={customer.phone} />
+                        </div>
                       </TableCell>
                       <TableCell className="text-sm text-gray-500 hidden lg:table-cell">
                         {formatDate(customer.created_at)}
@@ -599,6 +604,13 @@ export const CustomersPage: React.FC = () => {
                   {selectedCustomer._count?.orders || 0} total orders
                 </Badge>
               </div>
+
+              {/* Customer Points Card */}
+              <CustomerPointsCard
+                customerPhone={selectedCustomer.phone}
+                showTransactions={false}
+                compact={true}
+              />
 
               <div className="flex gap-2 pt-4 border-t">
                 <Button 
