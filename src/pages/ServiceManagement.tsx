@@ -248,7 +248,7 @@ const ServiceManagement = () => {
               <div>
                 <h3 className="font-medium text-red-800">Error memuat layanan</h3>
                 <p className="text-sm text-red-600">
-                  Please try refreshing the page or contact support if the problem persists.
+                  Silakan coba refresh halaman atau hubungi dukungan jika masalah berlanjut.
                 </p>
               </div>
             </div>
@@ -263,21 +263,21 @@ const ServiceManagement = () => {
             <Card>
               <CardContent className="p-8 text-center">
                 <Settings className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-2">No services found</h3>
+                <h3 className="text-lg font-medium mb-2">Layanan tidak ditemukan</h3>
                 <p className="text-muted-foreground mb-4">
-                  Get started by creating your first laundry service or load some sample services.
+                  Mulai dengan membuat layanan laundry pertama Anda atau muat beberapa contoh layanan.
                 </p>
                 <div className="flex justify-center gap-2">
                   <Button onClick={openCreateDialog}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Service
+                    Buat Layanan
                   </Button>
                   <Button 
                     variant="outline" 
                     onClick={seedInitialServices}
                     disabled={isProcessing}
                   >
-                    {isProcessing ? 'Loading...' : 'Load Sample Services'}
+                    {isProcessing ? 'Memuat...' : 'Muat Contoh Layanan'}
                   </Button>
                 </div>
               </CardContent>
@@ -302,7 +302,7 @@ const ServiceManagement = () => {
               <div className="space-y-2">
                 <h4 className="font-medium flex items-center">
                   <DollarSign className="h-4 w-4 mr-1" />
-                  Pricing Options
+                  Opsi Harga
                 </h4>
                 {service.supports_unit && (
                   <div className="flex justify-between text-sm">
@@ -320,8 +320,8 @@ const ServiceManagement = () => {
 
               {/* Duration */}
               <div className="flex justify-between text-sm">
-                <span>Duration:</span>
-                <span>{service.duration_value} {service.duration_unit}</span>
+                <span>Durasi:</span>
+                <span>{service.duration_value} {service.duration_unit === 'hours' ? 'jam' : 'hari'}</span>
               </div>
 
               {/* Actions */}
@@ -342,7 +342,7 @@ const ServiceManagement = () => {
                   className="flex-1 text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
+                  Hapus
                 </Button>
               </div>
             </CardContent>
@@ -370,7 +370,7 @@ const ServiceManagement = () => {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingService ? 'Edit Service' : 'Create New Service'}
+              {editingService ? 'Edit Layanan' : 'Buat Layanan Baru'}
             </DialogTitle>
           </DialogHeader>
           
@@ -378,17 +378,17 @@ const ServiceManagement = () => {
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="name">Service Name*</Label>
+                <Label htmlFor="name">Nama Layanan*</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Regular Wash"
+                  placeholder="mis., Cuci Reguler"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="category">Category*</Label>
+                <Label htmlFor="category">Kategori*</Label>
                 <Select 
                   value={formData.category} 
                   onValueChange={(value: any) => setFormData({ ...formData, category: value })}
@@ -397,30 +397,30 @@ const ServiceManagement = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="wash">Wash</SelectItem>
+                    <SelectItem value="wash">Cuci</SelectItem>
                     <SelectItem value="dry">Dry Clean</SelectItem>
-                    <SelectItem value="ironing">Ironing</SelectItem>
-                    <SelectItem value="folding">Folding</SelectItem>
-                    <SelectItem value="special">Special</SelectItem>
+                    <SelectItem value="ironing">Setrika</SelectItem>
+                    <SelectItem value="folding">Lipat</SelectItem>
+                    <SelectItem value="special">Spesial</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Deskripsi</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Brief description of the service"
+                placeholder="Deskripsi singkat layanan"
                 rows={3}
               />
             </div>
 
             {/* Pricing Options */}
             <div className="space-y-4">
-              <h3 className="font-medium">Pricing Options</h3>
+              <h3 className="font-medium">Opsi Harga</h3>
               
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
@@ -431,20 +431,20 @@ const ServiceManagement = () => {
                       setFormData({ ...formData, supports_unit: checked as boolean })
                     }
                   />
-                  <Label htmlFor="supports_unit">Support unit-based pricing</Label>
+                  <Label htmlFor="supports_unit">Dukung harga per unit</Label>
                 </div>
                 
                 {formData.supports_unit && (
                   <div>
-                    <Label htmlFor="unit_price">Price per unit ($)</Label>
+                    <Label htmlFor="unit_price">Harga per unit (Rp)</Label>
                     <Input
                       id="unit_price"
                       type="number"
                       min="0"
-                      step="0.01"
+                      step="1000"
                       value={formData.unit_price || ''}
                       onChange={(e) => setFormData({ ...formData, unit_price: parseFloat(e.target.value) || 0 })}
-                      placeholder="0.00"
+                      placeholder="0"
                     />
                   </div>
                 )}
@@ -457,20 +457,20 @@ const ServiceManagement = () => {
                       setFormData({ ...formData, supports_kilo: checked as boolean })
                     }
                   />
-                  <Label htmlFor="supports_kilo">Support weight-based pricing</Label>
+                  <Label htmlFor="supports_kilo">Dukung harga per kilogram</Label>
                 </div>
                 
                 {formData.supports_kilo && (
                   <div>
-                    <Label htmlFor="kilo_price">Price per kilogram ($)</Label>
+                    <Label htmlFor="kilo_price">Harga per kilogram (Rp)</Label>
                     <Input
                       id="kilo_price"
                       type="number"
                       min="0"
-                      step="0.01"
+                      step="1000"
                       value={formData.kilo_price || ''}
                       onChange={(e) => setFormData({ ...formData, kilo_price: parseFloat(e.target.value) || 0 })}
-                      placeholder="0.00"
+                      placeholder="0"
                     />
                   </div>
                 )}
@@ -480,7 +480,7 @@ const ServiceManagement = () => {
             {/* Duration */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="duration_value">Duration</Label>
+                <Label htmlFor="duration_value">Durasi</Label>
                 <Input
                   id="duration_value"
                   type="number"
@@ -490,7 +490,7 @@ const ServiceManagement = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="duration_unit">Unit</Label>
+                <Label htmlFor="duration_unit">Satuan</Label>
                 <Select 
                   value={formData.duration_unit} 
                   onValueChange={(value: any) => setFormData({ ...formData, duration_unit: value })}
@@ -499,8 +499,8 @@ const ServiceManagement = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="hours">Hours</SelectItem>
-                    <SelectItem value="days">Days</SelectItem>
+                    <SelectItem value="hours">Jam</SelectItem>
+                    <SelectItem value="days">Hari</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -514,10 +514,10 @@ const ServiceManagement = () => {
                 onClick={() => setShowCreateDialog(false)}
                 disabled={loading}
               >
-                Cancel
+                Batal
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Saving...' : editingService ? 'Update Service' : 'Create Service'}
+                {loading ? 'Menyimpan...' : editingService ? 'Perbarui Layanan' : 'Buat Layanan'}
               </Button>
             </div>
           </form>
