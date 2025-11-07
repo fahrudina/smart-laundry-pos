@@ -38,7 +38,7 @@ export const StoreManagement: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5" />
-              Current Store
+              Toko Saat Ini
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -53,7 +53,7 @@ export const StoreManagement: React.FC = () => {
                 )}
               </div>
             ) : (
-              <p className="text-muted-foreground">No store assigned</p>
+              <p className="text-muted-foreground">Tidak ada toko yang ditugaskan</p>
             )}
           </CardContent>
         </Card>
@@ -64,14 +64,14 @@ export const StoreManagement: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h1 className="text-xl sm:text-2xl font-bold">Store Management</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">Manajemen Toko</h1>
         <CreateStoreDialog onStoreCreated={handleStoreCreated} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {userStores.map((store) => (
-          <Card 
-            key={store.store_id} 
+          <Card
+            key={store.store_id}
             className={`cursor-pointer transition-all hover:shadow-md ${
               selectedStore?.store_id === store.store_id ? 'ring-2 ring-primary' : ''
             }`}
@@ -84,7 +84,7 @@ export const StoreManagement: React.FC = () => {
                   <span className="truncate">{store.store_name}</span>
                 </div>
                 <Badge variant={store.is_active ? 'default' : 'secondary'} className="w-fit">
-                  {store.is_active ? 'Active' : 'Inactive'}
+                  {store.is_active ? 'Aktif' : 'Tidak Aktif'}
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -103,15 +103,15 @@ export const StoreManagement: React.FC = () => {
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
-                      <span>Staff</span>
+                      <span>Karyawan</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Package className="h-3 w-3" />
-                      <span>Orders</span>
+                      <span>Order</span>
                     </div>
                   </div>
                   {currentStore?.store_id === store.store_id && (
-                    <Badge variant="outline" className="w-fit">Current</Badge>
+                    <Badge variant="outline" className="w-fit">Aktif</Badge>
                   )}
                 </div>
               </div>
@@ -131,9 +131,9 @@ export const StoreManagement: React.FC = () => {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No stores yet</h3>
+            <h3 className="text-lg font-semibold mb-2">Belum ada toko</h3>
             <p className="text-muted-foreground text-center mb-4">
-              Create your first store to start managing your laundry business.
+              Buat toko pertama Anda untuk mulai mengelola bisnis laundry.
             </p>
             <CreateStoreDialog onStoreCreated={handleStoreCreated} />
           </CardContent>
