@@ -17,14 +17,12 @@ export const StoreSelector: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleStoreSwitch = useCallback((storeId: string, storeName: string) => {
-    console.log('StoreSelector: handleStoreSwitch called with:', storeId, storeName);
     
     // Close the dropdown first
     setIsOpen(false);
     
     // Use requestAnimationFrame to ensure the dropdown close animation completes
     requestAnimationFrame(() => {
-      console.log('StoreSelector: Executing switchStore after frame');
       switchStore(storeId);
     });
   }, [switchStore]);
@@ -60,7 +58,6 @@ export const StoreSelector: React.FC = () => {
           <DropdownMenuItem
             key={store.store_id}
             onSelect={() => {
-              console.log('StoreSelector: onSelect called for store:', store.store_name, store.store_id);
               handleStoreSwitch(store.store_id, store.store_name);
             }}
             className="flex items-center justify-between cursor-pointer"

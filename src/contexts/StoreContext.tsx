@@ -50,31 +50,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const refreshStores = useCallback(async () => {
     try {
       if (!authService.isAuthenticated()) {
-        console.log('User not authenticated, skipping store refresh');
         setLoading(false);
         return;
       }
 
       if (isSwitching) {
-        console.log('Currently switching stores, skipping refresh');
         return;
       }
 
-      console.log('Fetching user stores...');
       setLoading(true);
       const stores = await authService.getUserStores();
-      console.log('Stores fetched:', stores);
-
-      // Debug: Check if enable_points is present
-      if (stores && stores.length > 0) {
-        console.log('🔍 DEBUG: First store data:', {
-          store_name: stores[0].store_name,
-          has_enable_points: 'enable_points' in stores[0],
-          enable_points_value: stores[0].enable_points,
-          has_enable_qr: 'enable_qr' in stores[0],
-          enable_qr_value: stores[0].enable_qr,
-        });
-      }
 
       setUserStores(stores);
 
@@ -86,9 +71,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Check if persisted store is still accessible
         targetStore = stores.find(s => s.store_id === persistedStoreId) || null;
         if (targetStore) {
-          console.log('Restoring persisted store:', targetStore);
         } else {
-          console.log('Persisted store no longer accessible, clearing persistence');
           persistStoreId(null);
         }
       }
@@ -101,26 +84,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setCurrentStore(currentStoreState => {
           // Priority 1: Keep current store if it's still in the list
           if (currentStoreState && stores.find(s => s.store_id === currentStoreState.store_id)) {
-            console.log('Keeping current store:', currentStoreState);
             return currentStoreState;
           }
           
           // Priority 2: Use persisted store if available
           if (targetStore) {
-            console.log('Setting restored store:', targetStore);
             return targetStore;
           }
           
           // Priority 3: Select first available store only if no current store
           if (!currentStoreState) {
-            console.log('Auto-selecting first store:', stores[0]);
             persistStoreId(stores[0].store_id);
             return stores[0];
           }
           
           // If current store is no longer accessible, keep the current state
           // instead of auto-switching to first store
-          console.log('Current store no longer accessible, but keeping selection to avoid auto-switch');
           return currentStoreState;
         });
       } else {
@@ -133,7 +112,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       // Check if it's an auth error
       if (error instanceof Error && error.message.includes('not authenticated')) {
-        console.log('Authentication error, user may need to log in again');
         return; // Don't show error toast for auth issues
       }
       
@@ -145,18 +123,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [isSwitching]);
 
   const switchStore = (storeId: string) => {
-    console.log('switchStore called with storeId:', storeId);
-    console.log('Available stores:', userStores.map(s => ({ id: s.store_id, name: s.store_name })));
-    console.log('Current store before switch:', currentStore?.store_id);
     
     if (isSwitching) {
-      console.log('Already switching stores, ignoring request');
       return;
     }
     
     const store = userStores.find(s => s.store_id === storeId);
     if (store) {
-      console.log('Switching to store:', store);
       setIsSwitching(true);
       
       // Update current store first
@@ -165,7 +138,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // Then persist to localStorage
       try {
         persistStoreId(store.store_id);
-        console.log('Store ID persisted successfully');
       } catch (error) {
         console.error('Error persisting store ID:', error);
       }
@@ -176,7 +148,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           title: "Store Switched",
           description: `Now working in: ${store.store_name}`,
         });
-        console.log('Toast notification shown');
       } catch (error) {
         console.error('Error showing toast:', error);
       }
@@ -184,7 +155,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // Reset switching flag after a short delay
       setTimeout(() => {
         setIsSwitching(false);
-        console.log('Store switching completed');
       }, 500);
     } else {
       console.error('Store not found with ID:', storeId);
@@ -204,11 +174,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (user) {
       // User just logged in, refresh stores
-      console.log('User authenticated, refreshing stores...');
       refreshStores();
     } else {
       // User logged out, reset store context
-      console.log('User logged out, resetting store context...');
       setCurrentStore(null);
       setUserStores([]);
       setLoading(false);

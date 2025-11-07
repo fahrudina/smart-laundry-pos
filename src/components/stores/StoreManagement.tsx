@@ -62,13 +62,13 @@ export const StoreManagement: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Store Management</h1>
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold">Store Management</h1>
         <CreateStoreDialog onStoreCreated={handleStoreCreated} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {userStores.map((store) => (
           <Card 
             key={store.store_id} 
@@ -78,12 +78,12 @@ export const StoreManagement: React.FC = () => {
             onClick={() => handleStoreSelect(store)}
           >
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  {store.store_name}
+              <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Building2 className="h-5 w-5 flex-shrink-0" />
+                  <span className="truncate">{store.store_name}</span>
                 </div>
-                <Badge variant={store.is_active ? 'default' : 'secondary'}>
+                <Badge variant={store.is_active ? 'default' : 'secondary'} className="w-fit">
                   {store.is_active ? 'Active' : 'Inactive'}
                 </Badge>
               </CardTitle>
@@ -96,10 +96,10 @@ export const StoreManagement: React.FC = () => {
                   </p>
                 )}
                 {store.store_address && (
-                  <p className="text-xs text-muted-foreground">{store.store_address}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{store.store_address}</p>
                 )}
-                
-                <div className="flex justify-between items-center pt-2">
+
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pt-2">
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
@@ -111,7 +111,7 @@ export const StoreManagement: React.FC = () => {
                     </div>
                   </div>
                   {currentStore?.store_id === store.store_id && (
-                    <Badge variant="outline">Current</Badge>
+                    <Badge variant="outline" className="w-fit">Current</Badge>
                   )}
                 </div>
               </div>
@@ -121,7 +121,7 @@ export const StoreManagement: React.FC = () => {
       </div>
 
       {selectedStore && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <StoreStaffManagement store={selectedStore} />
           <StoreSettingsCard />
         </div>

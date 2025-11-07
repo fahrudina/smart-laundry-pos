@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Printer, X, Star } from 'lucide-react';
+import { CheckCircle, Printer, Star } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -47,17 +47,8 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 z-10 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
-        >
-          <X className="h-6 w-6" />
-          <span className="sr-only">Close</span>
-        </button>
-
-        <DialogHeader className="p-8 pb-6">
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader className="space-y-6">
           {/* Success Icon */}
           <div className="flex justify-center mb-6">
             <div className="w-32 h-32 rounded-full bg-green-500 flex items-center justify-center">
@@ -123,7 +114,7 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
         </DialogHeader>
 
         {/* Action Buttons */}
-        <div className="p-6 pt-0 space-y-3">
+        <div className="space-y-3 pt-4">
           {/* Print Receipt Button */}
           <Button
             onClick={onPrintReceipt}

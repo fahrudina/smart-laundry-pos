@@ -163,18 +163,18 @@ export const EditCustomerDialog = ({
               autoComplete="address-line1"
             />
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)} 
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
               className="flex-1 h-11 text-base"
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={loading || !formData.name.trim() || !formData.phone.trim()} 
+            <Button
+              type="submit"
+              disabled={loading || !formData.name.trim() || !formData.phone.trim()}
               className="flex-1 h-11 text-base"
             >
               {loading ? 'Saving...' : 'Save Changes'}
