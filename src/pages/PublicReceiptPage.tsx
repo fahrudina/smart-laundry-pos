@@ -49,14 +49,11 @@ export const PublicReceiptPage: React.FC = () => {
       }
 
       try {
-        console.log('🧾 Fetching receipt data for order:', orderId);
         
         // Use the public function to get receipt data
         const { data: receiptResponse, error: receiptError } = await supabase
           .rpc('get_receipt_data', { order_id_param: orderId });
 
-        console.log('📋 Receipt response:', receiptResponse);
-        console.log('❌ Receipt error:', receiptError);
 
         if (receiptError) {
           throw receiptError;
@@ -85,7 +82,6 @@ export const PublicReceiptPage: React.FC = () => {
             enable_qr: receiptResponse.store.enable_qr || false,
             enable_points: receiptResponse.store.enable_points || false,
           });
-          console.log('✅ Store info from receipt function:', receiptResponse.store);
         } else {
           // Fallback store info if no store data found
           setStoreInfo({
@@ -95,7 +91,6 @@ export const PublicReceiptPage: React.FC = () => {
             enable_qr: false,
             enable_points: false,
           });
-          console.log('⚠️ No store data found, using fallback');
         }
       } catch (err) {
         console.error('Error fetching order:', err);

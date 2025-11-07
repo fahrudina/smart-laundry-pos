@@ -600,7 +600,7 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                 <div className="font-semibold">
                   Total: Rp{getTotalPrice().toLocaleString('id-ID')}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 sm:gap-3">
                   <Button variant="outline" onClick={handleCancel}>
                     Batal
                   </Button>

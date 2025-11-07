@@ -152,9 +152,6 @@ export const useCreateOrderWithNotifications = () => {
           const storeInfo = WhatsAppDataHelper.getStoreInfoFromContext(currentStore);
           const orderItems = WhatsAppDataHelper.formatOrderItems(orderData.items);
           
-          console.log('🏪 Current store context:', currentStore);
-          console.log('📋 Store info for notification:', storeInfo);
-          console.log('🎁 Points earned:', pointsEarned);
           
           const notificationData: OrderCreatedData = {
             orderId: order.id,
@@ -265,8 +262,6 @@ export const useUpdateOrderStatusWithNotifications = () => {
       //       const storeInfo = WhatsAppDataHelper.getStoreInfoFromContext(currentStore);
       //       const orderItems = WhatsAppDataHelper.formatOrderItems(orderData.order_items || []);
             
-      //       console.log('🏪 Current store context for completion:', currentStore);
-      //       console.log('📋 Store info for completion notification:', storeInfo);
             
       //       const notificationData: OrderCompletedData = {
       //         orderId: orderId,
@@ -293,8 +288,6 @@ export const useUpdateOrderStatusWithNotifications = () => {
             const storeInfo = WhatsAppDataHelper.getStoreInfoFromContext(currentStore);
             const orderItems = WhatsAppDataHelper.formatOrderItems(orderData.order_items || []);
             
-            console.log('🏪 Current store context for ready for pickup:', currentStore);
-            console.log('📋 Store info for ready for pickup notification:', storeInfo);
             
             const notificationData: OrderReadyForPickupData = {
               orderId: orderId,

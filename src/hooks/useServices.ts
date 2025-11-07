@@ -65,7 +65,6 @@ export const useServices = (category?: string) => {
           throw error;
         }
 
-        console.log('Fetched services from database:', data);
         return data || [];
       } catch (error) {
         console.error('Error in useServices:', error);

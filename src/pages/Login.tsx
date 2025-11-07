@@ -4,10 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -20,7 +19,6 @@ interface SignUpForm extends LoginForm {
   confirmPassword: string;
   fullName: string;
   phone: string;
-  isOwner: boolean;
   storeName: string;
   storeAddress: string;
   storePhone: string;
@@ -30,12 +28,14 @@ export const Login: React.FC = () => {
   const { user, loading, signIn, signUp } = useAuth();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   usePageTitle('Login');
 
   const loginForm = useForm<LoginForm>();
   const signUpForm = useForm<SignUpForm>();
-  const isOwner = signUpForm.watch('isOwner');
 
   // Redirect if already authenticated
   if (user) {
@@ -65,12 +65,12 @@ export const Login: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const role = data.isOwner ? 'laundry_owner' : 'staff';
-      const storeData = data.isOwner ? {
+      const role = 'laundry_owner';
+      const storeData = {
         name: data.storeName,
         address: data.storeAddress,
         phone: data.storePhone
-      } : undefined;
+      };
       await signUp(data.email, data.password, data.fullName, data.phone, role, storeData);
     } catch (error) {
       // Error is handled in the auth context
@@ -92,7 +92,7 @@ export const Login: React.FC = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Smart Laundry POS</CardTitle>
-          <CardDescription>Sign in to access your laundry management system</CardDescription>
+          <CardDescription>Sign in to your account or register as a store owner</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
@@ -124,18 +124,34 @@ export const Login: React.FC = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="login-password">Password</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="Enter your password"
-                    {...loginForm.register('password', { 
-                      required: 'Password is required',
-                      minLength: {
-                        value: 6,
-                        message: 'Password must be at least 6 characters'
-                      }
-                    })}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="login-password"
+                      type={showLoginPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      className="pr-10"
+                      {...loginForm.register('password', {
+                        required: 'Password is required',
+                        minLength: {
+                          value: 6,
+                          message: 'Password must be at least 6 characters'
+                        }
+                      })}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    >
+                      {showLoginPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-500" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-500" />
+                      )}
+                    </Button>
+                  </div>
                   {loginForm.formState.errors.password && (
                     <p className="text-sm text-red-500">{loginForm.formState.errors.password.message}</p>
                   )}
@@ -205,18 +221,34 @@ export const Login: React.FC = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="Create a password"
-                    {...signUpForm.register('password', { 
-                      required: 'Password is required',
-                      minLength: {
-                        value: 6,
-                        message: 'Password must be at least 6 characters'
-                      }
-                    })}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="signup-password"
+                      type={showSignupPassword ? "text" : "password"}
+                      placeholder="Create a password"
+                      className="pr-10"
+                      {...signUpForm.register('password', {
+                        required: 'Password is required',
+                        minLength: {
+                          value: 6,
+                          message: 'Password must be at least 6 characters'
+                        }
+                      })}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowSignupPassword(!showSignupPassword)}
+                    >
+                      {showSignupPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-500" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-500" />
+                      )}
+                    </Button>
+                  </div>
                   {signUpForm.formState.errors.password && (
                     <p className="text-sm text-red-500">{signUpForm.formState.errors.password.message}</p>
                   )}
@@ -224,78 +256,79 @@ export const Login: React.FC = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="signup-confirm-password">Confirm Password</Label>
-                  <Input
-                    id="signup-confirm-password"
-                    type="password"
-                    placeholder="Confirm your password"
-                    {...signUpForm.register('confirmPassword', { 
-                      required: 'Please confirm your password'
-                    })}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="signup-confirm-password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Confirm your password"
+                      className="pr-10"
+                      {...signUpForm.register('confirmPassword', {
+                        required: 'Please confirm your password'
+                      })}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-500" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-500" />
+                      )}
+                    </Button>
+                  </div>
                   {signUpForm.formState.errors.confirmPassword && (
                     <p className="text-sm text-red-500">{signUpForm.formState.errors.confirmPassword.message}</p>
                   )}
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="signup-owner"
-                    checked={isOwner}
-                    onCheckedChange={(checked) => signUpForm.setValue('isOwner', !!checked)}
+                <div className="space-y-2">
+                  <Label htmlFor="signup-store-name">Store Name</Label>
+                  <Input
+                    id="signup-store-name"
+                    type="text"
+                    placeholder="Enter your store name"
+                    {...signUpForm.register('storeName', {
+                      required: 'Store name is required'
+                    })}
                   />
-                  <Label htmlFor="signup-owner" className="text-sm">
-                    Create as Laundry Owner (can manage multiple stores)
-                  </Label>
+                  {signUpForm.formState.errors.storeName && (
+                    <p className="text-sm text-red-500">{signUpForm.formState.errors.storeName.message}</p>
+                  )}
                 </div>
-                
-                {isOwner && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-store-name">Store Name</Label>
-                      <Input
-                        id="signup-store-name"
-                        type="text"
-                        placeholder="Enter your store name"
-                        {...signUpForm.register('storeName', { 
-                          required: isOwner ? 'Store name is required for owners' : false
-                        })}
-                      />
-                      {signUpForm.formState.errors.storeName && (
-                        <p className="text-sm text-red-500">{signUpForm.formState.errors.storeName.message}</p>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-store-address">Store Address</Label>
-                      <Input
-                        id="signup-store-address"
-                        type="text"
-                        placeholder="Enter your store address"
-                        {...signUpForm.register('storeAddress', { 
-                          required: isOwner ? 'Store address is required for owners' : false
-                        })}
-                      />
-                      {signUpForm.formState.errors.storeAddress && (
-                        <p className="text-sm text-red-500">{signUpForm.formState.errors.storeAddress.message}</p>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-store-phone">Store Phone Number</Label>
-                      <Input
-                        id="signup-store-phone"
-                        type="tel"
-                        placeholder="Enter your store phone number"
-                        {...signUpForm.register('storePhone', { 
-                          required: isOwner ? 'Store phone number is required for owners' : false
-                        })}
-                      />
-                      {signUpForm.formState.errors.storePhone && (
-                        <p className="text-sm text-red-500">{signUpForm.formState.errors.storePhone.message}</p>
-                      )}
-                    </div>
-                  </>
-                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-store-address">Store Address</Label>
+                  <Input
+                    id="signup-store-address"
+                    type="text"
+                    placeholder="Enter your store address"
+                    {...signUpForm.register('storeAddress', {
+                      required: 'Store address is required'
+                    })}
+                  />
+                  {signUpForm.formState.errors.storeAddress && (
+                    <p className="text-sm text-red-500">{signUpForm.formState.errors.storeAddress.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-store-phone">Store Phone Number</Label>
+                  <Input
+                    id="signup-store-phone"
+                    type="tel"
+                    placeholder="Enter your store phone number"
+                    {...signUpForm.register('storePhone', {
+                      required: 'Store phone number is required'
+                    })}
+                  />
+                  {signUpForm.formState.errors.storePhone && (
+                    <p className="text-sm text-red-500">{signUpForm.formState.errors.storePhone.message}</p>
+                  )}
+                </div>
                 
                 <Button 
                   type="submit" 

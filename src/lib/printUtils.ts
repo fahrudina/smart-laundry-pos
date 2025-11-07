@@ -435,7 +435,6 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
   }
 
   try {
-    console.log('Requesting thermal printer device...');
     
     // Request thermal printer device with specific filters for MP-80M and similar printers
     const device = await navigator.bluetooth!.requestDevice({
@@ -458,17 +457,14 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
       optionalServices: [...THERMAL_PRINTER_SERVICES, ...THERMAL_PRINTER_CHARACTERISTICS]
     });
 
-    console.log('Device selected:', device.name || device.id);
 
     if (!device.gatt) {
       throw new Error('Device does not support GATT');
     }
 
     // Connect to the device
-    console.log('Connecting to GATT server...');
     const server = await device.gatt.connect();
     
-    console.log('Connected to GATT server, discovering services...');
     
     // Try to find a compatible service from our known list first
     let service: BluetoothRemoteGATTService | null = null;
@@ -477,54 +473,43 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
     for (const serviceUuid of THERMAL_PRINTER_SERVICES) {
       try {
         service = await server.getPrimaryService(serviceUuid);
-        console.log(`Found service: ${serviceUuid}`);
         
         // Get all characteristics for this service
         try {
           const characteristics = await (service as any).getCharacteristics();
-          console.log(`Service ${serviceUuid} characteristics:`, characteristics.map((c: any) => c.uuid));
         } catch (charListError) {
-          console.log('Could not list characteristics for service', serviceUuid);
         }
         
         // Try to find a compatible characteristic
         for (const charUuid of THERMAL_PRINTER_CHARACTERISTICS) {
           try {
             characteristic = await service.getCharacteristic(charUuid);
-            console.log(`Found characteristic: ${charUuid}`);
             
             // Test if we can write to this characteristic
             try {
               // Try a small test write to check permissions
               const testData = new Uint8Array([0x1B, 0x40]); // ESC @ (initialize printer)
               await characteristic.writeValue(testData);
-              console.log('✅ Characteristic supports writeValue');
               break;
             } catch (writeError) {
-              console.log('❌ writeValue failed, trying writeValueWithoutResponse...');
               try {
                 // Try writeValueWithoutResponse if available
                 if ('writeValueWithoutResponse' in characteristic) {
                   const testData = new Uint8Array([0x1B, 0x40]);
                   await (characteristic as any).writeValueWithoutResponse(testData);
-                  console.log('✅ Characteristic supports writeValueWithoutResponse');
                   break;
                 } else {
-                  console.log('❌ writeValueWithoutResponse not available');
                 }
               } catch (writeWithoutResponseError) {
-                console.log('❌ Both write methods failed, trying next characteristic...');
                 characteristic = null;
               }
             }
           } catch (charError) {
-            console.log(`Characteristic ${charUuid} not found, trying next...`);
           }
         }
         
         if (characteristic) break;
       } catch (serviceError) {
-        console.log(`Service ${serviceUuid} not found, trying next...`);
       }
     }
 
@@ -534,7 +519,6 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
       throw new Error(`No compatible thermal printer service/characteristic found for ${device.name || 'MP-80M'}. Please ensure the printer is in pairing mode and try again.`);
     }
 
-    console.log('Successfully connected to thermal printer');
     
     return {
       device,
@@ -555,7 +539,6 @@ export const disconnectThermalPrinter = (connection: ThermalPrinterConnection): 
   try {
     if (connection.server.connected) {
       connection.server.disconnect();
-      console.log('Disconnected from thermal printer');
     }
   } catch (error) {
     console.error('Error disconnecting from thermal printer:', error);
@@ -875,7 +858,6 @@ export const printToThermalPrinter = async (
       throw new Error('Printer characteristic is not available. Please reconnect to the printer.');
     }
 
-    console.log('Formatting receipt for thermal printing...');
     const printData = formatReceiptForThermal(receiptData, {
       paperWidth: 32,
       cutPaper: true,
@@ -883,8 +865,6 @@ export const printToThermalPrinter = async (
       ...options
     });
 
-    console.log('Sending data to thermal printer in chunks...');
-    console.log('Total data size:', printData.byteLength, 'bytes');
     
     // Split data into smaller chunks to be more conservative with Bluetooth
     const CHUNK_SIZE = 128; // Reduced from 512 to be more conservative
@@ -895,12 +875,10 @@ export const printToThermalPrinter = async (
       chunks.push(chunk);
     }
     
-    console.log(`Sending ${chunks.length} chunks to printer...`);
     
     // Send chunks with longer delays to ensure printer can process
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
-      console.log(`Sending chunk ${i + 1}/${chunks.length} (${chunk.byteLength} bytes)`);
       
       try {
         // Check connection before each chunk
@@ -911,12 +889,9 @@ export const printToThermalPrinter = async (
         // Try writeValue first, then writeValueWithoutResponse if it fails
         try {
           await connection.characteristic.writeValue(chunk);
-          console.log(`✅ Chunk ${i + 1} sent successfully with writeValue`);
         } catch (writeError) {
-          console.log('writeValue failed, trying writeValueWithoutResponse...');
           if ('writeValueWithoutResponse' in connection.characteristic) {
             await (connection.characteristic as any).writeValueWithoutResponse(chunk);
-            console.log(`✅ Chunk ${i + 1} sent successfully with writeValueWithoutResponse`);
           } else {
             throw writeError;
           }
@@ -941,7 +916,6 @@ export const printToThermalPrinter = async (
     // Add a final delay to ensure all data is processed by the printer
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    console.log('✅ Receipt sent to thermal printer successfully');
   } catch (error) {
     console.error('Error printing to thermal printer:', error);
     
@@ -959,7 +933,6 @@ export const printToThermalPrinter = async (
  */
 export const fetchReceiptDataForThermal = async (orderId: string): Promise<any> => {
   try {
-    console.log('🧾 Fetching receipt data for thermal printing, order:', orderId);
     
     // Fetch order data using the same RPC function as the receipt page
     const { data: receiptData, error } = await supabase.rpc('get_receipt_data', {
@@ -976,18 +949,12 @@ export const fetchReceiptDataForThermal = async (orderId: string): Promise<any> 
       throw new Error('Receipt data not found');
     }
 
-    console.log('📄 Receipt data fetched for thermal printing:', receiptData);
-    console.log('📄 Receipt data type:', typeof receiptData);
-    console.log('📄 Receipt data keys:', Object.keys(receiptData || {}));
 
     // Transform the data for thermal printing - handle nested structure from RPC function
     const orderData = receiptData.order || {};
     const storeData = receiptData.store || {};
     const orderItems = receiptData.order_items || [];
 
-    console.log('🏪 Store data:', storeData);
-    console.log('📋 Order data:', orderData);
-    console.log('📦 Order items:', orderItems);
 
     const transformedData = {
       storeName: storeData.name || 'SMART LAUNDRY POS',
@@ -1009,7 +976,6 @@ export const fetchReceiptDataForThermal = async (orderId: string): Promise<any> 
       enableQr: storeData.enable_qr || false,
     };
 
-    console.log('🔄 Transformed data:', transformedData);
     return transformedData;
   } catch (error) {
     console.error('Error fetching receipt data for thermal printing:', error);

@@ -62,13 +62,13 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]" aria-describedby="cash-payment-description">
+        <DialogHeader>
+          <DialogTitle>Pembayaran Tunai</DialogTitle>
+          <DialogDescription id="cash-payment-description">
+            Masukkan jumlah uang tunai yang diterima dari pelanggan.
+          </DialogDescription>
+        </DialogHeader>
         <form onSubmit={handleFormSubmit}>
-          <DialogHeader>
-            <DialogTitle>Pembayaran Tunai</DialogTitle>
-            <DialogDescription id="cash-payment-description">
-              Masukkan jumlah uang tunai yang diterima dari pelanggan.
-            </DialogDescription>
-          </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="text-center">
               <p className="text-sm text-muted-foreground">Total Pembayaran</p>
@@ -133,8 +133,8 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
               </div>
             )}
           </div>
-          
-          <DialogFooter>
+
+          <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Batal
             </Button>

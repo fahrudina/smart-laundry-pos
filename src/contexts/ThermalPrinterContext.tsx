@@ -43,7 +43,6 @@ export const ThermalPrinterProvider: React.FC<ThermalPrinterProviderProps> = ({ 
   useEffect(() => {
     if (printerConnection?.device) {
       const handleDisconnect = () => {
-        console.log('🔌 Bluetooth device disconnected');
         setPrinterConnection(null);
         setConnectionStatus('disconnected');
         toast.info('🔌 Thermal printer disconnected');
@@ -66,7 +65,6 @@ export const ThermalPrinterProvider: React.FC<ThermalPrinterProviderProps> = ({ 
     setLastError(null);
 
     try {
-      console.log('🔗 Connecting to thermal printer...');
       const connection = await connectThermalPrinter();
       setPrinterConnection(connection);
       setConnectionStatus('connected');
@@ -84,7 +82,6 @@ export const ThermalPrinterProvider: React.FC<ThermalPrinterProviderProps> = ({ 
 
   const disconnect = useCallback(() => {
     if (printerConnection) {
-      console.log('🔌 Disconnecting thermal printer...');
       disconnectThermalPrinter(printerConnection);
       setPrinterConnection(null);
       setConnectionStatus('disconnected');
