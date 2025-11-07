@@ -58,7 +58,7 @@ export const Login: React.FC = () => {
     if (data.password !== data.confirmPassword) {
       signUpForm.setError('confirmPassword', {
         type: 'manual',
-        message: 'Passwords do not match',
+        message: 'Kata sandi tidak cocok',
       });
       return;
     }
@@ -92,13 +92,13 @@ export const Login: React.FC = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Smart Laundry POS</CardTitle>
-          <CardDescription>Sign in to your account or register as a store owner</CardDescription>
+          <CardDescription>Masuk ke akun Anda atau daftar sebagai pemilik toko</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsTrigger value="login">Masuk</TabsTrigger>
+              <TabsTrigger value="signup">Daftar</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
@@ -108,12 +108,12 @@ export const Login: React.FC = () => {
                   <Input
                     id="login-email"
                     type="email"
-                    placeholder="Enter your email"
-                    {...loginForm.register('email', { 
-                      required: 'Email is required',
+                    placeholder="Masukkan email Anda"
+                    {...loginForm.register('email', {
+                      required: 'Email wajib diisi',
                       pattern: {
                         value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Invalid email address'
+                        message: 'Alamat email tidak valid'
                       }
                     })}
                   />
@@ -121,20 +121,20 @@ export const Login: React.FC = () => {
                     <p className="text-sm text-red-500">{loginForm.formState.errors.email.message}</p>
                   )}
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                  <Label htmlFor="login-password">Kata Sandi</Label>
                   <div className="relative">
                     <Input
                       id="login-password"
                       type={showLoginPassword ? "text" : "password"}
-                      placeholder="Enter your password"
+                      placeholder="Masukkan kata sandi Anda"
                       className="pr-10"
                       {...loginForm.register('password', {
-                        required: 'Password is required',
+                        required: 'Kata sandi wajib diisi',
                         minLength: {
                           value: 6,
-                          message: 'Password must be at least 6 characters'
+                          message: 'Kata sandi minimal 6 karakter'
                         }
                       })}
                     />
@@ -156,14 +156,14 @@ export const Login: React.FC = () => {
                     <p className="text-sm text-red-500">{loginForm.formState.errors.password.message}</p>
                   )}
                 </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+
+                <Button
+                  type="submit"
+                  className="w-full"
                   disabled={isLoading}
                 >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Sign In
+                  Masuk
                 </Button>
               </form>
             </TabsContent>
@@ -171,31 +171,31 @@ export const Login: React.FC = () => {
             <TabsContent value="signup">
               <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-fullname">Full Name</Label>
+                  <Label htmlFor="signup-fullname">Nama Lengkap</Label>
                   <Input
                     id="signup-fullname"
                     type="text"
-                    placeholder="Enter your full name"
-                    {...signUpForm.register('fullName', { 
-                      required: 'Full name is required'
+                    placeholder="Masukkan nama lengkap Anda"
+                    {...signUpForm.register('fullName', {
+                      required: 'Nama lengkap wajib diisi'
                     })}
                   />
                   {signUpForm.formState.errors.fullName && (
                     <p className="text-sm text-red-500">{signUpForm.formState.errors.fullName.message}</p>
                   )}
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="Enter your email"
-                    {...signUpForm.register('email', { 
-                      required: 'Email is required',
+                    placeholder="Masukkan email Anda"
+                    {...signUpForm.register('email', {
+                      required: 'Email wajib diisi',
                       pattern: {
                         value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Invalid email address'
+                        message: 'Alamat email tidak valid'
                       }
                     })}
                   />
@@ -203,15 +203,15 @@ export const Login: React.FC = () => {
                     <p className="text-sm text-red-500">{signUpForm.formState.errors.email.message}</p>
                   )}
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label htmlFor="signup-phone">Phone Number</Label>
+                  <Label htmlFor="signup-phone">Nomor Telepon</Label>
                   <Input
                     id="signup-phone"
                     type="tel"
-                    placeholder="Enter your phone number"
-                    {...signUpForm.register('phone', { 
-                      required: 'Phone number is required'
+                    placeholder="Masukkan nomor telepon Anda"
+                    {...signUpForm.register('phone', {
+                      required: 'Nomor telepon wajib diisi'
                     })}
                   />
                   {signUpForm.formState.errors.phone && (
@@ -220,18 +220,18 @@ export const Login: React.FC = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
+                  <Label htmlFor="signup-password">Kata Sandi</Label>
                   <div className="relative">
                     <Input
                       id="signup-password"
                       type={showSignupPassword ? "text" : "password"}
-                      placeholder="Create a password"
+                      placeholder="Buat kata sandi"
                       className="pr-10"
                       {...signUpForm.register('password', {
-                        required: 'Password is required',
+                        required: 'Kata sandi wajib diisi',
                         minLength: {
                           value: 6,
-                          message: 'Password must be at least 6 characters'
+                          message: 'Kata sandi minimal 6 karakter'
                         }
                       })}
                     />
@@ -253,17 +253,17 @@ export const Login: React.FC = () => {
                     <p className="text-sm text-red-500">{signUpForm.formState.errors.password.message}</p>
                   )}
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                  <Label htmlFor="signup-confirm-password">Konfirmasi Kata Sandi</Label>
                   <div className="relative">
                     <Input
                       id="signup-confirm-password"
                       type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Confirm your password"
+                      placeholder="Konfirmasi kata sandi Anda"
                       className="pr-10"
                       {...signUpForm.register('confirmPassword', {
-                        required: 'Please confirm your password'
+                        required: 'Silakan konfirmasi kata sandi Anda'
                       })}
                     />
                     <Button
@@ -286,13 +286,13 @@ export const Login: React.FC = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-store-name">Store Name</Label>
+                  <Label htmlFor="signup-store-name">Nama Toko</Label>
                   <Input
                     id="signup-store-name"
                     type="text"
-                    placeholder="Enter your store name"
+                    placeholder="Masukkan nama toko Anda"
                     {...signUpForm.register('storeName', {
-                      required: 'Store name is required'
+                      required: 'Nama toko wajib diisi'
                     })}
                   />
                   {signUpForm.formState.errors.storeName && (
@@ -301,13 +301,13 @@ export const Login: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-store-address">Store Address</Label>
+                  <Label htmlFor="signup-store-address">Alamat Toko</Label>
                   <Input
                     id="signup-store-address"
                     type="text"
-                    placeholder="Enter your store address"
+                    placeholder="Masukkan alamat toko Anda"
                     {...signUpForm.register('storeAddress', {
-                      required: 'Store address is required'
+                      required: 'Alamat toko wajib diisi'
                     })}
                   />
                   {signUpForm.formState.errors.storeAddress && (
@@ -316,27 +316,27 @@ export const Login: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-store-phone">Store Phone Number</Label>
+                  <Label htmlFor="signup-store-phone">Nomor Telepon Toko</Label>
                   <Input
                     id="signup-store-phone"
                     type="tel"
-                    placeholder="Enter your store phone number"
+                    placeholder="Masukkan nomor telepon toko Anda"
                     {...signUpForm.register('storePhone', {
-                      required: 'Store phone number is required'
+                      required: 'Nomor telepon toko wajib diisi'
                     })}
                   />
                   {signUpForm.formState.errors.storePhone && (
                     <p className="text-sm text-red-500">{signUpForm.formState.errors.storePhone.message}</p>
                   )}
                 </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+
+                <Button
+                  type="submit"
+                  className="w-full"
                   disabled={isLoading}
                 >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Sign Up
+                  Daftar
                 </Button>
               </form>
             </TabsContent>
@@ -344,7 +344,7 @@ export const Login: React.FC = () => {
         </CardContent>
         <CardFooter className="text-center">
           <p className="text-sm text-gray-600">
-            Secure access to your laundry management system
+            Akses aman ke sistem manajemen laundry Anda
           </p>
         </CardFooter>
       </Card>
