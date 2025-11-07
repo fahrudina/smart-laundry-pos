@@ -38,8 +38,8 @@ const initialFormData: ServiceFormData = {
 };
 
 const ServiceManagement = () => {
-  usePageTitle('Service Management');
-  
+  usePageTitle('Manajemen Layanan');
+
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingService, setEditingService] = useState<any>(null);
   const [formData, setFormData] = useState<ServiceFormData>(initialFormData);
@@ -96,8 +96,8 @@ const ServiceManagement = () => {
         await createServiceMutation.mutateAsync(service);
       }
       toast({
-        title: "Success",
-        description: "Initial services created successfully",
+        title: "Berhasil",
+        description: "Layanan awal berhasil dibuat",
       });
     } catch (error) {
       console.error('Error seeding services:', error);
@@ -122,7 +122,7 @@ const ServiceManagement = () => {
     if (!formData.name.trim()) {
       toast({
         title: "Error",
-        description: "Service name is required",
+        description: "Nama layanan wajib diisi",
         variant: "destructive",
       });
       return;
@@ -131,7 +131,7 @@ const ServiceManagement = () => {
     if (!formData.supports_unit && !formData.supports_kilo) {
       toast({
         title: "Error",
-        description: "Service must support at least one pricing method",
+        description: "Layanan harus mendukung setidaknya satu metode harga",
         variant: "destructive",
       });
       return;
@@ -140,7 +140,7 @@ const ServiceManagement = () => {
     if (formData.supports_unit && formData.unit_price <= 0) {
       toast({
         title: "Error",
-        description: "Unit price must be greater than 0",
+        description: "Harga per unit harus lebih dari 0",
         variant: "destructive",
       });
       return;
@@ -149,7 +149,7 @@ const ServiceManagement = () => {
     if (formData.supports_kilo && formData.kilo_price <= 0) {
       toast({
         title: "Error",
-        description: "Kilo price must be greater than 0",
+        description: "Harga per kilo harus lebih dari 0",
         variant: "destructive",
       });
       return;
@@ -193,7 +193,7 @@ const ServiceManagement = () => {
   };
 
   const handleDelete = async (serviceId: string) => {
-    if (!confirm('Are you sure you want to delete this service?')) {
+    if (!confirm('Apakah Anda yakin ingin menghapus layanan ini?')) {
       return;
     }
 
@@ -216,16 +216,16 @@ const ServiceManagement = () => {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Service Management</h1>
-          <p className="text-muted-foreground">Manage your laundry services and pricing</p>
+          <h1 className="text-3xl font-bold">Manajemen Layanan</h1>
+          <p className="text-muted-foreground">Kelola layanan dan harga laundry Anda</p>
         </div>
-        <Button 
-          onClick={openCreateDialog} 
+        <Button
+          onClick={openCreateDialog}
           className="flex items-center space-x-2"
           disabled={isProcessing}
         >
           <Plus className="h-4 w-4" />
-          <span>Add Service</span>
+          <span>Tambah Layanan</span>
         </Button>
       </div>
 
@@ -234,7 +234,7 @@ const ServiceManagement = () => {
         <div className="flex items-center justify-center py-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-            <p className="text-muted-foreground">Loading services...</p>
+            <p className="text-muted-foreground">Memuat layanan...</p>
           </div>
         </div>
       )}
@@ -246,9 +246,9 @@ const ServiceManagement = () => {
             <div className="flex items-center space-x-2">
               <AlertCircle className="h-5 w-5 text-red-600" />
               <div>
-                <h3 className="font-medium text-red-800">Error loading services</h3>
+                <h3 className="font-medium text-red-800">Error memuat layanan</h3>
                 <p className="text-sm text-red-600">
-                  Please try refreshing the page or contact support if the problem persists.
+                  Silakan coba refresh halaman atau hubungi dukungan jika masalah berlanjut.
                 </p>
               </div>
             </div>
@@ -263,21 +263,21 @@ const ServiceManagement = () => {
             <Card>
               <CardContent className="p-8 text-center">
                 <Settings className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-2">No services found</h3>
+                <h3 className="text-lg font-medium mb-2">Tidak ada layanan</h3>
                 <p className="text-muted-foreground mb-4">
-                  Get started by creating your first laundry service or load some sample services.
+                  Mulai dengan membuat layanan laundry pertama Anda atau muat beberapa contoh layanan.
                 </p>
                 <div className="flex justify-center gap-2">
                   <Button onClick={openCreateDialog}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Service
+                    Buat Layanan
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={seedInitialServices}
                     disabled={isProcessing}
                   >
-                    {isProcessing ? 'Loading...' : 'Load Sample Services'}
+                    {isProcessing ? 'Memuat...' : 'Muat Contoh Layanan'}
                   </Button>
                 </div>
               </CardContent>
@@ -302,7 +302,7 @@ const ServiceManagement = () => {
               <div className="space-y-2">
                 <h4 className="font-medium flex items-center">
                   <DollarSign className="h-4 w-4 mr-1" />
-                  Pricing Options
+                  Opsi Harga
                 </h4>
                 {service.supports_unit && (
                   <div className="flex justify-between text-sm">
@@ -320,8 +320,8 @@ const ServiceManagement = () => {
 
               {/* Duration */}
               <div className="flex justify-between text-sm">
-                <span>Duration:</span>
-                <span>{service.duration_value} {service.duration_unit}</span>
+                <span>Durasi:</span>
+                <span>{service.duration_value} {service.duration_unit === 'hours' ? 'jam' : 'hari'}</span>
               </div>
 
               {/* Actions */}
@@ -342,7 +342,7 @@ const ServiceManagement = () => {
                   className="flex-1 text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
+                  Hapus
                 </Button>
               </div>
             </CardContent>
@@ -370,73 +370,73 @@ const ServiceManagement = () => {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingService ? 'Edit Service' : 'Create New Service'}
+              {editingService ? 'Edit Layanan' : 'Buat Layanan Baru'}
             </DialogTitle>
           </DialogHeader>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="name">Service Name*</Label>
+                <Label htmlFor="name">Nama Layanan*</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Regular Wash"
+                  placeholder="contoh: Cuci Regular"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="category">Category*</Label>
-                <Select 
-                  value={formData.category} 
+                <Label htmlFor="category">Kategori*</Label>
+                <Select
+                  value={formData.category}
                   onValueChange={(value: any) => setFormData({ ...formData, category: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="wash">Wash</SelectItem>
+                    <SelectItem value="wash">Cuci</SelectItem>
                     <SelectItem value="dry">Dry Clean</SelectItem>
-                    <SelectItem value="ironing">Ironing</SelectItem>
-                    <SelectItem value="folding">Folding</SelectItem>
-                    <SelectItem value="special">Special</SelectItem>
+                    <SelectItem value="ironing">Setrika</SelectItem>
+                    <SelectItem value="folding">Lipat</SelectItem>
+                    <SelectItem value="special">Khusus</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Deskripsi</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Brief description of the service"
+                placeholder="Deskripsi singkat layanan"
                 rows={3}
               />
             </div>
 
             {/* Pricing Options */}
             <div className="space-y-4">
-              <h3 className="font-medium">Pricing Options</h3>
-              
+              <h3 className="font-medium">Opsi Harga</h3>
+
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="supports_unit"
                     checked={formData.supports_unit}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       setFormData({ ...formData, supports_unit: checked as boolean })
                     }
                   />
-                  <Label htmlFor="supports_unit">Support unit-based pricing</Label>
+                  <Label htmlFor="supports_unit">Mendukung harga per unit</Label>
                 </div>
-                
+
                 {formData.supports_unit && (
                   <div>
-                    <Label htmlFor="unit_price">Price per unit ($)</Label>
+                    <Label htmlFor="unit_price">Harga per unit (Rp)</Label>
                     <Input
                       id="unit_price"
                       type="number"
@@ -444,7 +444,7 @@ const ServiceManagement = () => {
                       step="0.01"
                       value={formData.unit_price || ''}
                       onChange={(e) => setFormData({ ...formData, unit_price: parseFloat(e.target.value) || 0 })}
-                      placeholder="0.00"
+                      placeholder="0"
                     />
                   </div>
                 )}
@@ -453,16 +453,16 @@ const ServiceManagement = () => {
                   <Checkbox
                     id="supports_kilo"
                     checked={formData.supports_kilo}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       setFormData({ ...formData, supports_kilo: checked as boolean })
                     }
                   />
-                  <Label htmlFor="supports_kilo">Support weight-based pricing</Label>
+                  <Label htmlFor="supports_kilo">Mendukung harga per berat</Label>
                 </div>
-                
+
                 {formData.supports_kilo && (
                   <div>
-                    <Label htmlFor="kilo_price">Price per kilogram ($)</Label>
+                    <Label htmlFor="kilo_price">Harga per kilogram (Rp)</Label>
                     <Input
                       id="kilo_price"
                       type="number"
@@ -470,7 +470,7 @@ const ServiceManagement = () => {
                       step="0.01"
                       value={formData.kilo_price || ''}
                       onChange={(e) => setFormData({ ...formData, kilo_price: parseFloat(e.target.value) || 0 })}
-                      placeholder="0.00"
+                      placeholder="0"
                     />
                   </div>
                 )}
@@ -480,7 +480,7 @@ const ServiceManagement = () => {
             {/* Duration */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="duration_value">Duration</Label>
+                <Label htmlFor="duration_value">Durasi</Label>
                 <Input
                   id="duration_value"
                   type="number"
@@ -490,17 +490,17 @@ const ServiceManagement = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="duration_unit">Unit</Label>
-                <Select 
-                  value={formData.duration_unit} 
+                <Label htmlFor="duration_unit">Satuan</Label>
+                <Select
+                  value={formData.duration_unit}
                   onValueChange={(value: any) => setFormData({ ...formData, duration_unit: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="hours">Hours</SelectItem>
-                    <SelectItem value="days">Days</SelectItem>
+                    <SelectItem value="hours">Jam</SelectItem>
+                    <SelectItem value="days">Hari</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -508,16 +508,16 @@ const ServiceManagement = () => {
 
             {/* Form Actions */}
             <div className="flex justify-end space-x-2 pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setShowCreateDialog(false)}
                 disabled={loading}
               >
-                Cancel
+                Batal
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Saving...' : editingService ? 'Update Service' : 'Create Service'}
+                {loading ? 'Menyimpan...' : editingService ? 'Perbarui Layanan' : 'Buat Layanan'}
               </Button>
             </div>
           </form>
