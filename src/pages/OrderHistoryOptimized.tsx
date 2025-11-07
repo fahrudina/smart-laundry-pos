@@ -340,17 +340,14 @@ export const OrderHistory = () => {
   }, []);
 
   const handleViewReceipt = useCallback((orderId: string) => {
-    console.log('Opening receipt for viewing:', orderId);
     openReceiptForView(orderId);
   }, []);
 
   const handlePrintReceipt = useCallback((orderId: string) => {
-    console.log('Opening receipt for printing:', orderId);
     openReceiptForPrint(orderId);
   }, []);
 
   const handleThermalPrint = useCallback((orderId: string) => {
-    console.log('Opening thermal print dialog for:', orderId);
     const order = filteredOrders.find(o => o.id === orderId);
     setThermalPrintOrder(order || null);
     setShowThermalPrintDialog(true);

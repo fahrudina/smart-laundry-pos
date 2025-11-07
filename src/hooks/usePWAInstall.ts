@@ -21,11 +21,9 @@ export const usePWAInstall = () => {
       // Stash the event so it can be triggered later
       setDeferredPrompt(e);
       setIsInstallable(true);
-      console.log('PWA install prompt available');
     };
 
     const handleAppInstalled = () => {
-      console.log('PWA was installed');
       setIsInstalled(true);
       setIsInstallable(false);
       setDeferredPrompt(null);
@@ -74,14 +72,11 @@ export const usePWAInstall = () => {
     // Wait for the user to respond to the prompt
     const { outcome } = await deferredPrompt.userChoice;
     
-    console.log(`User response to the install prompt: ${outcome}`);
     
     if (outcome === 'accepted') {
-      console.log('User accepted the install prompt');
       setIsInstallable(false);
       setDeferredPrompt(null);
     } else {
-      console.log('User dismissed the install prompt');
     }
   };
 

@@ -165,8 +165,8 @@ export const StoreSettingsCard: React.FC = () => {
                 </Label>
               </div>
               
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="space-y-1">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border rounded-lg">
+                <div className="space-y-1 flex-1">
                   <Label htmlFor="enable-qr" className="font-normal">
                     Show QR Code on Receipts
                   </Label>
@@ -179,6 +179,7 @@ export const StoreSettingsCard: React.FC = () => {
                   checked={settings.enable_qr}
                   onCheckedChange={handleQrToggle}
                   disabled={saving}
+                  className="self-start sm:self-center"
                 />
               </div>
 
@@ -209,8 +210,8 @@ export const StoreSettingsCard: React.FC = () => {
                 </Label>
               </div>
 
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="space-y-1">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border rounded-lg">
+                <div className="space-y-1 flex-1">
                   <Label htmlFor="enable-points" className="font-normal">
                     Enable Points Rewards
                   </Label>
@@ -223,6 +224,7 @@ export const StoreSettingsCard: React.FC = () => {
                   checked={settings.enable_points}
                   onCheckedChange={handlePointsToggle}
                   disabled={saving}
+                  className="self-start sm:self-center"
                 />
               </div>
 
@@ -248,10 +250,10 @@ export const StoreSettingsCard: React.FC = () => {
 
             {/* Save Button */}
             <div className="flex justify-end pt-4 border-t">
-              <Button 
-                onClick={saveSettings} 
+              <Button
+                onClick={saveSettings}
                 disabled={saving}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-full sm:w-auto"
               >
                 {saving ? (
                   <>
