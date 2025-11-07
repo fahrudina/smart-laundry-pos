@@ -175,7 +175,11 @@ export const useCreateOrderWithNotifications = () => {
         }
       })();
 
-      return order;
+      // Return order with points earned information
+      return {
+        ...order,
+        points_earned: pointsEarned,
+      };
     },
     onSuccess: () => {
       // Invalidate all order queries to refresh the data

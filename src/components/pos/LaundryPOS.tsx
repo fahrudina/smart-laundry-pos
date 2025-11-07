@@ -142,6 +142,7 @@ export const LaundryPOS = () => {
     paymentMethod: string;
     customerName: string;
     whatsAppSent: boolean;
+    pointsEarned?: number;
   } | null>(null);
   
   const navigate = useNavigate();
@@ -668,7 +669,26 @@ export const LaundryPOS = () => {
       paymentMethod: paymentMethod,
       customerName: customerName,
       whatsAppSent: true, // WhatsApp notification is sent asynchronously
+      pointsEarned: createdOrder.points_earned || 0,
     });
+    
+    // Show toast notification for points earned if applicable
+    if (createdOrder.points_earned && createdOrder.points_earned > 0) {
+      toast.success(`🎉 Pelanggan mendapat +${createdOrder.points_earned} poin!`, {
+        style: {
+          minWidth: '320px',
+          maxWidth: '500px',
+          width: '90vw',
+          padding: '16px',
+          fontSize: '16px',
+          borderRadius: '12px',
+          border: '2px solid #f59e0b',
+          backgroundColor: '#fffbeb',
+          color: '#92400e',
+        },
+        duration: 5000,
+      });
+    }
     
     // Clear the current order
     setCurrentOrder([]);
@@ -918,6 +938,7 @@ export const LaundryPOS = () => {
           paymentMethod={lastCreatedOrder.paymentMethod}
           customerName={lastCreatedOrder.customerName}
           whatsAppSent={lastCreatedOrder.whatsAppSent}
+          pointsEarned={lastCreatedOrder.pointsEarned}
           onPrintReceipt={handlePrintReceipt}
           onNewTransaction={handleNewTransaction}
         />
