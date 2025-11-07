@@ -390,11 +390,12 @@ export const EnhancedLaundryPOS = () => {
         estimated_completion: completionDate?.toISOString(),
       };
 
-      const createdOrder = await createOrderMutation.mutateAsync(orderData);
+      const result = await createOrderMutation.mutateAsync(orderData);
+      const createdOrder = result.order;
 
       // Close cash payment dialog
       setShowCashPaymentDialog(false);
-      
+
       // Show order success dialog
       showOrderSuccess(createdOrder, totalAmount, 'cash');
     } catch (error) {
@@ -445,7 +446,8 @@ export const EnhancedLaundryPOS = () => {
         estimated_completion: completionDate?.toISOString(),
       };
 
-      const createdOrder = await createOrderMutation.mutateAsync(orderData);
+      const result = await createOrderMutation.mutateAsync(orderData);
+      const createdOrder = result.order;
 
       // Show order success dialog
       showOrderSuccess(createdOrder, totalAmount, paymentMethod);

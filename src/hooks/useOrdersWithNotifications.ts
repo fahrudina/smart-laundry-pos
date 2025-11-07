@@ -175,14 +175,20 @@ export const useCreateOrderWithNotifications = () => {
         }
       })();
 
-      return order;
+      return { order, pointsEarned };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       // Invalidate all order queries to refresh the data
       queryClient.invalidateQueries({ queryKey: ORDERS_QUERY_KEY });
+
+      // Show success message with points earned information if applicable
+      const description = data.pointsEarned && data.pointsEarned > 0
+        ? `Order processed successfully. Customer earned ${data.pointsEarned} points!`
+        : "Order processed successfully";
+
       toast({
         title: "Success",
-        description: "Order processed successfully",
+        description,
       });
     },
     onError: (error) => {
