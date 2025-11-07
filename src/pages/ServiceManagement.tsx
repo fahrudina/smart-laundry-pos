@@ -38,7 +38,7 @@ const initialFormData: ServiceFormData = {
 };
 
 const ServiceManagement = () => {
-  usePageTitle('Service Management');
+  usePageTitle('Manajemen Layanan');
   
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingService, setEditingService] = useState<any>(null);
@@ -96,8 +96,8 @@ const ServiceManagement = () => {
         await createServiceMutation.mutateAsync(service);
       }
       toast({
-        title: "Success",
-        description: "Initial services created successfully",
+        title: "Berhasil",
+        description: "Layanan awal berhasil dibuat",
       });
     } catch (error) {
       console.error('Error seeding services:', error);
@@ -122,7 +122,7 @@ const ServiceManagement = () => {
     if (!formData.name.trim()) {
       toast({
         title: "Error",
-        description: "Service name is required",
+        description: "Nama layanan wajib diisi",
         variant: "destructive",
       });
       return;
@@ -131,7 +131,7 @@ const ServiceManagement = () => {
     if (!formData.supports_unit && !formData.supports_kilo) {
       toast({
         title: "Error",
-        description: "Service must support at least one pricing method",
+        description: "Layanan harus mendukung minimal satu metode harga",
         variant: "destructive",
       });
       return;
@@ -140,7 +140,7 @@ const ServiceManagement = () => {
     if (formData.supports_unit && formData.unit_price <= 0) {
       toast({
         title: "Error",
-        description: "Unit price must be greater than 0",
+        description: "Harga per unit harus lebih dari 0",
         variant: "destructive",
       });
       return;
@@ -149,7 +149,7 @@ const ServiceManagement = () => {
     if (formData.supports_kilo && formData.kilo_price <= 0) {
       toast({
         title: "Error",
-        description: "Kilo price must be greater than 0",
+        description: "Harga per kilo harus lebih dari 0",
         variant: "destructive",
       });
       return;
@@ -193,7 +193,7 @@ const ServiceManagement = () => {
   };
 
   const handleDelete = async (serviceId: string) => {
-    if (!confirm('Are you sure you want to delete this service?')) {
+    if (!confirm('Apakah Anda yakin ingin menghapus layanan ini?')) {
       return;
     }
 
@@ -216,8 +216,8 @@ const ServiceManagement = () => {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Service Management</h1>
-          <p className="text-muted-foreground">Manage your laundry services and pricing</p>
+          <h1 className="text-3xl font-bold">Manajemen Layanan</h1>
+          <p className="text-muted-foreground">Kelola layanan laundry dan harga Anda</p>
         </div>
         <Button 
           onClick={openCreateDialog} 
@@ -225,7 +225,7 @@ const ServiceManagement = () => {
           disabled={isProcessing}
         >
           <Plus className="h-4 w-4" />
-          <span>Add Service</span>
+          <span>Tambah Layanan</span>
         </Button>
       </div>
 
@@ -234,7 +234,7 @@ const ServiceManagement = () => {
         <div className="flex items-center justify-center py-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-            <p className="text-muted-foreground">Loading services...</p>
+            <p className="text-muted-foreground">Memuat layanan...</p>
           </div>
         </div>
       )}
@@ -246,7 +246,7 @@ const ServiceManagement = () => {
             <div className="flex items-center space-x-2">
               <AlertCircle className="h-5 w-5 text-red-600" />
               <div>
-                <h3 className="font-medium text-red-800">Error loading services</h3>
+                <h3 className="font-medium text-red-800">Error memuat layanan</h3>
                 <p className="text-sm text-red-600">
                   Please try refreshing the page or contact support if the problem persists.
                 </p>
