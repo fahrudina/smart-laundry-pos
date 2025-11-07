@@ -83,6 +83,7 @@ export const PublicReceiptPage: React.FC = () => {
             address: receiptResponse.store.address || 'Alamat belum diset',
             phone: receiptResponse.store.phone || 'Nomor telepon belum diset',
             enable_qr: receiptResponse.store.enable_qr || false,
+            enable_points: receiptResponse.store.enable_points || false,
           });
           console.log('✅ Store info from receipt function:', receiptResponse.store);
         } else {
@@ -92,6 +93,7 @@ export const PublicReceiptPage: React.FC = () => {
             address: 'Alamat belum diset',
             phone: 'Nomor telepon belum diset',
             enable_qr: false,
+            enable_points: false,
           });
           console.log('⚠️ No store data found, using fallback');
         }
