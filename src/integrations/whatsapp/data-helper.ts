@@ -10,7 +10,6 @@ export class WhatsAppDataHelper {
    */
   static async getStoreInfo(storeId?: string): Promise<StoreInfo> {
     try {
-      console.log('🔍 Fetching store info for storeId:', storeId);
       
       // First, try to get all stores to debug
       const { data: allStores, error: debugError } = await supabase
@@ -18,8 +17,6 @@ export class WhatsAppDataHelper {
         .select('id, name, address, phone, is_active')
         .eq('is_active', true);
       
-      console.log('📊 All active stores:', allStores);
-      console.log('❌ Debug error:', debugError);
 
       let query = supabase
         .from('stores')
@@ -28,21 +25,17 @@ export class WhatsAppDataHelper {
 
       if (storeId) {
         query = query.eq('id', storeId);
-        console.log('🎯 Querying specific store with ID:', storeId);
       } else {
-        console.log('🔄 No storeId provided, getting first active store');
       }
 
       const { data, error } = await query.single();
 
-      console.log('📋 Store query result:', { data, error });
 
       if (error) {
         console.warn('⚠️ Failed to fetch store info:', error);
         
         // If specific store not found, try getting any active store
         if (storeId && error.code === 'PGRST116') {
-          console.log('🔄 Specific store not found, trying to get any active store...');
           const { data: fallbackData, error: fallbackError } = await supabase
             .from('stores')
             .select('name, address, phone')
@@ -51,7 +44,6 @@ export class WhatsAppDataHelper {
             .single();
           
           if (!fallbackError && fallbackData) {
-            console.log('✅ Found fallback store:', fallbackData);
             return {
               name: fallbackData.name || 'Smart Laundry POS',
               address: fallbackData.address || 'Alamat belum diset',
@@ -61,7 +53,6 @@ export class WhatsAppDataHelper {
         }
         
         // Return default store info as fallback
-        console.log('🔧 Using default fallback store info');
         return {
           name: 'Smart Laundry POS',
           address: 'Alamat belum diset - silakan update di pengaturan toko',
@@ -69,7 +60,6 @@ export class WhatsAppDataHelper {
         };
       }
 
-      console.log('✅ Successfully fetched store info:', data);
       return {
         name: data.name || 'Smart Laundry POS',
         address: data.address || 'Alamat belum diset - silakan update di pengaturan toko',
@@ -90,10 +80,8 @@ export class WhatsAppDataHelper {
    * Get store info from store context data (alternative method)
    */
   static getStoreInfoFromContext(storeData: any): StoreInfo {
-    console.log('🏪 Getting store info from context:', storeData);
     
     if (!storeData) {
-      console.log('⚠️ No store data provided from context');
       return {
         name: 'Smart Laundry POS',
         address: 'Alamat belum diset - silakan update di pengaturan toko',

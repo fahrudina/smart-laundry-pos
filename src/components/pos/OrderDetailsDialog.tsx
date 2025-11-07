@@ -1,7 +1,6 @@
 import React from 'react';
-import { X, Calendar, User, Phone, CreditCard, AlertTriangle } from 'lucide-react';
+import { Calendar, User, Phone, CreditCard, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatDateLong, isDateOverdue } from '@/lib/utils';
@@ -57,14 +56,9 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span className="text-lg sm:text-xl">Order Details</span>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Order Details</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 sm:space-y-6">

@@ -81,7 +81,6 @@ export const useWhatsApp = () => {
     }
 
     if (whatsAppFeatures.developmentMode) {
-      console.log('DEV MODE - Order created notification:', { phoneNumber, orderData });
       return { success: true, messageId: 'dev-mode-id' };
     }
 
@@ -124,12 +123,10 @@ export const useWhatsApp = () => {
   //   orderData: OrderCompletedData
   // ): Promise<NotificationResult> => {
   //   if (!whatsAppFeatures.notifyOnOrderCompleted) {
-  //     console.log('Order completed notifications disabled');
   //     return { success: false, error: 'Feature disabled' };
   //   }
 
   //   if (whatsAppFeatures.developmentMode) {
-  //     console.log('DEV MODE - Order completed notification:', { phoneNumber, orderData });
   //     return { success: true, messageId: 'dev-mode-id' };
   //   }
 
@@ -142,7 +139,6 @@ export const useWhatsApp = () => {
   //     const result = await whatsAppService.notifyOrderCompleted(phoneNumber, orderData);
       
   //     if (result.success) {
-  //       console.log('Order completed notification sent successfully');
   //     } else {
   //       console.error('Failed to send order completed notification:', result.error);
   //     }
@@ -169,7 +165,6 @@ export const useWhatsApp = () => {
     }
 
     if (whatsAppFeatures.developmentMode) {
-      console.log('DEV MODE - Order ready for pickup notification:', { phoneNumber, orderData });
       return { success: true, messageId: 'dev-mode-id' };
     }
 
@@ -182,7 +177,6 @@ export const useWhatsApp = () => {
       const result = await whatsAppService.notifyOrderReadyForPickup(phoneNumber, orderData);
       
       if (result.success) {
-        console.log('Order ready for pickup notification sent successfully');
       } else {
         console.error('Failed to send order ready for pickup notification:', result.error);
       }
@@ -205,7 +199,6 @@ export const useWhatsApp = () => {
     message: string
   ): Promise<NotificationResult> => {
     if (whatsAppFeatures.developmentMode) {
-      console.log('DEV MODE - Custom message:', { phoneNumber, message });
       return { success: true, messageId: 'dev-mode-id' };
     }
 

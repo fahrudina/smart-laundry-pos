@@ -146,127 +146,125 @@ export const AppHeader: React.FC = () => {
           </div>
 
           {/* Primary Navigation - Desktop */}
-          <nav className="hidden lg:flex items-center space-x-3">
+          <nav className="hidden lg:flex items-center space-x-1">
             <Button
               variant={isOnHome ? "default" : "ghost"}
               size="sm"
               onClick={handleHomeNavigation}
-              className={`flex items-center gap-2 ${
-                isOnHome 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+              className={`flex items-center gap-1.5 px-3 ${
+                isOnHome
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <Home className="h-4 w-4" />
-              <span className="hidden lg:inline">Home</span>
+              <span>Home</span>
             </Button>
-            
+
             <Button
               variant={isOnPOS ? "default" : "ghost"}
               size="sm"
               onClick={handlePOSNavigation}
-              className={`flex items-center gap-2 ${
-                isOnPOS 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+              className={`flex items-center gap-1.5 px-3 ${
+                isOnPOS
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden lg:inline">New Order</span>
+              <span>New Order</span>
             </Button>
-            
+
             <Button
               variant={isOnHistory ? "default" : "ghost"}
               size="sm"
               onClick={handleHistoryNavigation}
-              className={`flex items-center gap-2 ${
-                isOnHistory 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+              className={`flex items-center gap-1.5 px-3 ${
+                isOnHistory
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <History className="h-4 w-4" />
-              <span className="hidden lg:inline">History</span>
+              <span>History</span>
             </Button>
 
             <Button
               variant={isOnCustomers ? "default" : "ghost"}
               size="sm"
               onClick={handleCustomersNavigation}
-              className={`flex items-center gap-2 ${
-                isOnCustomers 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+              className={`flex items-center gap-1.5 px-3 ${
+                isOnCustomers
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <Users className="h-4 w-4" />
-              <span className="hidden lg:inline">Customers</span>
+              <span>Customers</span>
             </Button>
 
-            {/* Owner-only Navigation */}
+            {/* Owner-only Navigation - Consolidated Dropdown */}
             {isOwner && (
-              <>
-                <Button
-                  variant={location.pathname === '/services' ? "default" : "ghost"}
-                  size="sm"
-                  onClick={handleServicesNavigation}
-                  className={`flex items-center gap-2 ${
-                    location.pathname === '/services'
-                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                >
-                  <Wrench className="h-4 w-4" />
-                  <span className="hidden lg:inline">Services</span>
-                </Button>
-                
-                <Button
-                  variant={location.pathname === '/stores' ? "default" : "ghost"}
-                  size="sm"
-                  onClick={handleStoresNavigation}
-                  className={`flex items-center gap-2 ${
-                    location.pathname === '/stores'
-                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                >
-                  <Building2 className="h-4 w-4" />
-                  <span className="hidden lg:inline">Stores</span>
-                </Button>
-                
-                <Button
-                  variant={location.pathname === '/whatsapp-broadcast' ? "default" : "ghost"}
-                  size="sm"
-                  onClick={handleWhatsAppBroadcastNavigation}
-                  className={`flex items-center gap-2 ${
-                    location.pathname === '/whatsapp-broadcast'
-                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  <span className="hidden xl:inline">Broadcast</span>
-                </Button>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant={['/services', '/stores', '/whatsapp-broadcast'].includes(location.pathname) ? "default" : "ghost"}
+                    size="sm"
+                    className={`flex items-center gap-1.5 px-3 ${
+                      ['/services', '/stores', '/whatsapp-broadcast'].includes(location.pathname)
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Manage</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Management</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleServicesNavigation}>
+                    <Wrench className="h-4 w-4 mr-2" />
+                    Services
+                    {location.pathname === '/services' && (
+                      <Check className="h-4 w-4 ml-auto text-blue-600" />
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleStoresNavigation}>
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Store Management
+                    {location.pathname === '/stores' && (
+                      <Check className="h-4 w-4 ml-auto text-blue-600" />
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleWhatsAppBroadcastNavigation}>
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    WhatsApp Broadcast
+                    {location.pathname === '/whatsapp-broadcast' && (
+                      <Check className="h-4 w-4 ml-auto text-blue-600" />
+                    )}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </nav>
 
           {/* Right Section */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="flex items-center gap-2">
             {/* Store Selector for Owners */}
             {isOwner && (
-              <div className="hidden md:block">
+              <div className="hidden lg:block">
                 <StoreSelector />
               </div>
             )}
 
             {/* Quick Actions */}
-            <div className="hidden sm:flex items-center">
+            <div className="hidden sm:flex">
               <AddCustomerDialog
                 trigger={
-                  <Button variant="default" size="sm" className="h-9 px-2 sm:px-3 bg-blue-600 text-white hover:bg-blue-700">
-                    <UserPlus className="h-4 w-4" />
-                    <span className="hidden lg:ml-2 lg:inline">Add Customer</span>
+                  <Button variant="default" size="sm" className="h-9 px-3 bg-blue-600 text-white hover:bg-blue-700">
+                    <UserPlus className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Add Customer</span>
                   </Button>
                 }
               />
@@ -312,7 +310,6 @@ export const AppHeader: React.FC = () => {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log('AppHeader: Mobile store switch to:', store.store_name, store.store_id);
                           switchStore(store.store_id);
                         }}
                         className="flex items-start gap-3 cursor-pointer p-3"

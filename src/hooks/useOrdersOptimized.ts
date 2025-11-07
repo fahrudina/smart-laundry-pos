@@ -84,16 +84,12 @@ export const useOrdersInfinite = (filters?: OrderFilters) => {
     queryFn: async ({ pageParam = 0 }) => {
       try {
         if (!currentStore) {
-          console.log('No current store selected, returning empty result');
           return { data: [], count: 0, nextCursor: null, hasNextPage: false };
         }
 
         const from = pageParam * PAGE_SIZE;
         const to = from + PAGE_SIZE - 1;
 
-        console.log('Attempting to query orders table...');
-        console.log('Query filters:', filters);
-        console.log('Current store:', currentStore);
 
         // First, try a simple query without joins to test basic connectivity
         const { data: testData, error: testError } = await supabase
@@ -102,7 +98,6 @@ export const useOrdersInfinite = (filters?: OrderFilters) => {
           .eq('store_id', currentStore.store_id)
           .limit(1);
 
-        console.log('Test query result:', { testData, testError });
 
         if (testError) {
           console.error('Test query failed:', testError);
@@ -143,7 +138,6 @@ export const useOrdersInfinite = (filters?: OrderFilters) => {
         if (filters?.searchTerm) {
           // Search in customer name, phone, order ID with case-insensitive matching
           const searchPattern = filters.searchTerm.toLowerCase().trim();
-          console.log('Search pattern:', searchPattern);
           
           // Build comprehensive phone search patterns
           let phoneSearchQueries = [`customer_phone.ilike.%${searchPattern}%`];
@@ -199,14 +193,11 @@ export const useOrdersInfinite = (filters?: OrderFilters) => {
             ...phoneSearchQueries
           ].join(',');
           
-          console.log('Phone search variations:', phoneSearchQueries);
-          console.log('Full search query:', searchQuery);
           query = query.or(searchQuery);
         }
 
         const { data, error, count } = await query;
         
-        console.log('Query result:', { data, error, count });
         
         if (error) {
           console.error('Supabase query error:', error);
@@ -429,7 +420,6 @@ export const useOrdersByCustomer = (customerPhone: string) => {
     queryKey: [...ORDERS_QUERY_KEY, 'customer', customerPhone, currentStore?.store_id],
     queryFn: async () => {
       if (!currentStore) {
-        console.log('No current store selected, returning empty result');
         return [];
       }
 
