@@ -38,7 +38,7 @@ interface SortState {
 
 export const OrderHistory = () => {
   const navigate = useNavigate();
-  usePageTitle('Order History');
+  usePageTitle('Riwayat Pesanan');
   const { isOwner } = useStore();
   
   const [searchTerm, setSearchTerm] = useState('');

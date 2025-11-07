@@ -59,7 +59,7 @@ export const EditCustomerDialog = ({
     if (!formData.name.trim() || !formData.phone.trim()) {
       toast({
         title: "Error",
-        description: "Name and phone number are required",
+        description: "Nama dan nomor telepon wajib diisi",
         variant: "destructive",
       });
       return;
@@ -84,8 +84,8 @@ export const EditCustomerDialog = ({
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Customer updated successfully",
+        title: "Berhasil",
+        description: "Pelanggan berhasil diperbarui",
       });
 
       onOpenChange(false);
@@ -93,7 +93,7 @@ export const EditCustomerDialog = ({
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to update customer",
+        description: error.message || "Gagal memperbarui pelanggan",
         variant: "destructive",
       });
     } finally {
@@ -109,32 +109,32 @@ export const EditCustomerDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] max-w-[425px] max-h-[90vh] overflow-y-auto mx-4 my-8">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">Edit Customer</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Edit Pelanggan</DialogTitle>
           <DialogDescription>
-            Update customer information
+            Perbarui informasi pelanggan
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pb-2">
           <div className="space-y-2">
-            <Label htmlFor="edit-name" className="text-sm font-medium">Name *</Label>
+            <Label htmlFor="edit-name" className="text-sm font-medium">Nama *</Label>
             <Input
               id="edit-name"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="Customer name"
+              placeholder="Nama pelanggan"
               required
               className="h-11 text-base"
               autoComplete="name"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit-phone" className="text-sm font-medium">Phone Number *</Label>
+            <Label htmlFor="edit-phone" className="text-sm font-medium">Nomor Telepon *</Label>
             <Input
               id="edit-phone"
               type="tel"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder="Phone number"
+              placeholder="Nomor telepon"
               required
               className="h-11 text-base"
               autoComplete="tel"
@@ -147,18 +147,18 @@ export const EditCustomerDialog = ({
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              placeholder="Email address"
+              placeholder="Alamat email"
               className="h-11 text-base"
               autoComplete="email"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit-address" className="text-sm font-medium">Address</Label>
+            <Label htmlFor="edit-address" className="text-sm font-medium">Alamat</Label>
             <Input
               id="edit-address"
               value={formData.address}
               onChange={(e) => handleInputChange('address', e.target.value)}
-              placeholder="Customer address"
+              placeholder="Alamat pelanggan"
               className="h-11 text-base"
               autoComplete="address-line1"
             />
@@ -170,14 +170,14 @@ export const EditCustomerDialog = ({
               onClick={() => onOpenChange(false)} 
               className="flex-1 h-11 text-base"
             >
-              Cancel
+              Batal
             </Button>
             <Button 
               type="submit" 
               disabled={loading || !formData.name.trim() || !formData.phone.trim()} 
               className="flex-1 h-11 text-base"
             >
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
             </Button>
           </div>
         </form>

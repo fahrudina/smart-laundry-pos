@@ -38,9 +38,9 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
   };
 
   const getPaymentMethodDisplay = (method: string | null) => {
-    if (!method) return 'Not specified';
+    if (!method) return 'Tidak ditentukan';
     switch (method) {
-      case 'cash': return 'Cash';
+      case 'cash': return 'Tunai';
       case 'qris': return 'QRIS';
       case 'transfer': return 'Transfer';
       default: return method;
@@ -60,7 +60,7 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
       <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span className="text-lg sm:text-xl">Order Details</span>
+            <span className="text-lg sm:text-xl">Detail Pesanan</span>
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
@@ -81,15 +81,15 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
             </div>
             <div className="flex flex-wrap gap-2">
               <Badge className={getExecutionStatusColor(order.execution_status)}>
-                <span className="hidden sm:inline">Execution: </span>{order.execution_status}
+                <span className="hidden sm:inline">Eksekusi: </span>{order.execution_status}
               </Badge>
               <Badge className={getPaymentStatusColor(order.payment_status)}>
-                <span className="hidden sm:inline">Payment: </span>{order.payment_status}
+                <span className="hidden sm:inline">Pembayaran: </span>{order.payment_status}
               </Badge>
               {isOrderOverdue(order) && (
                 <Badge variant="destructive" className="flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
-                  Overdue
+                  Terlambat
                 </Badge>
               )}
             </div>
@@ -102,7 +102,7 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
             <div className="space-y-3">
               <h3 className="font-semibold flex items-center text-base sm:text-lg">
                 <User className="h-4 w-4 mr-2" />
-                Customer Information
+                Informasi Pelanggan
               </h3>
               <div className="space-y-2">
                 <p className="text-muted-foreground text-sm sm:text-base">{order.customer_name}</p>
@@ -119,15 +119,15 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
               </h3>
               <div className="space-y-2">
                 <div className="text-sm sm:text-base">
-                  <span className="font-medium text-muted-foreground">Drop-off: </span>
+                  <span className="font-medium text-muted-foreground">Masuk: </span>
                   <span>
                     {order.order_date ? formatDateLong(order.order_date) : formatDateLong(order.created_at)}
                   </span>
                 </div>
                 <div className="text-sm sm:text-base">
-                  <span className="font-medium text-muted-foreground">Est. Completion: </span>
+                  <span className="font-medium text-muted-foreground">Est. Selesai: </span>
                   <span className={`${isOrderOverdue(order) ? 'text-red-600 font-medium' : ''}`}>
-                    {order.estimated_completion ? formatDateLong(order.estimated_completion) : 'Not specified'}
+                    {order.estimated_completion ? formatDateLong(order.estimated_completion) : 'Tidak ditentukan'}
                   </span>
                   {isOrderOverdue(order) && (
                     <AlertTriangle className="h-3 w-3 inline ml-1 text-red-600" />
@@ -143,7 +143,7 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
           <div className="space-y-3 sm:space-y-4">
             <h3 className="font-semibold flex items-center text-base sm:text-lg">
               <CreditCard className="h-4 w-4 mr-2" />
-              Payment Information
+              Informasi Pembayaran
             </h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-3">
@@ -154,20 +154,20 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                   </Badge>
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Method: </span>
+                  <span className="text-sm font-medium text-muted-foreground">Metode: </span>
                   <span className="text-sm sm:text-base">{getPaymentMethodDisplay(order.payment_method)}</span>
                 </div>
               </div>
               <div className="space-y-3">
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Total Amount: </span>
+                  <span className="text-sm font-medium text-muted-foreground">Total: </span>
                   <div className="text-lg sm:text-xl font-bold text-primary">
                     Rp{order.total_amount.toLocaleString('id-ID')}
                   </div>
                 </div>
                 {order.payment_amount && order.payment_amount !== order.total_amount && (
                   <div>
-                    <span className="text-sm font-medium text-muted-foreground">Amount Paid: </span>
+                    <span className="text-sm font-medium text-muted-foreground">Jumlah Dibayar: </span>
                     <div className="text-lg sm:text-xl font-semibold text-green-600">
                       Rp{order.payment_amount.toLocaleString('id-ID')}
                     </div>
@@ -187,7 +187,7 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
 
           {/* Order Items */}
           <div>
-            <h3 className="font-semibold mb-3 sm:mb-4 text-base sm:text-lg">Order Items</h3>
+            <h3 className="font-semibold mb-3 sm:mb-4 text-base sm:text-lg">Item Pesanan</h3>
             <div className="space-y-3 sm:space-y-4">
               {order.order_items?.map((item: any, index: number) => (
                 <div key={index} className="p-3 sm:p-4 bg-secondary rounded-lg">
@@ -207,15 +207,15 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                         
                         {/* Service type specific details */}
                         {item.service_type === 'kilo' && item.weight_kg && (
-                          <p>Weight: {item.weight_kg} kg</p>
+                          <p>Berat: {item.weight_kg} kg</p>
                         )}
                         
                         {item.service_type === 'combined' && (
                           <div className="space-y-1">
-                            {item.weight_kg && <p>Weight: {item.weight_kg} kg</p>}
+                            {item.weight_kg && <p>Berat: {item.weight_kg} kg</p>}
                             {item.unit_items && item.unit_items.length > 0 && (
                               <div>
-                                <p className="font-medium">Unit Items:</p>
+                                <p className="font-medium">Item per Unit:</p>
                                 <div className="ml-2 space-y-1">
                                   {item.unit_items.map((unitItem: any, unitIndex: number) => (
                                     <p key={unitIndex} className="text-xs">
@@ -230,7 +230,7 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                         
                         {item.service_type === 'unit' && item.unit_items && item.unit_items.length > 0 && (
                           <div>
-                            <p className="font-medium">Unit Items:</p>
+                            <p className="font-medium">Item per Unit:</p>
                             <div className="ml-2 space-y-1">
                               {item.unit_items.map((unitItem: any, unitIndex: number) => (
                                 <p key={unitIndex} className="text-xs">
@@ -243,7 +243,7 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
 
                         {item.estimated_completion && (
                           <p className="text-xs">
-                            Ready by: {formatDateLong(item.estimated_completion)}
+                            Siap pada: {formatDateLong(item.estimated_completion)}
                           </p>
                         )}
                       </div>
