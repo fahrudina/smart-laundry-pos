@@ -32,8 +32,8 @@ export const CreateStoreDialog: React.FC<CreateStoreDialogProps> = ({ onStoreCre
     try {
       await authService.createStore(formData);
       toast({
-        title: "Success",
-        description: "Store created successfully!",
+        title: "Berhasil",
+        description: "Toko berhasil dibuat!",
       });
       setOpen(false);
       setFormData({
@@ -47,7 +47,7 @@ export const CreateStoreDialog: React.FC<CreateStoreDialogProps> = ({ onStoreCre
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create store",
+        description: error instanceof Error ? error.message : "Gagal membuat toko",
         variant: "destructive",
       });
     } finally {
@@ -64,74 +64,74 @@ export const CreateStoreDialog: React.FC<CreateStoreDialogProps> = ({ onStoreCre
       <DialogTrigger asChild>
         <Button className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
-          Create Store
+          Buat Toko
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Store</DialogTitle>
+          <DialogTitle>Buat Toko Baru</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Store Name *</Label>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nama Toko *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="Enter store name"
+              placeholder="Masukkan nama toko"
               required
             />
           </div>
-          
-          <div>
-            <Label htmlFor="description">Description</Label>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Deskripsi</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Store description (optional)"
+              placeholder="Deskripsi toko (opsional)"
               rows={3}
             />
           </div>
-          
-          <div>
-            <Label htmlFor="address">Address</Label>
+
+          <div className="space-y-2">
+            <Label htmlFor="address">Alamat</Label>
             <Textarea
               id="address"
               value={formData.address}
               onChange={(e) => handleInputChange('address', e.target.value)}
-              placeholder="Store address (optional)"
+              placeholder="Alamat toko (opsional)"
               rows={2}
             />
           </div>
-          
-          <div>
-            <Label htmlFor="phone">Phone</Label>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Nomor Telepon</Label>
             <Input
               id="phone"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder="Store phone number (optional)"
+              placeholder="Nomor telepon toko (opsional)"
             />
           </div>
-          
-          <div>
+
+          <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              placeholder="Store email (optional)"
+              placeholder="Email toko (opsional)"
             />
           </div>
-          
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">
+              Batal
             </Button>
-            <Button type="submit" disabled={loading || !formData.name.trim()}>
-              {loading ? 'Creating...' : 'Create Store'}
+            <Button type="submit" disabled={loading || !formData.name.trim()} className="w-full sm:w-auto">
+              {loading ? 'Membuat...' : 'Buat Toko'}
             </Button>
           </div>
         </form>
