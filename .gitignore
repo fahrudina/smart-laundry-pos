@@ -29,3 +29,6 @@ public/favicon-generator.html
 # environment variables
 .env
 .env.local
+
+
+research/

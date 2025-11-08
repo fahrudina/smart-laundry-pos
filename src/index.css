@@ -376,14 +376,22 @@ All colors MUST be HSL.
   /* Thermal printer specific styles */
   .thermal-receipt {
     font-family: 'Courier New', monospace;
-    width: 80mm;
-    max-width: 80mm;
+    width: 100%; /* Full width on screen */
+    max-width: 100%; /* Full width on screen */
     font-size: 9px; /* Reduced from 11px */
     line-height: 1.2; /* Reduced from 1.3 */
     color: black;
     background: white;
     overflow: hidden; /* Prevent overflow */
     box-sizing: border-box;
+  }
+
+  /* Only apply 80mm width during printing */
+  @media print {
+    .thermal-receipt {
+      width: 80mm !important;
+      max-width: 80mm !important;
+    }
   }
 
   .thermal-receipt .center {

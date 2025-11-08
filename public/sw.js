@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smart-laundry-pos-v2';
+const CACHE_NAME = 'smart-laundry-pos-v3';
 const OFFLINE_URL = '/offline.html';
 
 const urlsToCache = [
@@ -67,14 +67,17 @@ self.addEventListener('fetch', (event) => {
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
-            
-            // Clone and cache the response
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-            
+
+            // Only cache GET requests (service workers cannot cache POST, PUT, DELETE, etc.)
+            if (event.request.method === 'GET') {
+              // Clone and cache the response
+              const responseToCache = response.clone();
+              caches.open(CACHE_NAME)
+                .then((cache) => {
+                  cache.put(event.request, responseToCache);
+                });
+            }
+
             return response;
           }).catch(() => {
             // Return offline fallback for images
