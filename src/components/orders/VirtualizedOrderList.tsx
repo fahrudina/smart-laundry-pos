@@ -102,23 +102,23 @@ const OrderItem = memo(({ index, style, data }: {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground mb-3">
                 <div className="truncate">
-                  <span className="font-medium">Phone: </span>
+                  <span className="font-medium">Telepon: </span>
                   {order.customer_phone}
                 </div>
                 <div className="truncate">
-                  <span className="font-medium">Order ID: </span>
+                  <span className="font-medium">ID Pesanan: </span>
                   {order.id.slice(-8)}
                 </div>
                 <div className="truncate">
-                  <span className="font-medium">Created: </span>
+                  <span className="font-medium">Dibuat: </span>
                   {formatDate(order.created_at)}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground mb-3">
                 <div>
-                  <span className="font-medium">Items: </span>
-                  {order.order_items?.length || 0} items
+                  <span className="font-medium">Item: </span>
+                  {order.order_items?.length || 0} item
                 </div>
                 <div>
                   <span className="font-medium">Total: </span>
@@ -139,7 +139,7 @@ const OrderItem = memo(({ index, style, data }: {
                     className="flex items-center justify-center space-x-1 text-xs"
                   >
                     <Eye className="h-3 w-3" />
-                    <span>View</span>
+                    <span>Lihat</span>
                   </Button>
 
                   {data.onViewReceipt && (
@@ -150,50 +150,22 @@ const OrderItem = memo(({ index, style, data }: {
                       className="flex items-center justify-center space-x-1 text-xs border-blue-200 text-blue-700 hover:bg-blue-50"
                     >
                       <Receipt className="h-3 w-3" />
-                      <span>Receipt</span>
+                      <span>Struk</span>
                     </Button>
                   )}
                 </div>
 
                 {/* Row 2: Print Actions */}
-                {(data.onPrintReceipt || data.onPrintThermal || data.onExportReceiptPDF) && (
-                  <div className="grid grid-cols-3 gap-1 sm:gap-2">
-                    {data.onPrintReceipt && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => data.onPrintReceipt!(order.id)}
-                        className="flex items-center justify-center space-x-1 text-xs border-green-200 text-green-700 hover:bg-green-50"
-                      >
-                        <Printer className="h-3 w-3" />
-                        <span className="hidden sm:inline">Print</span>
-                      </Button>
-                    )}
-
-                    {data.onPrintThermal && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => data.onPrintThermal!(order.id)}
-                        className="flex items-center justify-center space-x-1 text-xs border-blue-200 text-blue-700 hover:bg-blue-50"
-                      >
-                        <Bluetooth className="h-3 w-3" />
-                        <span className="hidden sm:inline">Thermal</span>
-                      </Button>
-                    )}
-
-                    {data.onExportReceiptPDF && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => data.onExportReceiptPDF!(order.id, order.customer_name)}
-                        className="flex items-center justify-center space-x-1 text-xs border-purple-200 text-purple-700 hover:bg-purple-50"
-                      >
-                        <Download className="h-3 w-3" />
-                        <span className="hidden sm:inline">PDF</span>
-                      </Button>
-                    )}
-                  </div>
+                {data.onPrintThermal && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => data.onPrintThermal!(order.id)}
+                    className="w-full flex items-center justify-center space-x-1 text-xs border-green-200 text-green-700 hover:bg-green-50"
+                  >
+                    <Printer className="h-3 w-3" />
+                    <span>Cetak Struk</span>
+                  </Button>
                 )}
 
                 {/* Row 3: Status Action */}
@@ -204,7 +176,7 @@ const OrderItem = memo(({ index, style, data }: {
                     onClick={() => onUpdateExecution(order.id, 'in_progress')}
                     className="w-full text-xs bg-blue-600 hover:bg-blue-700"
                   >
-                    🔄 Start Processing
+                    🔄 Mulai Proses
                   </Button>
                 )}
                 {order.execution_status === 'in_progress' && (
@@ -214,7 +186,7 @@ const OrderItem = memo(({ index, style, data }: {
                     onClick={() => onUpdateExecution(order.id, 'ready_for_pickup')}
                     className="w-full text-xs bg-orange-600 hover:bg-orange-700"
                   >
-                    📦 Ready for Pickup
+                    📦 Siap Diambil
                   </Button>
                 )}
                 {order.execution_status === 'ready_for_pickup' && (

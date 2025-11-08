@@ -145,22 +145,22 @@ export const PublicReceiptPage: React.FC = () => {
   };
 
   // Helper function to calculate price per kg safely
-  const calculatePricePerKg = (order: OrderData): number | null => {
-    if (!order.order_items || order.order_items.length === 0) {
-      return null;
-    }
+  // const calculatePricePerKg = (order: OrderData): number | null => {
+  //   if (!order.order_items || order.order_items.length === 0) {
+  //     return null;
+  //   }
     
-    const totalWeight = order.order_items.reduce(
-      (total, item) => total + (item.weight_kg || item.quantity || 0), 
-      0
-    );
+  //   const totalWeight = order.order_items.reduce(
+  //     (total, item) => total + (item.weight_kg || item.quantity || 0), 
+  //     0
+  //   );
     
-    if (totalWeight === 0) {
-      return null;
-    }
+  //   if (totalWeight === 0) {
+  //     return null;
+  //   }
     
-    return Math.round(order.subtotal / totalWeight);
-  };
+  //   return Math.round(order.subtotal / totalWeight);
+  // };
 
   if (loading) {
     return (
@@ -188,12 +188,12 @@ export const PublicReceiptPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4">
-      <div className="max-w-md mx-auto px-4">
+    <div className="min-h-screen bg-gray-50 py-2 sm:py-4 flex items-start justify-center px-0">
+      <div className="w-full max-w-md mx-auto px-2 sm:px-4">
         {/* Receipt Card */}
-        <div id="receipt-content" className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm receipt-print thermal-receipt">
+        <div id="receipt-content" className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm receipt-print thermal-receipt mx-auto">
           {/* Store Header */}
-          <div className="bg-white p-4 text-center border-b border-gray-200 receipt-section">
+          <div className="bg-white p-3 sm:p-4 text-center border-b border-gray-200 receipt-section">
             {/* Logo placeholder */}
             <div 
               className="w-16 h-16 bg-emerald-100 rounded-full mx-auto mb-3 flex items-center justify-center no-print"
@@ -204,13 +204,13 @@ export const PublicReceiptPage: React.FC = () => {
             </div>
             
             {/* Store Information */}
-            <h1 className="text-xl font-bold text-gray-800 mb-1 print-text bold center">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-800 mb-1 print-text bold center">
               {storeInfo?.name || 'Smart Laundry POS'}
             </h1>
-            <p className="text-sm text-gray-600 mb-1 print-text center">
+            <p className="text-xs sm:text-sm text-gray-600 mb-1 print-text center">
               {storeInfo?.address || 'Alamat belum diset'}
             </p>
-            <p className="text-sm text-gray-600 mb-4 print-text center">
+            <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 print-text center">
               No. HP {storeInfo?.phone || 'Nomor telepon belum diset'}
             </p>
 
@@ -245,7 +245,7 @@ export const PublicReceiptPage: React.FC = () => {
             </div>
 
             {/* Customer Information */}
-            <div className="text-left space-y-1">
+            <div className="text-center space-y-1">
               <p className="text-sm">
                 <span className="text-gray-600">Nama:</span>{' '}
                 <span className="font-medium text-gray-800">{order.customer_name}</span>
@@ -257,21 +257,21 @@ export const PublicReceiptPage: React.FC = () => {
             </div>
 
             {/* Service Type */}
-            <div className="mt-4 text-center">
-              <p className="text-lg font-bold text-gray-800 mb-1">
+            <div className="mt-3 sm:mt-4 text-center">
+              <p className="text-base sm:text-lg font-bold text-gray-800 mb-1">
                 {order.order_items[0]?.service_name || 'Layanan Kiloan'}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs sm:text-sm text-gray-500">
                 ({order.order_items[0]?.service_name?.toUpperCase() || 'KILOAN REGULER'})
               </p>
             </div>
           </div>
 
           {/* Status Section */}
-          <div className="bg-white p-4 border-b border-gray-200">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">STATUS LAYANAN</h2>
-              <span className="bg-emerald-500 text-white px-3 py-1 rounded text-sm font-medium">
+          <div className="bg-white p-3 sm:p-4 border-b border-gray-200">
+            <div className="flex justify-between items-center mb-3 sm:mb-4">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-800">STATUS LAYANAN</h2>
+              <span className="bg-emerald-500 text-white px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium">
                 {order.execution_status === 'completed' ? 'Sudah Diambil' : 
                  order.execution_status === 'ready_for_pickup' ? 'Siap Diambil' :
                  order.execution_status === 'in_progress' ? 'Sedang Dikerjakan' : 'Dalam Antrian'}
@@ -307,12 +307,12 @@ export const PublicReceiptPage: React.FC = () => {
           </div>
 
           {/* Detail Transaksi */}
-          <div className="p-4">
-            <div 
-              className="flex justify-between items-center cursor-pointer mb-4"
+          <div className="p-3 sm:p-4">
+            <div
+              className="flex justify-between items-center cursor-pointer mb-3 sm:mb-4"
               onClick={() => setShowDetails(!showDetails)}
             >
-              <h2 className="text-lg font-semibold text-gray-800">Detail Transaksi</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-800">Detail Transaksi</h2>
               {showDetails ? (
                 <ChevronUp className="h-5 w-5 text-gray-600" />
               ) : (
@@ -394,7 +394,7 @@ export const PublicReceiptPage: React.FC = () => {
 
             {/* Pricing Breakdown */}
             <div className="mt-4 space-y-2 text-sm border-t border-dashed border-gray-300 pt-4">
-              <div className="flex justify-between">
+              {/* <div className="flex justify-between">
                 <span className="text-gray-600">Harga /kg</span>
                 <span className="text-gray-800">
                   {(() => {
@@ -402,7 +402,7 @@ export const PublicReceiptPage: React.FC = () => {
                     return pricePerKg !== null ? `Rp. ${pricePerKg.toLocaleString('id-ID')}` : '-';
                   })()}
                 </span>
-              </div>
+              </div> */}
               
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal</span>
@@ -471,7 +471,7 @@ export const PublicReceiptPage: React.FC = () => {
 
           {/* Customer Points Card - Only show if store has points enabled and payment is completed */}
           {storeInfo?.enable_points && order.payment_status === 'completed' && (
-            <div className="p-4 border-t border-gray-200">
+            <div className="p-3 sm:p-4 border-t border-gray-200">
               <CustomerPointsCard
                 customerPhone={order.customer_phone}
                 showTransactions={false}
@@ -484,7 +484,7 @@ export const PublicReceiptPage: React.FC = () => {
           )}
 
           {/* Catatan Section */}
-          <div className="p-4 bg-gray-50 border-t border-gray-200">
+          <div className="p-3 sm:p-4 bg-gray-50 border-t border-gray-200">
             <h3 className="text-sm font-semibold text-gray-800 mb-3">Catatan</h3>
             <div className="text-xs text-gray-600 space-y-2">
               <p><strong>KETENTUAN :</strong></p>
