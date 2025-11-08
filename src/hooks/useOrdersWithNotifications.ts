@@ -239,9 +239,14 @@ export const useUpdateOrderStatusWithNotifications = () => {
         .eq('id', orderId)
         .single();
 
+      // Explicitly check if orderData exists, throw if not found
+      if (!orderData) {
+        throw new Error('Order not found');
+      }
+
       // Calculate and award points if payment is being changed to "completed" AND store has points enabled
       let pointsEarned = 0;
-      const wasPaymentPending = orderData?.payment_status === 'pending';
+      const wasPaymentPending = orderData.payment_status === 'pending';
       const isPaymentCompleted = paymentStatus === 'completed';
 
       if (wasPaymentPending && isPaymentCompleted && currentStore?.enable_points && orderData) {
