@@ -156,21 +156,16 @@ const OrderItem = memo(({ index, style, data }: {
                 </div>
 
                 {/* Row 2: Print Actions */}
-                {(data.onPrintReceipt || data.onPrintThermal || data.onExportReceiptPDF) && (
-                  <div className="grid grid-cols-3 gap-1 sm:gap-2">
-                    {data.onPrintThermal && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => data.onPrintThermal!(order.id)}
-                        className="flex items-center justify-center space-x-1 text-xs border-green-200 text-green-700 hover:bg-green-50"
-                      >
-                        <Printer className="h-3 w-3" />
-                        <span className="hidden sm:inline">Cetak</span>
-                      </Button>
-                    )}
-
-                  </div>
+                {data.onPrintThermal && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => data.onPrintThermal!(order.id)}
+                    className="w-full flex items-center justify-center space-x-1 text-xs border-green-200 text-green-700 hover:bg-green-50"
+                  >
+                    <Printer className="h-3 w-3" />
+                    <span>Cetak Struk</span>
+                  </Button>
                 )}
 
                 {/* Row 3: Status Action */}
@@ -201,7 +196,7 @@ const OrderItem = memo(({ index, style, data }: {
                     onClick={() => onUpdateExecution(order.id, 'completed')}
                     className="w-full text-xs bg-green-600 hover:bg-green-700"
                   >
-                    ✅ Tandai Sudah Diambil
+                    ✅ Mark as Picked Up
                   </Button>
                 )}
 
@@ -214,7 +209,7 @@ const OrderItem = memo(({ index, style, data }: {
                       onClick={() => onUpdatePayment(order.id, 'completed', 'cash')}
                       className="text-xs border-green-300 text-green-700 hover:bg-green-50"
                     >
-                      💵 Tunai
+                      💵 Cash
                     </Button>
                     <Button
                       variant="outline"
