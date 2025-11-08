@@ -46,7 +46,7 @@ export const CreateStoreDialog: React.FC<CreateStoreDialogProps> = ({ onStoreCre
       onStoreCreated();
     } catch (error) {
       toast({
-        title: "Error",
+        title: "Gagal",
         description: error instanceof Error ? error.message : "Gagal membuat toko",
         variant: "destructive",
       });
