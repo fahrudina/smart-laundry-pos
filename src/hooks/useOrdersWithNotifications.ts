@@ -200,13 +200,13 @@ export const useCreateOrderWithNotifications = () => {
 export const useUpdateOrderStatusWithNotifications = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { notifyOrderReadyForPickup } = useWhatsApp();
+  const { notifyOrderReadyForPickup, notifyOrderCreated } = useWhatsApp();
   const { currentStore } = useStore();
 
   return useMutation({
-    mutationFn: async ({ 
-      orderId, 
-      executionStatus, 
+    mutationFn: async ({
+      orderId,
+      executionStatus,
       paymentStatus,
       paymentMethod,
       paymentAmount,
@@ -232,11 +232,95 @@ export const useUpdateOrderStatusWithNotifications = () => {
             quantity,
             line_total,
             service_type,
-            weight_kg
+            weight_kg,
+            unit_items
           )
         `)
         .eq('id', orderId)
         .single();
+
+      // Explicitly check if orderData exists, throw if not found
+      if (!orderData) {
+        throw new Error('Order not found');
+      }
+
+      // Calculate and award points if payment is being changed to "completed" AND store has points enabled
+      let pointsEarned = 0;
+      const wasPaymentPending = orderData.payment_status === 'pending';
+      const isPaymentCompleted = paymentStatus === 'completed';
+
+      if (wasPaymentPending && isPaymentCompleted && currentStore?.enable_points && orderData) {
+        // Calculate points from the order items
+        orderData.order_items?.forEach((item: any) => {
+          if (item.service_type === 'kilo' && item.weight_kg) {
+            // 1 point per kg (rounded)
+            pointsEarned += Math.round(item.weight_kg);
+          } else if (item.service_type === 'unit') {
+            // 1 point per unit
+            pointsEarned += item.quantity;
+          } else if (item.service_type === 'combined') {
+            // For combined, count both weight and units
+            if (item.weight_kg) {
+              pointsEarned += Math.round(item.weight_kg);
+            }
+            pointsEarned += item.quantity;
+          }
+        });
+
+        if (pointsEarned > 0) {
+          // Update points table
+          const { data: existingPoints } = await supabase
+            .from('points')
+            .select('point_id, accumulated_points, current_points')
+            .eq('customer_phone', orderData.customer_phone)
+            .eq('store_id', currentStore?.store_id)
+            .single();
+
+          let pointId: number;
+
+          if (existingPoints) {
+            // Add to existing points
+            await supabase
+              .from('points')
+              .update({
+                accumulated_points: existingPoints.accumulated_points + pointsEarned,
+                current_points: existingPoints.current_points + pointsEarned,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('point_id', existingPoints.point_id);
+
+            pointId = existingPoints.point_id;
+          } else {
+            // Create new customer points record
+            const { data: newPoint } = await supabase
+              .from('points')
+              .insert({
+                customer_phone: orderData.customer_phone,
+                accumulated_points: pointsEarned,
+                current_points: pointsEarned,
+                store_id: currentStore?.store_id,
+              })
+              .select('point_id')
+              .single();
+
+            pointId = newPoint?.point_id;
+          }
+
+          // Create point transaction record for earning points
+          if (pointId) {
+            await supabase
+              .from('point_transactions')
+              .insert({
+                point_id: pointId,
+                order_id: orderId,
+                points_changed: pointsEarned,
+                transaction_type: 'earning',
+                transaction_date: new Date().toISOString(),
+                notes: `Points earned from order ${orderId.slice(0, 8)}`,
+              });
+          }
+        }
+      }
 
       // Update the order status
       const updateData: any = {};
@@ -246,6 +330,7 @@ export const useUpdateOrderStatusWithNotifications = () => {
       if (paymentAmount !== undefined) updateData.payment_amount = paymentAmount;
       if (paymentNotes !== undefined) updateData.payment_notes = paymentNotes;
       if (executionNotes !== undefined) updateData.execution_notes = executionNotes;
+      if (pointsEarned > 0) updateData.points_earned = pointsEarned;
 
       const { error } = await supabase
         .from('orders')
@@ -254,31 +339,33 @@ export const useUpdateOrderStatusWithNotifications = () => {
 
       if (error) throw error;
 
-      // Send WhatsApp notification for completed orders
-      // if (executionStatus === 'completed' && orderData) {
-      //   (async () => {
-      //     try {
-      //       // Use store context data directly instead of querying by ID
-      //       const storeInfo = WhatsAppDataHelper.getStoreInfoFromContext(currentStore);
-      //       const orderItems = WhatsAppDataHelper.formatOrderItems(orderData.order_items || []);
-            
-            
-      //       const notificationData: OrderCompletedData = {
-      //         orderId: orderId,
-      //         customerName: orderData.customer_name,
-      //         totalAmount: orderData.total_amount,
-      //         completedAt: WhatsAppDataHelper.formatCompletionDate(new Date().toISOString()),
-      //         orderItems,
-      //         storeInfo,
-      //       };
+      // Send WhatsApp notification when payment is completed with points earned
+      if (wasPaymentPending && isPaymentCompleted && pointsEarned > 0 && orderData) {
+        (async () => {
+          try {
+            // Use store context data directly instead of querying by ID
+            const storeInfo = WhatsAppDataHelper.getStoreInfoFromContext(currentStore);
+            const orderItems = WhatsAppDataHelper.formatOrderItems(orderData.order_items || []);
 
-      //       await notifyOrderCompleted(orderData.customer_phone, notificationData);
-      //     } catch (error) {
-      //       // Log WhatsApp notification errors but don't fail the status update
-      //       console.warn('WhatsApp notification failed:', error);
-      //     }
-      //   })();
-      // }
+            const notificationData: OrderCreatedData = {
+              orderId: orderId,
+              customerName: orderData.customer_name,
+              totalAmount: orderData.total_amount,
+              subtotal: orderData.subtotal,
+              estimatedCompletion: WhatsAppDataHelper.formatEstimatedCompletion(orderData.estimated_completion),
+              paymentStatus: 'completed',
+              orderItems,
+              storeInfo,
+              pointsEarned: pointsEarned,
+            };
+
+            await notifyOrderCreated(orderData.customer_phone, notificationData);
+          } catch (error) {
+            // Log WhatsApp notification errors but don't fail the status update
+            console.warn('WhatsApp notification failed:', error);
+          }
+        })();
+      }
 
       // Send WhatsApp notification for ready for pickup orders
       if (executionStatus === 'ready_for_pickup' && orderData) {
@@ -287,8 +374,8 @@ export const useUpdateOrderStatusWithNotifications = () => {
             // Use store context data directly instead of querying by ID
             const storeInfo = WhatsAppDataHelper.getStoreInfoFromContext(currentStore);
             const orderItems = WhatsAppDataHelper.formatOrderItems(orderData.order_items || []);
-            
-            
+
+
             const notificationData: OrderReadyForPickupData = {
               orderId: orderId,
               customerName: orderData.customer_name,
@@ -296,7 +383,7 @@ export const useUpdateOrderStatusWithNotifications = () => {
               readyAt: WhatsAppDataHelper.formatCompletionDate(new Date().toISOString()),
               orderItems,
               storeInfo,
-              paymentStatus: orderData.payment_status,
+              paymentStatus: paymentStatus || orderData.payment_status,
             };
 
             await notifyOrderReadyForPickup(orderData.customer_phone, notificationData);
@@ -307,7 +394,7 @@ export const useUpdateOrderStatusWithNotifications = () => {
         })();
       }
 
-      return { orderId, executionStatus };
+      return { orderId, executionStatus, pointsEarned };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ORDERS_QUERY_KEY });
