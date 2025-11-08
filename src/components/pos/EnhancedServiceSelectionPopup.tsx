@@ -59,6 +59,7 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [selectedServices, setSelectedServices] = useState<SelectedService[]>([]);
   const [dynamicItems, setDynamicItems] = useState<DynamicItem[]>([]);
+  const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   const { data: servicesData = [], isLoading } = useServices();
 
   // Convert ServiceData to Service format for compatibility
@@ -132,6 +133,11 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
     const existingIndex = selectedServices.findIndex(
       s => s.service.id === service.id && s.type === type
     );
+
+    // Trigger animation
+    const buttonKey = `${service.id}-${type}`;
+    setAnimatingButton(buttonKey);
+    setTimeout(() => setAnimatingButton(null), 300);
 
     if (existingIndex >= 0) {
       // Update existing service quantity
@@ -299,7 +305,7 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                             variant="outline"
                             size="sm"
                             onClick={() => addService(service, 'unit')}
-                            className="flex-1"
+                            className={`flex-1 transition-all ${animatingButton === `${service.id}-unit` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
                           >
                             <Plus className="h-3 w-3 mr-1" />
                             Tambah Satuan
@@ -310,7 +316,7 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                             variant="outline"
                             size="sm"
                             onClick={() => addService(service, 'kilo')}
-                            className="flex-1"
+                            className={`flex-1 transition-all ${animatingButton === `${service.id}-kilo` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
                           >
                             <Plus className="h-3 w-3 mr-1" />
                             Tambah Kilo
