@@ -38,7 +38,7 @@ interface SortState {
 
 export const OrderHistory = () => {
   const navigate = useNavigate();
-  usePageTitle('Order History');
+  usePageTitle('Riwayat Pesanan');
   const { isOwner } = useStore();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -388,9 +388,9 @@ export const OrderHistory = () => {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Order History</h1>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Riwayat Pesanan</h1>
                 <p className="text-sm text-muted-foreground hidden sm:block">
-                  Manage and track all customer orders
+                  Kelola dan lacak semua pesanan pelanggan
                 </p>
               </div>
             </div>
@@ -418,7 +418,7 @@ export const OrderHistory = () => {
                 className="flex items-center space-x-2"
               >
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span>Refresh</span>
+                <span>Muat Ulang</span>
               </Button>
               <Button
                 variant="default"
@@ -426,7 +426,7 @@ export const OrderHistory = () => {
                 className="flex items-center space-x-2"
               >
                 <Home className="h-4 w-4" />
-                <span>New Order</span>
+                <span>Pesanan Baru</span>
               </Button>
             </div>
           </div>
@@ -440,7 +440,7 @@ export const OrderHistory = () => {
               <div className="relative order-2 sm:order-1">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search by customer name, phone, or order ID (min 2 chars)..."
+                  placeholder="Cari berdasarkan nama pelanggan, telepon, atau ID pesanan (min 2 karakter)..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 w-full sm:w-80"
@@ -460,7 +460,7 @@ export const OrderHistory = () => {
                 )}
                 {searchTerm !== debouncedSearchTerm && (
                   <div className="absolute -bottom-6 left-0 text-xs text-muted-foreground">
-                    Searching...
+                    Mencari...
                   </div>
                 )}
               </div>
@@ -474,7 +474,7 @@ export const OrderHistory = () => {
                       className={`w-full sm:w-auto ${hasActiveFilters ? 'bg-blue-50 border-blue-200' : ''}`}
                     >
                       <Filter className="h-4 w-4 mr-2" />
-                      Filters
+                      Filter
                       {hasActiveFilters && (
                         <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
                           {Object.values(filters).filter(Boolean).length + (debouncedSearchTerm ? 1 : 0)}
@@ -486,17 +486,17 @@ export const OrderHistory = () => {
                   <PopoverContent className="w-screen max-w-sm sm:w-80" align="end" side="bottom">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium">Filters</h4>
+                        <h4 className="font-medium">Filter</h4>
                         {hasActiveFilters && (
                           <Button variant="ghost" size="sm" onClick={clearFilters}>
-                            Clear All
+                            Hapus Semua
                           </Button>
                         )}
                       </div>
 
                       <div className="space-y-3 max-h-96 overflow-y-auto">
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Execution Status</label>
+                      <label className="text-sm font-medium mb-2 block">Status Eksekusi</label>
                       <Select
                         value={pendingFilters.executionStatus}
                         onValueChange={(value) => setPendingFilters(prev => ({ ...prev, executionStatus: value }))}
@@ -505,18 +505,18 @@ export const OrderHistory = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Statuses</SelectItem>
-                          <SelectItem value="in_queue">In Queue</SelectItem>
-                          <SelectItem value="in_progress">In Progress</SelectItem>
-                          <SelectItem value="ready_for_pickup">Ready for Pickup</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                          <SelectItem value="all">Semua Status</SelectItem>
+                          <SelectItem value="in_queue">Dalam Antrian</SelectItem>
+                          <SelectItem value="in_progress">Sedang Diproses</SelectItem>
+                          <SelectItem value="ready_for_pickup">Siap Diambil</SelectItem>
+                          <SelectItem value="completed">Selesai</SelectItem>
+                          <SelectItem value="cancelled">Dibatalkan</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Payment Status</label>
+                      <label className="text-sm font-medium mb-2 block">Status Pembayaran</label>
                       <Select
                         value={pendingFilters.paymentStatus}
                         onValueChange={(value) => setPendingFilters(prev => ({ ...prev, paymentStatus: value }))}
@@ -525,17 +525,17 @@ export const OrderHistory = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Statuses</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="down_payment">Down Payment</SelectItem>
-                          <SelectItem value="completed">Paid</SelectItem>
-                          <SelectItem value="refunded">Refunded</SelectItem>
+                          <SelectItem value="all">Semua Status</SelectItem>
+                          <SelectItem value="pending">Menunggu</SelectItem>
+                          <SelectItem value="down_payment">DP</SelectItem>
+                          <SelectItem value="completed">Lunas</SelectItem>
+                          <SelectItem value="refunded">Dikembalikan</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Payment Method</label>
+                      <label className="text-sm font-medium mb-2 block">Metode Pembayaran</label>
                       <Select
                         value={pendingFilters.paymentMethod}
                         onValueChange={(value) => setPendingFilters(prev => ({ ...prev, paymentMethod: value }))}
@@ -544,8 +544,8 @@ export const OrderHistory = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Methods</SelectItem>
-                          <SelectItem value="cash">Cash</SelectItem>
+                          <SelectItem value="all">Semua Metode</SelectItem>
+                          <SelectItem value="cash">Tunai</SelectItem>
                           <SelectItem value="qris">QRIS</SelectItem>
                           <SelectItem value="transfer">Transfer</SelectItem>
                         </SelectContent>
@@ -553,7 +553,7 @@ export const OrderHistory = () => {
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Date Range</label>
+                      <label className="text-sm font-medium mb-2 block">Rentang Tanggal</label>
                       <Select
                         value={pendingFilters.dateRange}
                         onValueChange={(value) => {
@@ -568,12 +568,12 @@ export const OrderHistory = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Time</SelectItem>
-                          <SelectItem value="today">Today</SelectItem>
-                          <SelectItem value="yesterday">Yesterday</SelectItem>
-                          <SelectItem value="week">This Week</SelectItem>
-                          <SelectItem value="month">This Month</SelectItem>
-                          <SelectItem value="custom">Custom Range</SelectItem>
+                          <SelectItem value="all">Semua Waktu</SelectItem>
+                          <SelectItem value="today">Hari Ini</SelectItem>
+                          <SelectItem value="yesterday">Kemarin</SelectItem>
+                          <SelectItem value="week">Minggu Ini</SelectItem>
+                          <SelectItem value="month">Bulan Ini</SelectItem>
+                          <SelectItem value="custom">Rentang Khusus</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -581,7 +581,7 @@ export const OrderHistory = () => {
                     {/* Custom Date Range Picker - shown when custom is selected */}
                     {pendingFilters.dateRange === 'custom' && (
                       <div>
-                        <label className="text-sm font-medium mb-2 block">Select Date Range</label>
+                        <label className="text-sm font-medium mb-2 block">Pilih Rentang Tanggal</label>
                         <DateRangePicker
                           date={pendingCustomDateRange}
                           onDateChange={setPendingCustomDateRange}
@@ -598,18 +598,18 @@ export const OrderHistory = () => {
                         className="rounded"
                       />
                       <label htmlFor="overdue" className="text-sm font-medium">
-                        Show only overdue orders
+                        Tampilkan hanya pesanan terlambat
                       </label>
                     </div>
                   </div>
                       
                       {/* Apply Button */}
                       <div className="pt-3 border-t">
-                        <Button 
-                          onClick={applyFilters} 
+                        <Button
+                          onClick={applyFilters}
                           className="w-full"
                         >
-                          Apply Filters
+                          Terapkan Filter
                         </Button>
                       </div>
                     </div>
@@ -635,20 +635,20 @@ export const OrderHistory = () => {
                 {loading && filteredOrders.length === 0 ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    <span className="ml-2">Loading orders...</span>
+                    <span className="ml-2">Memuat pesanan...</span>
                   </div>
                 ) : filteredOrders.length === 0 ? (
                   <div className="text-center py-8">
                     <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No orders found</h3>
+                    <h3 className="text-lg font-medium mb-2">Tidak ada pesanan ditemukan</h3>
                     <p className="text-muted-foreground mb-4">
-                      {hasActiveFilters 
-                        ? "Try adjusting your filters or search terms" 
-                        : "No orders have been created yet"}
+                      {hasActiveFilters
+                        ? "Coba sesuaikan filter atau kata kunci pencarian"
+                        : "Belum ada pesanan yang dibuat"}
                     </p>
                     {hasActiveFilters && (
                       <Button variant="outline" onClick={clearFilters}>
-                        Clear Filters
+                        Hapus Filter
                       </Button>
                     )}
                   </div>
@@ -681,10 +681,10 @@ export const OrderHistory = () => {
                       {loading ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-                          Loading...
+                          Memuat...
                         </>
                       ) : (
-                        'Load More Orders'
+                        'Muat Lebih Banyak Pesanan'
                       )}
                     </Button>
                   </div>
@@ -693,7 +693,7 @@ export const OrderHistory = () => {
                 {/* Summary */}
                 {filteredOrders.length > 0 && (
                   <div className="text-center text-sm text-muted-foreground mt-4 mb-4">
-                    Showing {filteredOrders.length} of {totalCount} orders
+                    Menampilkan {filteredOrders.length} dari {totalCount} pesanan
                   </div>
                 )}
               </CardContent>
