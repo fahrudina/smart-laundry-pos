@@ -27,6 +27,7 @@ export const HomePage: React.FC = () => {
   const { currentStore, isOwner } = useStore();
   const { metrics, loading } = useDashboard();
   const navigate = useNavigate();
+  const { shouldShowCoachmark, hideCoachmark } = useCoachmark();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
