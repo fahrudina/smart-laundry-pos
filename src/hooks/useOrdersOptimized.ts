@@ -55,6 +55,8 @@ interface CreateOrderData {
   subtotal: number;
   tax_amount: number;
   total_amount: number;
+  discount_amount?: number;
+  points_used?: number;
   execution_status?: string;
   payment_status?: string;
   payment_method?: string;
@@ -329,7 +331,9 @@ export const useUpdatePaymentStatus = () => {
       paymentMethod, 
       paymentAmount, 
       paymentNotes,
-      cashReceived
+      cashReceived,
+      discountAmount,
+      pointsUsed
     }: {
       orderId: string;
       paymentStatus: string;
@@ -337,6 +341,8 @@ export const useUpdatePaymentStatus = () => {
       paymentAmount?: number;
       paymentNotes?: string;
       cashReceived?: number;
+      discountAmount?: number;
+      pointsUsed?: number;
     }) => {
       const { error } = await supabase
         .from('orders')
@@ -346,6 +352,8 @@ export const useUpdatePaymentStatus = () => {
           payment_amount: paymentAmount,
           payment_notes: paymentNotes,
           cash_received: cashReceived,
+          discount_amount: discountAmount,
+          points_used: pointsUsed,
         })
         .eq('id', orderId);
 

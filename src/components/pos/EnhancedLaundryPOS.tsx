@@ -348,10 +348,11 @@ export const EnhancedLaundryPOS = () => {
     }
   };
 
-  const processCashPayment = async (cashReceived: number) => {
+  const processCashPayment = async (cashReceived: number, discountAmount?: number, pointsUsed?: number) => {
     try {
       const subtotal = getTotalPrice();
-      const totalAmount = subtotal;
+      const discount = discountAmount || 0;
+      const totalAmount = Math.max(0, subtotal - discount);
       const completionDate = getOrderCompletionTime();
 
       // Combine regular order items and dynamic items
@@ -382,6 +383,8 @@ export const EnhancedLaundryPOS = () => {
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
+        discount_amount: discount,
+        points_used: pointsUsed || 0,
         execution_status: 'in_queue',
         payment_status: 'completed',
         payment_method: 'cash',
@@ -855,6 +858,7 @@ export const EnhancedLaundryPOS = () => {
         isOpen={showCashPaymentDialog}
         onClose={() => setShowCashPaymentDialog(false)}
         totalAmount={getTotalPrice()}
+        customerPhone={customerPhone}
         onSubmit={processCashPayment}
       />
 

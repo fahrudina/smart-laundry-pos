@@ -22,6 +22,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { toast } from 'sonner';
 import { DateRange } from 'react-day-picker';
 import { startOfDay, endOfDay, isWithinInterval } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FilterState {
   executionStatus: string;
@@ -39,7 +40,7 @@ interface SortState {
 export const OrderHistory = () => {
   const navigate = useNavigate();
   usePageTitle('Riwayat Pesanan');
-  const { isOwner } = useStore();
+  const { isOwner, currentStore } = useStore();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -318,21 +319,80 @@ export const OrderHistory = () => {
     });
   }, [updatePaymentMutation, orders]);
 
-  const handleCashPaymentSubmit = useCallback(async (cashReceived: number) => {
+  const handleCashPaymentSubmit = useCallback(async (cashReceived: number, discountAmount?: number, pointsUsed?: number) => {
     if (!cashPaymentOrder) return;
     
-    updatePaymentMutation.mutate({
-      orderId: cashPaymentOrder.id,
-      paymentStatus: 'completed',
-      paymentMethod: 'cash',
-      paymentAmount: cashPaymentOrder.total_amount,
-      cashReceived: cashReceived,
-    });
-    
-    // Close the dialog and clear state
-    setShowCashPaymentDialog(false);
-    setCashPaymentOrder(null);
-  }, [updatePaymentMutation, cashPaymentOrder]);
+    try {
+      // Calculate final amount after discount
+      const finalAmount = Math.max(0, cashPaymentOrder.total_amount - (discountAmount || 0));
+      
+      // Handle point redemption if points were used
+      if (pointsUsed && pointsUsed > 0 && currentStore?.enable_points) {
+        // Get customer's current points
+        const { data: pointsData, error: pointsError } = await supabase
+          .from('points')
+          .select('point_id, current_points')
+          .eq('customer_phone', cashPaymentOrder.customer_phone)
+          .eq('store_id', currentStore.store_id)
+          .maybeSingle();
+
+        if (pointsError || !pointsData) {
+          toast.error('Gagal mengambil data poin pelanggan');
+          return;
+        }
+
+        // Validate customer has enough points
+        if (pointsData.current_points < pointsUsed) {
+          toast.error(`Poin tidak cukup. Tersedia: ${pointsData.current_points} poin`);
+          return;
+        }
+
+        // Deduct points from customer's account
+        const { error: updateError } = await supabase
+          .from('points')
+          .update({
+            current_points: pointsData.current_points - pointsUsed,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('point_id', pointsData.point_id);
+
+        if (updateError) {
+          toast.error('Gagal mengurangi poin pelanggan');
+          return;
+        }
+
+        // Create redemption transaction record
+        await supabase
+          .from('point_transactions')
+          .insert({
+            point_id: pointsData.point_id,
+            order_id: cashPaymentOrder.id,
+            points_changed: -pointsUsed,
+            transaction_type: 'redemption',
+            transaction_date: new Date().toISOString(),
+            notes: `Redeemed ${pointsUsed} points for Rp${(discountAmount || 0).toLocaleString('id-ID')} discount on order ${cashPaymentOrder.id.slice(0, 8)}`,
+          });
+      }
+      
+      // Update payment status
+      updatePaymentMutation.mutate({
+        orderId: cashPaymentOrder.id,
+        paymentStatus: 'completed',
+        paymentMethod: 'cash',
+        paymentAmount: finalAmount,
+        cashReceived: cashReceived,
+        discountAmount: discountAmount,
+        pointsUsed: pointsUsed,
+      });
+      
+      // Close the dialog and clear state
+      setShowCashPaymentDialog(false);
+      setCashPaymentOrder(null);
+    } catch (error) {
+      console.error('Error processing cash payment:', error);
+      toast.error('Gagal memproses pembayaran');
+    }
+  }, [updatePaymentMutation, cashPaymentOrder, currentStore]);
 
   const handleViewOrder = useCallback((order: Order) => {
     setSelectedOrder(order);
@@ -719,6 +779,7 @@ export const OrderHistory = () => {
               setCashPaymentOrder(null);
             }}
             totalAmount={cashPaymentOrder.total_amount}
+            customerPhone={cashPaymentOrder.customer_phone}
             onSubmit={handleCashPaymentSubmit}
           />
         )}
