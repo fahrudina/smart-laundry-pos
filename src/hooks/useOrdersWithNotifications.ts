@@ -29,6 +29,8 @@ export const useCreateOrderWithNotifications = () => {
           subtotal: orderData.subtotal,
           tax_amount: orderData.tax_amount,
           total_amount: orderData.total_amount,
+          discount_amount: orderData.discount_amount || 0,
+          points_redeemed: orderData.points_redeemed || 0,
           execution_status: orderData.execution_status || 'in_queue',
           payment_status: orderData.payment_status || 'pending',
           payment_method: orderData.payment_method,
@@ -62,6 +64,45 @@ export const useCreateOrderWithNotifications = () => {
         .insert(orderItems);
 
       if (itemsError) throw itemsError;
+
+      // Deduct points if customer redeemed points for discount
+      if (orderData.points_redeemed && orderData.points_redeemed > 0 && currentStore?.enable_points) {
+        const { data: existingPoints, error: pointsError } = await supabase
+          .from('points')
+          .select('point_id, current_points')
+          .eq('customer_phone', orderData.customer_phone)
+          .eq('store_id', currentStore?.store_id)
+          .single();
+
+        if (pointsError || !existingPoints) {
+          throw new Error('Customer points not found');
+        }
+
+        if (existingPoints.current_points < orderData.points_redeemed) {
+          throw new Error('Insufficient points');
+        }
+
+        // Deduct points
+        await supabase
+          .from('points')
+          .update({
+            current_points: existingPoints.current_points - orderData.points_redeemed,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('point_id', existingPoints.point_id);
+
+        // Create point transaction record for redemption
+        await supabase
+          .from('point_transactions')
+          .insert({
+            point_id: existingPoints.point_id,
+            order_id: order.id,
+            points_changed: -orderData.points_redeemed,
+            transaction_type: 'redemption',
+            transaction_date: new Date().toISOString(),
+            notes: `Points redeemed for order ${order.id.slice(0, 8)} (Rp${orderData.discount_amount} discount)`,
+          });
+      }
 
       // Calculate and award points if payment is successful AND store has points enabled
       let pointsEarned = 0;
