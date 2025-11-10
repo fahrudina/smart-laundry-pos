@@ -4,6 +4,7 @@ import { useDashboard } from '@/hooks/useDashboard';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { Card, CardContent } from '@/components/ui/card';
+import { Coachmark, useCoachmark } from '@/components/ui/coachmark';
 import { 
   Building2, 
   Plus, 
@@ -26,6 +27,7 @@ export const HomePage: React.FC = () => {
   const { currentStore, isOwner } = useStore();
   const { metrics, loading } = useDashboard();
   const navigate = useNavigate();
+  const { shouldShowCoachmark, hideCoachmark } = useCoachmark();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -160,6 +162,9 @@ export const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Coachmark */}
+      <Coachmark open={shouldShowCoachmark} onClose={hideCoachmark} />
+      
       {/* Header with coral/salmon background */}
       <div className="bg-gradient-to-r from-rose-400 to-rose-500 text-white px-4 pt-8 pb-12 rounded-b-3xl shadow-lg">
         <h1 className="text-2xl font-bold text-center">Beranda</h1>
