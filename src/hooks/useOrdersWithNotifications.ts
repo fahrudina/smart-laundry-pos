@@ -29,6 +29,8 @@ export const useCreateOrderWithNotifications = () => {
           subtotal: orderData.subtotal,
           tax_amount: orderData.tax_amount,
           total_amount: orderData.total_amount,
+          discount_amount: orderData.discount_amount || 0,
+          points_used: orderData.points_used || 0,
           execution_status: orderData.execution_status || 'in_queue',
           payment_status: orderData.payment_status || 'pending',
           payment_method: orderData.payment_method,
@@ -62,6 +64,47 @@ export const useCreateOrderWithNotifications = () => {
         .insert(orderItems);
 
       if (itemsError) throw itemsError;
+
+      // Handle point redemption if points were used
+      if (orderData.points_used && orderData.points_used > 0 && currentStore?.enable_points) {
+        // Get customer's current points
+        const { data: pointsData, error: pointsError } = await supabase
+          .from('points')
+          .select('point_id, current_points')
+          .eq('customer_phone', orderData.customer_phone)
+          .eq('store_id', currentStore.store_id)
+          .maybeSingle();
+
+        if (pointsError || !pointsData) {
+          throw new Error('Failed to fetch customer points for redemption');
+        }
+
+        // Deduct points from customer's account
+        const { error: updateError } = await supabase
+          .from('points')
+          .update({
+            current_points: pointsData.current_points - orderData.points_used,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('point_id', pointsData.point_id);
+
+        if (updateError) {
+          throw new Error('Failed to deduct points from customer account');
+        }
+
+        // Create redemption transaction record
+        const discountAmount = orderData.discount_amount || 0;
+        await supabase
+          .from('point_transactions')
+          .insert({
+            point_id: pointsData.point_id,
+            order_id: order.id,
+            points_changed: -orderData.points_used, // Negative for redemption
+            transaction_type: 'redemption',
+            transaction_date: new Date().toISOString(),
+            notes: `Redeemed ${orderData.points_used} points for Rp${discountAmount.toLocaleString('id-ID')} discount on order ${order.id.slice(0, 8)}`,
+          });
+      }
 
       // Calculate and award points if payment is successful AND store has points enabled
       let pointsEarned = 0;
