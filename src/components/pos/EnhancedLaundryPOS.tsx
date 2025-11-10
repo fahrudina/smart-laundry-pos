@@ -38,6 +38,8 @@ export const EnhancedLaundryPOS = () => {
     whatsAppSent: boolean;
     pointsEarned?: number;
   } | null>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [pointsRedeemed, setPointsRedeemed] = useState(0);
   const [dropOffDate, setDropOffDate] = useState(() => {
     // Set to current date/time in Asia/Jakarta timezone
     const now = new Date();
@@ -348,7 +350,7 @@ export const EnhancedLaundryPOS = () => {
     }
   };
 
-  const processCashPayment = async (cashReceived: number, discountAmount: number = 0, pointsRedeemed: number = 0) => {
+  const processCashPayment = async (cashReceived: number) => {
     try {
       const subtotal = getTotalPrice();
       const totalAmount = subtotal - discountAmount;
@@ -409,7 +411,7 @@ export const EnhancedLaundryPOS = () => {
   const processNonCashPayment = async (paymentMethod: string) => {
     try {
       const subtotal = getTotalPrice();
-      const totalAmount = subtotal;
+      const totalAmount = subtotal - discountAmount;
       const completionDate = getOrderCompletionTime();
 
       // Combine regular order items and dynamic items
@@ -440,6 +442,8 @@ export const EnhancedLaundryPOS = () => {
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
+        discount_amount: discountAmount,
+        points_redeemed: pointsRedeemed,
         execution_status: 'in_queue',
         payment_status: 'completed',
         payment_method: paymentMethod,
@@ -578,7 +582,7 @@ export const EnhancedLaundryPOS = () => {
       whatsAppSent: true, // WhatsApp notification is sent asynchronously
       pointsEarned: createdOrder.points_earned || 0,
     });
-    
+
     // Show toast notification for points earned if applicable
     if (createdOrder.points_earned && createdOrder.points_earned > 0) {
       toast.success(`🎉 Pelanggan mendapat +${createdOrder.points_earned} poin!`, {
@@ -596,11 +600,13 @@ export const EnhancedLaundryPOS = () => {
         duration: 5000,
       });
     }
-    
-    // Clear the current order
+
+    // Clear the current order and discount
     setCurrentOrder([]);
     setDynamicItems([]);
-    
+    setDiscountAmount(0);
+    setPointsRedeemed(0);
+
     // Show success dialog
     setShowOrderSuccessDialog(true);
   };
@@ -850,14 +856,17 @@ export const EnhancedLaundryPOS = () => {
         updateQuantity={updateQuantity}
         removeFromOrder={removeServiceFromOrder}
         removeDynamicItem={removeDynamicItem}
+        discountAmount={discountAmount}
+        pointsRedeemed={pointsRedeemed}
+        onDiscountChange={setDiscountAmount}
+        onPointsRedeemedChange={setPointsRedeemed}
       />
 
       {/* Cash Payment Dialog */}
       <CashPaymentDialog
         isOpen={showCashPaymentDialog}
         onClose={() => setShowCashPaymentDialog(false)}
-        totalAmount={getTotalPrice()}
-        customerPhone={customerPhone}
+        totalAmount={getTotalPrice() - discountAmount}
         onSubmit={processCashPayment}
       />
 
