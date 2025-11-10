@@ -739,14 +739,29 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
     commands.push(textToBytes(' '.repeat(spacesToAdd) + subtotalText));
     commands.push(ESC_POS.CRLF);
   }
-  
+
+  // Discount (if any)
+  if (receiptData.discountAmount && receiptData.discountAmount > 0) {
+    const discountText = `Diskon: -Rp ${receiptData.discountAmount.toLocaleString('id-ID')}`;
+    const spacesToAdd = Math.max(0, paperWidth - discountText.length);
+    commands.push(textToBytes(' '.repeat(spacesToAdd) + discountText));
+    commands.push(ESC_POS.CRLF);
+
+    // Points redeemed info (if discount from points)
+    if (receiptData.pointsRedeemed && receiptData.pointsRedeemed > 0) {
+      const pointsText = `  (${receiptData.pointsRedeemed} poin ditukar)`;
+      commands.push(textToBytes(pointsText));
+      commands.push(ESC_POS.CRLF);
+    }
+  }
+
   if (receiptData.taxAmount && receiptData.taxAmount > 0) {
     const taxText = `Pajak: Rp ${receiptData.taxAmount.toLocaleString('id-ID')}`;
     const spacesToAdd = Math.max(0, paperWidth - taxText.length);
     commands.push(textToBytes(' '.repeat(spacesToAdd) + taxText));
     commands.push(ESC_POS.CRLF);
   }
-  
+
   // Total
   commands.push(ESC_POS.BOLD_ON);
   commands.push(ESC_POS.SIZE_DOUBLE_WIDTH);
@@ -968,6 +983,8 @@ export const fetchReceiptDataForThermal = async (orderId: string): Promise<any> 
       totalAmount: orderData.total_amount || 0,
       subtotal: orderData.subtotal || 0,
       taxAmount: orderData.tax_amount || 0,
+      discountAmount: orderData.discount_amount || 0,
+      pointsRedeemed: orderData.points_redeemed || 0,
       paymentMethod: orderData.payment_method || 'cash',
       paymentStatus: orderData.payment_status || 'pending',
       executionStatus: orderData.execution_status || 'in_queue',
