@@ -31,6 +31,8 @@ interface OrderData {
     line_total: number;
     service_type: string;
     weight_kg?: number;
+    category?: string;
+    item_type?: 'service' | 'product';
   }>;
 }
 
@@ -385,25 +387,64 @@ export const PublicReceiptPage: React.FC = () => {
 
             {/* Service Items - Expandable */}
             {showDetails && (
-              <div className="mt-4 space-y-3 border-t border-gray-200 pt-4">
-                <h3 className="font-medium text-gray-800 mb-3">Item Layanan:</h3>
-                {order.order_items.map((item, index) => (
-                  <div key={index} className="border-b border-gray-200 pb-3">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-800">
-                          {item.weight_kg ? `${item.weight_kg}Kg` : `${item.quantity}x`} ({item.service_name})
-                        </p>
-                        <p className="text-emerald-600 text-sm">Rp. {item.service_price.toLocaleString('id-ID')}</p>
+              <div className="mt-4 space-y-4 border-t border-gray-200 pt-4">
+                {/* Service Items Section */}
+                {order.order_items.filter(item => item.item_type !== 'product').length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                      <span className="w-1 h-4 bg-blue-500 rounded"></span>
+                      Layanan:
+                    </h3>
+                    {order.order_items
+                      .filter(item => item.item_type !== 'product')
+                      .map((item, index) => (
+                      <div key={`service-${index}`} className="border-b border-gray-200 pb-3">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-800">
+                              {item.weight_kg ? `${item.weight_kg}Kg` : `${item.quantity}x`} ({item.service_name})
+                            </p>
+                            <p className="text-emerald-600 text-sm">Rp. {item.service_price.toLocaleString('id-ID')}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-gray-800">
+                              Rp. {item.line_total.toLocaleString('id-ID')}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium text-gray-800">
-                          Rp. {item.line_total.toLocaleString('id-ID')}
-                        </p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                )}
+                
+                {/* Product Items Section */}
+                {order.order_items.filter(item => item.item_type === 'product').length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                      <span className="w-1 h-4 bg-cyan-500 rounded"></span>
+                      Produk & Barang:
+                    </h3>
+                    {order.order_items
+                      .filter(item => item.item_type === 'product')
+                      .map((item, index) => (
+                      <div key={`product-${index}`} className="border-b border-cyan-100 pb-3 bg-cyan-50/30 p-2 rounded">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-800">
+                              {item.quantity}x {item.service_name}
+                            </p>
+                            <p className="text-cyan-600 text-sm">Rp. {item.service_price.toLocaleString('id-ID')}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-gray-800">
+                              Rp. {item.line_total.toLocaleString('id-ID')}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

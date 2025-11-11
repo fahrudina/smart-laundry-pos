@@ -18,6 +18,7 @@ interface Service {
   durationValue: number;
   durationUnit: 'hours' | 'days';
   category: string;
+  itemType?: 'service' | 'product';
   supportsUnit?: boolean;
   supportsKilo?: boolean;
   kiloPrice?: number;
@@ -74,11 +75,23 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
       durationValue: serviceData.duration_value,
       durationUnit: serviceData.duration_unit,
       category: serviceData.category,
+      itemType: serviceData.item_type || 'service',
       supportsUnit: serviceData.supports_unit,
       supportsKilo: serviceData.supports_kilo,
       kiloPrice: serviceData.kilo_price,
     }));
   }, [servicesData]);
+
+  // Separate services and products
+  const serviceItems = React.useMemo(() => 
+    services.filter(s => s.itemType === 'service' || !s.itemType), 
+    [services]
+  );
+  
+  const productItems = React.useMemo(() => 
+    services.filter(s => s.itemType === 'product'), 
+    [services]
+  );
 
   // Use external state if provided, otherwise use internal state
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
@@ -119,12 +132,33 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
 
   const getCategoryColor = (category: string) => {
     switch (category) {
+      // Service categories
       case 'wash': return 'bg-blue-100 text-blue-800';
       case 'dry': return 'bg-green-100 text-green-800';
       case 'special': return 'bg-purple-100 text-purple-800';
       case 'ironing': return 'bg-orange-100 text-orange-800';
       case 'folding': return 'bg-yellow-100 text-yellow-800';
+      // Product categories
+      case 'detergent': return 'bg-cyan-100 text-cyan-800';
+      case 'perfume': return 'bg-pink-100 text-pink-800';
+      case 'softener': return 'bg-indigo-100 text-indigo-800';
+      case 'other_goods': return 'bg-teal-100 text-teal-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'wash': return 'Cuci';
+      case 'dry': return 'Kering';
+      case 'special': return 'Khusus';
+      case 'ironing': return 'Setrika';
+      case 'folding': return 'Lipat';
+      case 'detergent': return 'Deterjen';
+      case 'perfume': return 'Parfum';
+      case 'softener': return 'Pelembut';
+      case 'other_goods': return 'Produk Lainnya';
+      default: return category;
     }
   };
 
@@ -263,68 +297,131 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
             </TabsList>
             
             <TabsContent value="services" className="mt-4">
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {isLoading ? (
                   <div className="text-center py-4">Memuat layanan...</div>
                 ) : services.length > 0 ? (
-                  services.map((service) => (
-                    <Card key={service.id} className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold">{service.name}</h3>
-                            <Badge className={getCategoryColor(service.category)}>
-                              {service.category}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-gray-500 flex items-center">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Durasi: {service.duration}
-                          </p>
-                          <p className="text-xs text-green-600 font-medium">
-                            Siap: {formatDate(calculateFinishDate(service.durationValue, service.durationUnit))}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          {service.supportsUnit && service.price && (
-                            <div className="text-blue-600 font-semibold">
-                              Rp{service.price.toLocaleString('id-ID')}
+                  <>
+                    {/* Services Section */}
+                    {serviceItems.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                          <span className="w-1 h-4 bg-blue-500 rounded"></span>
+                          Layanan Laundry
+                        </h3>
+                        {serviceItems.map((service) => (
+                          <Card key={service.id} className="p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-semibold">{service.name}</h3>
+                                  <Badge className={getCategoryColor(service.category)}>
+                                    {getCategoryLabel(service.category)}
+                                  </Badge>
+                                </div>
+                                {service.durationValue > 0 && (
+                                  <>
+                                    <p className="text-xs text-gray-500 flex items-center">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Durasi: {service.duration}
+                                    </p>
+                                    <p className="text-xs text-green-600 font-medium">
+                                      Siap: {formatDate(calculateFinishDate(service.durationValue, service.durationUnit))}
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                {service.supportsUnit && service.price && (
+                                  <div className="text-blue-600 font-semibold">
+                                    Rp{service.price.toLocaleString('id-ID')}
+                                  </div>
+                                )}
+                                {service.supportsKilo && service.kiloPrice && (
+                                  <div className="text-sm text-gray-600">
+                                    Rp{service.kiloPrice.toLocaleString('id-ID')}/kg
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          )}
-                          {service.supportsKilo && service.kiloPrice && (
-                            <div className="text-sm text-gray-600">
-                              Rp{service.kiloPrice.toLocaleString('id-ID')}/kg
-                            </div>
-                          )}
-                        </div>
-                      </div>
 
-                      <div className="flex gap-2 mt-3">
-                        {service.supportsUnit && service.price && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => addService(service, 'unit')}
-                            className={`flex-1 transition-all ${animatingButton === `${service.id}-unit` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Tambah Satuan
-                          </Button>
-                        )}
-                        {service.supportsKilo && service.kiloPrice && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => addService(service, 'kilo')}
-                            className={`flex-1 transition-all ${animatingButton === `${service.id}-kilo` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Tambah Kilo
-                          </Button>
-                        )}
+                            <div className="flex gap-2 mt-3">
+                              {service.supportsUnit && service.price && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => addService(service, 'unit')}
+                                  className={`flex-1 transition-all ${animatingButton === `${service.id}-unit` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Tambah Satuan
+                                </Button>
+                              )}
+                              {service.supportsKilo && service.kiloPrice && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => addService(service, 'kilo')}
+                                  className={`flex-1 transition-all ${animatingButton === `${service.id}-kilo` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Tambah Kilo
+                                </Button>
+                              )}
+                            </div>
+                          </Card>
+                        ))}
                       </div>
-                    </Card>
-                  ))
+                    )}
+
+                    {/* Products Section */}
+                    {productItems.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                          <span className="w-1 h-4 bg-cyan-500 rounded"></span>
+                          Produk & Barang
+                        </h3>
+                        {productItems.map((product) => (
+                          <Card key={product.id} className="p-4 border-cyan-200 bg-cyan-50/30">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-semibold">{product.name}</h3>
+                                  <Badge className={getCategoryColor(product.category)}>
+                                    {getCategoryLabel(product.category)}
+                                  </Badge>
+                                </div>
+                                {product.description && (
+                                  <p className="text-xs text-gray-600">{product.description}</p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                {product.supportsUnit && product.price && (
+                                  <div className="text-cyan-700 font-semibold">
+                                    Rp{product.price.toLocaleString('id-ID')}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex gap-2 mt-3">
+                              {product.supportsUnit && product.price && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => addService(product, 'unit')}
+                                  className={`flex-1 transition-all border-cyan-300 hover:bg-cyan-100 ${animatingButton === `${product.id}-unit` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Tambah Produk
+                                </Button>
+                              )}
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <p>Tidak ada layanan tersedia.</p>
