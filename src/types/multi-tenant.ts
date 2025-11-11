@@ -82,7 +82,7 @@ export interface OrderWithStore {
   tax_amount: number;
   total_amount: number;
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  payment_status: 'pending' | 'paid' | 'refunded';
+  payment_status: 'pending' | 'completed' | 'down_payment' | 'refunded';
   store_id: string;
   created_at: string;
   updated_at: string;
