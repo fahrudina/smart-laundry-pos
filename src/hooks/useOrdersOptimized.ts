@@ -59,6 +59,8 @@ interface CreateOrderData {
   subtotal: number;
   tax_amount: number;
   total_amount: number;
+  discount_amount?: number;
+  points_redeemed?: number;
   execution_status?: string;
   payment_status?: string;
   payment_method?: string;

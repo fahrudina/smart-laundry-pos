@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { Clock, ShoppingCart, CreditCard, X, Minus, Plus, Banknote, QrCode, Smartphone } from 'lucide-react';
+import { Clock, ShoppingCart, CreditCard, X, Minus, Plus, Banknote, QrCode, Smartphone, Gift, Percent } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useCustomerPoints } from '@/hooks/useCustomerPoints';
+import { useStore } from '@/contexts/StoreContext';
 
 interface OrderItem {
   service: {
@@ -51,6 +55,10 @@ interface FloatingOrderSummaryProps {
   updateQuantity?: (serviceId: string, quantity: number, serviceType: 'unit' | 'kilo' | 'combined') => void;
   removeFromOrder?: (serviceId: string, serviceType: 'unit' | 'kilo' | 'combined') => void;
   removeDynamicItem?: (index: number) => void;
+  discountAmount: number;
+  pointsRedeemed: number;
+  onDiscountChange: (amount: number) => void;
+  onPointsRedeemedChange: (points: number) => void;
 }
 
 export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
@@ -71,8 +79,18 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
   updateQuantity,
   removeFromOrder,
   removeDynamicItem,
+  discountAmount,
+  pointsRedeemed,
+  onDiscountChange,
+  onPointsRedeemedChange,
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('cash');
+  const [discountType, setDiscountType] = useState<'custom' | 'points'>('custom');
+  const [customDiscount, setCustomDiscount] = useState('');
+  const [pointsToRedeem, setPointsToRedeem] = useState('');
+
+  const { currentStore } = useStore();
+  const { data: customerPoints } = useCustomerPoints(customerPhone);
 
   const paymentMethods = [
     { id: 'cash', name: 'Tunai', icon: Banknote, color: 'bg-green-500' },
@@ -80,13 +98,56 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
     { id: 'transfer', name: 'Transfer', icon: Smartphone, color: 'bg-purple-500' },
   ];
 
+  // Handle discount changes
+  const handleCustomDiscountChange = (value: string) => {
+    setCustomDiscount(value);
+    const amount = parseFloat(value) || 0;
+    onDiscountChange(amount);
+    onPointsRedeemedChange(0);
+  };
+
+  const handlePointsToRedeemChange = (value: string) => {
+    setPointsToRedeem(value);
+    const points = parseFloat(value) || 0;
+    const amount = points * 100;
+    onDiscountChange(amount);
+    onPointsRedeemedChange(points);
+  };
+
+  const handleDiscountTypeChange = (type: 'custom' | 'points') => {
+    setDiscountType(type);
+    if (type === 'custom') {
+      setPointsToRedeem('');
+      const amount = parseFloat(customDiscount) || 0;
+      onDiscountChange(amount);
+      onPointsRedeemedChange(0);
+    } else {
+      setCustomDiscount('');
+      const points = parseFloat(pointsToRedeem) || 0;
+      onDiscountChange(points * 100);
+      onPointsRedeemedChange(points);
+    }
+  };
+
+  // Points available check
+  const hasPoints = customerPoints && customerPoints.current_points > 0;
+  const pointsAvailable = customerPoints?.current_points || 0;
+
+  // Validate points input
+  const pointsError = discountType === 'points' && parseFloat(pointsToRedeem) > pointsAvailable;
+  const discountError = discountAmount > getTotalPrice();
+
   if (currentOrder.length === 0 && dynamicItems.length === 0) {
     return null;
   }
 
   const subtotal = getTotalPrice();
-  const totalAmount = subtotal;
+  const totalAmount = subtotal - discountAmount;
   const completionTime = getOrderCompletionTime();
+
+  const formatCurrency = (amount: number) => {
+    return amount.toLocaleString('id-ID');
+  };
 
   return (
     <div className="fixed bottom-1 sm:bottom-4 left-1 sm:left-4 right-1 sm:right-4 z-50 max-w-lg mx-auto">
@@ -251,12 +312,83 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
 
           <Separator className="mb-2 sm:mb-3" />
 
+          {/* Discount Section */}
+          {currentStore?.enable_points && (
+            <div className="space-y-2 mb-3">
+              <Label className="text-xs sm:text-sm font-medium">Diskon (Opsional)</Label>
+              <Tabs value={discountType} onValueChange={(v) => handleDiscountTypeChange(v as 'custom' | 'points')}>
+                <TabsList className="grid w-full grid-cols-2 h-8">
+                  <TabsTrigger value="custom" className="flex items-center gap-1 text-xs">
+                    <Percent className="h-3 w-3" />
+                    Custom
+                  </TabsTrigger>
+                  <TabsTrigger value="points" className="flex items-center gap-1 text-xs" disabled={!hasPoints}>
+                    <Gift className="h-3 w-3" />
+                    Poin {hasPoints && `(${pointsAvailable})`}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="custom" className="space-y-1 mt-2">
+                  <Input
+                    type="number"
+                    value={customDiscount}
+                    onChange={(e) => handleCustomDiscountChange(e.target.value)}
+                    placeholder="Masukkan diskon (Rp)"
+                    className="text-center h-8 text-sm"
+                    min={0}
+                    max={subtotal}
+                  />
+                  {discountError && (
+                    <p className="text-xs text-red-600">Diskon tidak boleh melebihi total pembayaran</p>
+                  )}
+                </TabsContent>
+                <TabsContent value="points" className="space-y-1 mt-2">
+                  {hasPoints ? (
+                    <>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                        <span>Poin tersedia: {pointsAvailable}</span>
+                        <span>1 poin = Rp100</span>
+                      </div>
+                      <Input
+                        type="number"
+                        value={pointsToRedeem}
+                        onChange={(e) => handlePointsToRedeemChange(e.target.value)}
+                        placeholder="Masukkan jumlah poin"
+                        className="text-center h-8 text-sm"
+                        min={0}
+                        max={pointsAvailable}
+                      />
+                      {pointsError && (
+                        <p className="text-xs text-red-600">Poin tidak mencukupi! Maksimal: {pointsAvailable} poin</p>
+                      )}
+                      {parseFloat(pointsToRedeem) > 0 && !pointsError && (
+                        <p className="text-xs text-green-600 text-center">
+                          Diskon: Rp {formatCurrency(parseFloat(pointsToRedeem) * 100)}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs sm:text-sm text-muted-foreground text-center py-2">
+                      Pelanggan belum memiliki poin
+                    </p>
+                  )}
+                </TabsContent>
+              </Tabs>
+              <Separator />
+            </div>
+          )}
+
           {/* Price Summary */}
           <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Subtotal:</span>
               <span className="font-medium">Rp{subtotal.toLocaleString('id-ID')}</span>
             </div>
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Diskon:</span>
+                <span className="font-medium text-green-600">-Rp{formatCurrency(discountAmount)}</span>
+              </div>
+            )}
             <Separator />
             <div className="flex justify-between text-lg font-bold text-gray-900">
               <span>Total:</span>
@@ -291,20 +423,20 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
 
           {/* Action Buttons */}
           <div className="space-y-1 sm:space-y-2">
-            <Button 
-              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 sm:py-3 text-sm" 
+            <Button
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 sm:py-3 text-sm"
               onClick={() => onProcessPayment(selectedPaymentMethod)}
-              disabled={isProcessing || !customerName || !customerPhone}
+              disabled={isProcessing || !customerName || !customerPhone || pointsError || discountError}
             >
               <CreditCard className="h-4 w-4 mr-2" />
               {isProcessing ? "Processing..." : "Bayar Sekarang"}
             </Button>
-            
-            <Button 
-              variant="outline" 
-              className="w-full text-blue-600 border-blue-300 hover:bg-blue-50 py-1.5 sm:py-2 text-sm" 
+
+            <Button
+              variant="outline"
+              className="w-full text-blue-600 border-blue-300 hover:bg-blue-50 py-1.5 sm:py-2 text-sm"
               onClick={onCreateDraft}
-              disabled={isProcessing || !customerName || !customerPhone}
+              disabled={isProcessing || !customerName || !customerPhone || pointsError || discountError}
             >
               <Clock className="h-4 w-4 mr-2" />
               Bayar Nanti
