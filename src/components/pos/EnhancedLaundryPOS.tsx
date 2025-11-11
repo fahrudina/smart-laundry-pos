@@ -365,6 +365,8 @@ export const EnhancedLaundryPOS = () => {
         service_type: item.serviceType,
         weight_kg: item.weight,
         unit_items: item.unitItems,
+        category: item.service.category,
+        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
       }));
 
       const dynamicOrderItems = dynamicItems.map(item => ({
@@ -375,18 +377,24 @@ export const EnhancedLaundryPOS = () => {
         service_type: 'unit' as const,
         weight_kg: undefined,
         unit_items: undefined,
+        category: 'other_goods',
+        item_type: 'product' as const,
       }));
+
+      // Check if all items are products (no services)
+      const allItems = [...regularItems, ...dynamicOrderItems];
+      const allItemsAreProducts = allItems.every(item => item.item_type === 'product');
 
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: [...regularItems, ...dynamicOrderItems],
+        items: allItems,
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
         discount_amount: discountAmount,
         points_redeemed: pointsRedeemed,
-        execution_status: 'in_queue',
+        execution_status: allItemsAreProducts ? 'completed' : 'in_queue',
         payment_status: 'completed',
         payment_method: 'cash',
         payment_amount: totalAmount,
@@ -423,6 +431,8 @@ export const EnhancedLaundryPOS = () => {
         service_type: item.serviceType,
         weight_kg: item.weight,
         unit_items: item.unitItems,
+        category: item.service.category,
+        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
       }));
 
       const dynamicOrderItems = dynamicItems.map(item => ({
@@ -433,18 +443,24 @@ export const EnhancedLaundryPOS = () => {
         service_type: 'unit' as const,
         weight_kg: undefined,
         unit_items: undefined,
+        category: 'other_goods',
+        item_type: 'product' as const,
       }));
+
+      // Check if all items are products (no services)
+      const allItems = [...regularItems, ...dynamicOrderItems];
+      const allItemsAreProducts = allItems.every(item => item.item_type === 'product');
 
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: [...regularItems, ...dynamicOrderItems],
+        items: allItems,
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
         discount_amount: discountAmount,
         points_redeemed: pointsRedeemed,
-        execution_status: 'in_queue',
+        execution_status: allItemsAreProducts ? 'completed' : 'in_queue',
         payment_status: 'completed',
         payment_method: paymentMethod,
         payment_amount: totalAmount,
@@ -507,6 +523,8 @@ export const EnhancedLaundryPOS = () => {
         service_type: item.serviceType,
         weight_kg: item.weight,
         unit_items: item.unitItems,
+        category: item.service.category,
+        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
       }));
 
       const dynamicOrderItems = dynamicItems.map(item => ({
@@ -517,16 +535,22 @@ export const EnhancedLaundryPOS = () => {
         service_type: 'unit' as const,
         weight_kg: undefined,
         unit_items: undefined,
+        category: 'other_goods',
+        item_type: 'product' as const,
       }));
+
+      // Check if all items are products (no services)
+      const allItems = [...regularItems, ...dynamicOrderItems];
+      const allItemsAreProducts = allItems.every(item => item.item_type === 'product');
 
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: [...regularItems, ...dynamicOrderItems],
+        items: allItems,
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
-        execution_status: 'in_queue',
+        execution_status: allItemsAreProducts ? 'completed' : 'in_queue',
         payment_status: 'pending',
         order_date: dropOffDate.toISOString(),
         estimated_completion: completionDate?.toISOString(),
