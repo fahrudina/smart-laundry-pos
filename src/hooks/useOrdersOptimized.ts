@@ -18,6 +18,8 @@ interface OrderItem {
   service_type: 'unit' | 'kilo' | 'combined';
   weight_kg?: number;
   unit_items?: UnitItem[];
+  category?: string;
+  item_type?: 'service' | 'product';
 }
 
 interface Order {

@@ -363,6 +363,8 @@ export const EnhancedLaundryPOS = () => {
         service_type: item.serviceType,
         weight_kg: item.weight,
         unit_items: item.unitItems,
+        category: item.service.category,
+        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
       }));
 
       const dynamicOrderItems = dynamicItems.map(item => ({
@@ -373,6 +375,8 @@ export const EnhancedLaundryPOS = () => {
         service_type: 'unit' as const,
         weight_kg: undefined,
         unit_items: undefined,
+        category: 'other_goods',
+        item_type: 'product' as const,
       }));
 
       const orderData = {
@@ -419,6 +423,8 @@ export const EnhancedLaundryPOS = () => {
         service_type: item.serviceType,
         weight_kg: item.weight,
         unit_items: item.unitItems,
+        category: item.service.category,
+        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
       }));
 
       const dynamicOrderItems = dynamicItems.map(item => ({
@@ -429,6 +435,8 @@ export const EnhancedLaundryPOS = () => {
         service_type: 'unit' as const,
         weight_kg: undefined,
         unit_items: undefined,
+        category: 'other_goods',
+        item_type: 'product' as const,
       }));
 
       const orderData = {
@@ -501,6 +509,8 @@ export const EnhancedLaundryPOS = () => {
         service_type: item.serviceType,
         weight_kg: item.weight,
         unit_items: item.unitItems,
+        category: item.service.category,
+        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
       }));
 
       const dynamicOrderItems = dynamicItems.map(item => ({
@@ -511,6 +521,8 @@ export const EnhancedLaundryPOS = () => {
         service_type: 'unit' as const,
         weight_kg: undefined,
         unit_items: undefined,
+        category: 'other_goods',
+        item_type: 'product' as const,
       }));
 
       const orderData = {
