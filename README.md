@@ -39,6 +39,7 @@ A modern, comprehensive Point of Sale (POS) system designed specifically for lau
 ### Core POS Functionality
 - **Customer Management**: Search, add, and manage customer information with phone-based lookup
 - **Service Management**: Multiple laundry services with different pricing and completion times
+- **Product/Goods Support**: Sell retail products (detergent, perfume, softener) alongside services
 - **Order Processing**: Create orders with real-time completion estimates
 - **Payment Processing**: Support for Cash, QRIS, and Transfer payments
 - **Dual Status Tracking**: Separate tracking for execution status (in_queue, in_progress, completed, cancelled) and payment status (pending, completed, down_payment, refunded)

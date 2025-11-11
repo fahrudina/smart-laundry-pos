@@ -55,6 +55,8 @@ export const useCreateOrderWithNotifications = () => {
         weight_kg: item.weight_kg,
         unit_items: item.service_type === 'kilo' ? 0 : item.unit_items,
         estimated_completion: item.estimated_completion,
+        category: item.category,
+        item_type: item.item_type || 'service',
       }));
 
       const { error: itemsError } = await supabase
