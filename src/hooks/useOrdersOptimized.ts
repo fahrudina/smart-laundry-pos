@@ -53,6 +53,8 @@ interface CreateOrderData {
     service_type: 'unit' | 'kilo' | 'combined';
     weight_kg?: number;
     unit_items?: UnitItem[];
+    category?: string;
+    item_type?: 'service' | 'product';
   }[];
   subtotal: number;
   tax_amount: number;
