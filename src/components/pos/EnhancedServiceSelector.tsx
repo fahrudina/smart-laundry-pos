@@ -13,7 +13,7 @@ export interface Service {
   duration: string;
   durationValue: number;
   durationUnit: 'hours' | 'days';
-  category: 'wash' | 'dry' | 'special' | 'ironing' | 'folding';
+  category: 'wash' | 'dry' | 'special' | 'ironing' | 'folding' | 'detergent' | 'perfume' | 'softener' | 'other_goods';
   supportsKilo?: boolean; // Whether this service supports kilo pricing
   kiloPrice?: number; // Price per kg if supports kilo
 }
