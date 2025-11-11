@@ -69,7 +69,7 @@ export const messageTemplates: MessageTemplate = {
       : 'Tipe Laundry : Regular';
 
     // Build points message if points were earned
-    const pointsMessage = data.pointsEarned && data.pointsEarned > 0 && data.paymentStatus === 'paid'
+    const pointsMessage = data.pointsEarned && data.pointsEarned > 0 && data.paymentStatus === 'completed'
       ? `\n🎉 Selamat! Anda mendapatkan ${data.pointsEarned} poin laundry! 🎉\n(1 poin per kg/unit)\n====================`
       : '';
 
