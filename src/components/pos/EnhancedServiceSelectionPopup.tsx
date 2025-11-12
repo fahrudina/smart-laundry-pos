@@ -284,12 +284,14 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
           Tambah Layanan & Item
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Tambah Layanan & Item Kustom</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
+        <div className="px-6 pt-6 pb-4">
+          <DialogHeader>
+            <DialogTitle>Tambah Layanan & Item Kustom</DialogTitle>
+          </DialogHeader>
+        </div>
         
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto px-6 space-y-4">
           <Tabs defaultValue="services" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="services">Layanan Tersedia</TabsTrigger>
@@ -605,10 +607,11 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
               </div>
             </TabsContent>
           </Tabs>
+        </div>
 
-          {/* Selected Items Summary */}
+          {/* Selected Items Summary - Fixed at Bottom */}
           {(selectedServices.length > 0 || dynamicItems.some(isDynamicItemValid)) && (
-            <div className="border-t pt-4">
+            <div className="border-t bg-white px-6 py-4 mt-auto">
               <h4 className="font-semibold mb-3">Item Terpilih</h4>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {/* Regular Services */}
@@ -714,7 +717,6 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
               </div>
             </div>
           )}
-        </div>
       </DialogContent>
     </Dialog>
   );
