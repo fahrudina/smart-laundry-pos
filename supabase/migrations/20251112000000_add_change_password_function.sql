@@ -20,7 +20,7 @@ BEGIN
   
   -- If current password is invalid, return false
   IF NOT password_valid THEN
-    RAISE EXCEPTION 'Current password is incorrect';
+    RAISE EXCEPTION 'Password saat ini tidak sesuai';
   END IF;
   
   -- Update to new password
