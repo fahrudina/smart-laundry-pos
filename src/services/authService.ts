@@ -324,6 +324,28 @@ class AuthService {
     
     return user.store_id === storeId; // Staff can only access their assigned store
   }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    if (!this.isAuthenticated()) {
+      throw new Error('Pengguna tidak terautentikasi');
+    }
+
+    const userId = this.session!.user.id;
+
+    const { data, error } = await supabase.rpc('change_user_password', {
+      user_id: userId,
+      current_password: currentPassword,
+      new_password: newPassword
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!data) {
+      throw new Error('Gagal mengubah password');
+    }
+  }
 }
 
 export const authService = AuthService.getInstance();
