@@ -41,6 +41,7 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
       'transfer': 'TRANSFER',
       'debit': 'DEBIT',
       'credit': 'CREDIT',
+      'pending': 'BAYAR NANTI',
     };
     return methodMap[method.toLowerCase()] || method.toUpperCase();
   };
