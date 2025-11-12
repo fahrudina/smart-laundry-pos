@@ -8,6 +8,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   signUp: (email: string, password: string, fullName?: string, phone?: string, role?: 'staff' | 'laundry_owner', storeData?: { name: string; address?: string; phone?: string; }) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -104,12 +105,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    try {
+      setLoading(true);
+      await authService.changePassword(currentPassword, newPassword);
+      
+      toast({
+        title: "Success",
+        description: "Password changed successfully!",
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     user,
     loading,
     signIn,
     signOut,
     signUp,
+    changePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
