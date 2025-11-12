@@ -327,7 +327,7 @@ class AuthService {
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     if (!this.isAuthenticated()) {
-      throw new Error('User not authenticated');
+      throw new Error('Pengguna tidak terautentikasi');
     }
 
     const userId = this.session!.user.id;
@@ -343,7 +343,7 @@ class AuthService {
     }
 
     if (!data) {
-      throw new Error('Failed to change password');
+      throw new Error('Gagal mengubah password');
     }
   }
 }
