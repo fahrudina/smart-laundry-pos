@@ -556,39 +556,10 @@ export const EnhancedLaundryPOS = () => {
         estimated_completion: completionDate?.toISOString(),
       };
 
-      await createOrderMutation.mutateAsync(orderData);
+      const createdOrder = await createOrderMutation.mutateAsync(orderData);
 
-      setCurrentOrder([]);
-      setDynamicItems([]);
-      setCustomerName('');
-      setCustomerPhone('');
-      
-      toast.success(
-        <div className="flex items-start space-x-3 py-2">
-          <CheckCircle2 className="h-7 w-7 text-blue-600 mt-1 flex-shrink-0" />
-          <div className="flex-1">
-            <div className="text-lg font-bold text-blue-800 mb-1">📝 Order berhasil dibuat!</div>
-            <div className="text-sm text-blue-700 leading-relaxed">
-              <div className="font-medium">Menunggu pembayaran</div>
-              <div className="mt-1">Estimasi selesai: <span className="font-semibold">{completionDate ? formatDate(completionDate) : 'TBD'}</span></div>
-            </div>
-          </div>
-        </div>,
-        { 
-          duration: 6000,
-          style: {
-            background: '#eff6ff',
-            border: '2px solid #3b82f6',
-            color: '#1d4ed8',
-            minWidth: '320px',
-            maxWidth: '500px',
-            width: '90vw',
-            padding: '20px',
-            borderRadius: '16px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-          }
-        }
-      );
+      // Show order success dialog for draft order (same as paid orders)
+      showOrderSuccess(createdOrder, totalAmount, 'pending');
     } catch (error) {
       // Error is already handled in the hook
     }
