@@ -255,6 +255,7 @@ export const useUpdateOrderStatusWithNotifications = () => {
       paymentAmount,
       paymentNotes,
       executionNotes,
+      cashReceived,
     }: {
       orderId: string;
       executionStatus?: string;
@@ -263,6 +264,7 @@ export const useUpdateOrderStatusWithNotifications = () => {
       paymentAmount?: number;
       paymentNotes?: string;
       executionNotes?: string;
+      cashReceived?: number;
     }) => {
       // Fetch current order data for WhatsApp notification
       const { data: orderData } = await supabase
@@ -373,6 +375,7 @@ export const useUpdateOrderStatusWithNotifications = () => {
       if (paymentAmount !== undefined) updateData.payment_amount = paymentAmount;
       if (paymentNotes !== undefined) updateData.payment_notes = paymentNotes;
       if (executionNotes !== undefined) updateData.execution_notes = executionNotes;
+      if (cashReceived !== undefined) updateData.cash_received = cashReceived;
       if (pointsEarned > 0) updateData.points_earned = pointsEarned;
 
       const { error } = await supabase
