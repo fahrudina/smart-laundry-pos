@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useNavigate } from 'react-router-dom';
-import { useOrders, useUpdatePaymentStatus, OrderFilters, Order } from '@/hooks/useOrdersOptimized';
+import { useOrders, OrderFilters, Order } from '@/hooks/useOrdersOptimized';
 import { useUpdateOrderStatusWithNotifications } from '@/hooks/useOrdersWithNotifications';
 import { OrderDetailsDialog } from '@/components/pos/OrderDetailsDialog';
 import { CashPaymentDialog } from '@/components/pos/CashPaymentDialog';
@@ -104,8 +104,7 @@ export const OrderHistory = () => {
     isRefreshing
   } = useOrders(queryFilters);
 
-  const updatePaymentMutation = useUpdatePaymentStatus();
-  const updateExecutionMutation = useUpdateOrderStatusWithNotifications();
+  const updateOrderMutation = useUpdateOrderStatusWithNotifications();
 
   // Enhanced filtering function with sorting (client-side for complex filters)
   const filteredOrders = useMemo(() => {
@@ -293,11 +292,11 @@ export const OrderHistory = () => {
   };
 
   const handleUpdateExecutionStatus = useCallback(async (orderId: string, status: string) => {
-    updateExecutionMutation.mutate({
+    updateOrderMutation.mutate({
       orderId,
       executionStatus: status,
     });
-  }, [updateExecutionMutation]);
+  }, [updateOrderMutation]);
 
   const handleUpdatePaymentStatus = useCallback(async (orderId: string, status: string, method?: string) => {
     const order = orders.find(o => o.id === orderId);
@@ -309,19 +308,19 @@ export const OrderHistory = () => {
       return;
     }
     
-    // For other payment methods, process directly
-    updatePaymentMutation.mutate({
+    // For other payment methods, process directly with points and notifications
+    updateOrderMutation.mutate({
       orderId,
       paymentStatus: status,
       paymentMethod: method,
       paymentAmount: order?.total_amount,
     });
-  }, [updatePaymentMutation, orders]);
+  }, [updateOrderMutation, orders]);
 
   const handleCashPaymentSubmit = useCallback(async (cashReceived: number) => {
     if (!cashPaymentOrder) return;
     
-    updatePaymentMutation.mutate({
+    updateOrderMutation.mutate({
       orderId: cashPaymentOrder.id,
       paymentStatus: 'completed',
       paymentMethod: 'cash',
@@ -332,7 +331,7 @@ export const OrderHistory = () => {
     // Close the dialog and clear state
     setShowCashPaymentDialog(false);
     setCashPaymentOrder(null);
-  }, [updatePaymentMutation, cashPaymentOrder]);
+  }, [updateOrderMutation, cashPaymentOrder]);
 
   const handleViewOrder = useCallback((order: Order) => {
     setSelectedOrder(order);
