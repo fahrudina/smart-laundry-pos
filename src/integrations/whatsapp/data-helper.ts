@@ -20,7 +20,7 @@ export class WhatsAppDataHelper {
 
       let query = supabase
         .from('stores')
-        .select('name, address, phone')
+        .select('name, address, phone, enable_qr, enable_points, wa_use_store_number')
         .eq('is_active', true);
 
       if (storeId) {
@@ -38,7 +38,7 @@ export class WhatsAppDataHelper {
         if (storeId && error.code === 'PGRST116') {
           const { data: fallbackData, error: fallbackError } = await supabase
             .from('stores')
-            .select('name, address, phone')
+            .select('name, address, phone, enable_qr, enable_points, wa_use_store_number')
             .eq('is_active', true)
             .limit(1)
             .single();
@@ -48,6 +48,9 @@ export class WhatsAppDataHelper {
               name: fallbackData.name || 'Smart Laundry POS',
               address: fallbackData.address || 'Alamat belum diset',
               phone: fallbackData.phone || 'Nomor telepon belum diset',
+              enable_qr: fallbackData.enable_qr,
+              enable_points: fallbackData.enable_points,
+              wa_use_store_number: fallbackData.wa_use_store_number,
             };
           }
         }
@@ -64,6 +67,9 @@ export class WhatsAppDataHelper {
         name: data.name || 'Smart Laundry POS',
         address: data.address || 'Alamat belum diset - silakan update di pengaturan toko',
         phone: data.phone || 'Nomor telepon belum diset',
+        enable_qr: data.enable_qr,
+        enable_points: data.enable_points,
+        wa_use_store_number: data.wa_use_store_number,
       };
     } catch (error) {
       console.error('💥 Error fetching store info:', error);
@@ -93,6 +99,9 @@ export class WhatsAppDataHelper {
       name: storeData.store_name || storeData.name || 'Smart Laundry POS',
       address: storeData.store_address || storeData.address || 'Alamat belum diset - silakan update di pengaturan toko',
       phone: storeData.store_phone || storeData.phone || 'Nomor telepon belum diset',
+      enable_qr: storeData.enable_qr,
+      enable_points: storeData.enable_points,
+      wa_use_store_number: storeData.wa_use_store_number,
     };
   }
 
@@ -165,5 +174,18 @@ export class WhatsAppDataHelper {
       console.warn('Error formatting completion date:', error);
       return new Date().toLocaleDateString('id-ID');
     }
+  }
+
+  /**
+   * Get WhatsApp sender phone number based on store configuration
+   * Returns store phone if feature is enabled and phone is set, otherwise undefined
+   */
+  static getWhatsAppSender(storeInfo: StoreInfo): string | undefined {
+    // Check if feature is enabled and store phone exists
+    if (storeInfo.wa_use_store_number && storeInfo.phone && storeInfo.phone !== 'Nomor telepon belum diset') {
+      return storeInfo.phone;
+    }
+    // Return undefined to use default sender
+    return undefined;
   }
 }

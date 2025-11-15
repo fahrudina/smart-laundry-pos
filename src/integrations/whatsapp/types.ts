@@ -9,6 +9,7 @@ export interface WhatsAppConfig {
 export interface WhatsAppMessage {
   to: string;
   message: string;
+  from?: string; // Optional sender phone number (multi-sender support)
 }
 
 export interface WhatsAppResponse {
@@ -30,6 +31,7 @@ export interface StoreInfo {
   phone: string;
   enable_qr?: boolean;
   enable_points?: boolean;
+  wa_use_store_number?: boolean;
 }
 
 export interface OrderItem {

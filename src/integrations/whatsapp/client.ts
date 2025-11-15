@@ -54,13 +54,20 @@ export class WhatsAppClient {
       }
 
       // Create request exactly like Postman example
+      const requestBody: { to: string; message: string; from?: string } = {
+        to: message.to,
+        message: message.message,
+      };
+
+      // Include from field if provided (multi-sender support)
+      if (message.from) {
+        requestBody.from = message.from;
+      }
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers,
-        body: JSON.stringify({
-          to: message.to,
-          message: message.message,
-        }),
+        body: JSON.stringify(requestBody),
         signal: controller.signal,
       });
 
