@@ -284,7 +284,7 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
           Tambah Layanan & Item
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 w-[95vw] sm:w-full">
         <div className="px-6 pt-6 pb-4">
           <DialogHeader>
             <DialogTitle>Tambah Layanan & Item Kustom</DialogTitle>
@@ -435,12 +435,12 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
             
             <TabsContent value="custom" className="mt-4">
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
                   <h4 className="font-semibold">Item Kustom</h4>
                   <Button
                     variant="outline"
                     onClick={addDynamicItem}
-                    className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100"
+                    className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 w-full sm:w-auto"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Tambah Item Kustom
@@ -469,7 +469,7 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                                 />
                               </div>
                               
-                              <div className="grid grid-cols-2 gap-3">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                   <label className="text-sm font-medium mb-1 block">Durasi Layanan *</label>
                                   <div className="flex gap-2">
@@ -702,15 +702,15 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                 ))}
               </div>
               
-              <div className="flex justify-between items-center mt-4 pt-3 border-t">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mt-4 pt-3 border-t">
                 <div className="font-semibold">
                   Total: Rp{getTotalPrice().toLocaleString('id-ID')}
                 </div>
-                <div className="flex gap-2 sm:gap-3">
-                  <Button variant="outline" onClick={handleCancel}>
+                <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+                  <Button variant="outline" onClick={handleCancel} className="flex-1 sm:flex-none">
                     Batal
                   </Button>
-                  <Button onClick={handleConfirm} disabled={!isFormValid()}>
+                  <Button onClick={handleConfirm} disabled={!isFormValid()} className="flex-1 sm:flex-none">
                     Tambah ke Pesanan
                   </Button>
                 </div>
