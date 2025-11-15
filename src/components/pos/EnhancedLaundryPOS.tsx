@@ -378,7 +378,7 @@ export const EnhancedLaundryPOS = () => {
         weight_kg: undefined,
         unit_items: undefined,
         category: 'other_goods',
-        item_type: 'product' as const,
+        item_type: 'service' as const,
       }));
 
       // Check if all items are products (no services)
@@ -444,7 +444,7 @@ export const EnhancedLaundryPOS = () => {
         weight_kg: undefined,
         unit_items: undefined,
         category: 'other_goods',
-        item_type: 'product' as const,
+        item_type: 'service' as const,
       }));
 
       // Check if all items are products (no services)
@@ -536,7 +536,7 @@ export const EnhancedLaundryPOS = () => {
         weight_kg: undefined,
         unit_items: undefined,
         category: 'other_goods',
-        item_type: 'product' as const,
+        item_type: 'service' as const,
       }));
 
       // Check if all items are products (no services)
