@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, ShoppingCart, CreditCard, X, Minus, Plus, Banknote, QrCode, Smartphone, Gift, Percent } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -88,6 +88,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
   const [discountType, setDiscountType] = useState<'custom' | 'points'>('custom');
   const [customDiscount, setCustomDiscount] = useState('');
   const [pointsToRedeem, setPointsToRedeem] = useState('');
+  const [isPaymentStarted, setIsPaymentStarted] = useState(false);
 
   const { currentStore } = useStore();
   const { data: customerPoints } = useCustomerPoints(customerPhone);
@@ -127,6 +128,25 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
       onDiscountChange(points * 100);
       onPointsRedeemedChange(points);
     }
+  };
+
+  // Reset payment started state when processing completes or fails
+  useEffect(() => {
+    if (!isProcessing && isPaymentStarted) {
+      setIsPaymentStarted(false);
+    }
+  }, [isProcessing, isPaymentStarted]);
+
+  // Handle payment button click
+  const handlePaymentClick = (paymentMethod: string) => {
+    setIsPaymentStarted(true);
+    onProcessPayment(paymentMethod);
+  };
+
+  // Handle draft order button click
+  const handleDraftClick = () => {
+    setIsPaymentStarted(true);
+    onCreateDraft();
   };
 
   // Points available check
@@ -424,19 +444,19 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
           {/* Action Buttons */}
           <div className="space-y-1 sm:space-y-2">
             <Button
-              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 sm:py-3 text-sm"
-              onClick={() => onProcessPayment(selectedPaymentMethod)}
-              disabled={isProcessing || !customerName || !customerPhone || pointsError || discountError}
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 sm:py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => handlePaymentClick(selectedPaymentMethod)}
+              disabled={isProcessing || isPaymentStarted || !customerName || !customerPhone || pointsError || discountError}
             >
               <CreditCard className="h-4 w-4 mr-2" />
-              {isProcessing ? "Processing..." : "Bayar Sekarang"}
+              {isProcessing || isPaymentStarted ? "Processing..." : "Bayar Sekarang"}
             </Button>
 
             <Button
               variant="outline"
-              className="w-full text-blue-600 border-blue-300 hover:bg-blue-50 py-1.5 sm:py-2 text-sm"
-              onClick={onCreateDraft}
-              disabled={isProcessing || !customerName || !customerPhone || pointsError || discountError}
+              className="w-full text-blue-600 border-blue-300 hover:bg-blue-50 py-1.5 sm:py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleDraftClick}
+              disabled={isProcessing || isPaymentStarted || !customerName || !customerPhone || pointsError || discountError}
             >
               <Clock className="h-4 w-4 mr-2" />
               Bayar Nanti
