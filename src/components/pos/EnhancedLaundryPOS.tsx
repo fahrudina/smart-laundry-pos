@@ -38,6 +38,8 @@ export const EnhancedLaundryPOS = () => {
     whatsAppSent: boolean;
     pointsEarned?: number;
   } | null>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [pointsRedeemed, setPointsRedeemed] = useState(0);
   const [dropOffDate, setDropOffDate] = useState(() => {
     // Set to current date/time in Asia/Jakarta timezone
     const now = new Date();
@@ -351,7 +353,7 @@ export const EnhancedLaundryPOS = () => {
   const processCashPayment = async (cashReceived: number) => {
     try {
       const subtotal = getTotalPrice();
-      const totalAmount = subtotal;
+      const totalAmount = subtotal - discountAmount;
       const completionDate = getOrderCompletionTime();
 
       // Combine regular order items and dynamic items
@@ -363,6 +365,8 @@ export const EnhancedLaundryPOS = () => {
         service_type: item.serviceType,
         weight_kg: item.weight,
         unit_items: item.unitItems,
+        category: item.service.category,
+        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
       }));
 
       const dynamicOrderItems = dynamicItems.map(item => ({
@@ -373,16 +377,24 @@ export const EnhancedLaundryPOS = () => {
         service_type: 'unit' as const,
         weight_kg: undefined,
         unit_items: undefined,
+        category: 'other_goods',
+        item_type: 'service' as const,
       }));
+
+      // Check if all items are products (no services)
+      const allItems = [...regularItems, ...dynamicOrderItems];
+      const allItemsAreProducts = allItems.every(item => item.item_type === 'product');
 
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: [...regularItems, ...dynamicOrderItems],
+        items: allItems,
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
-        execution_status: 'in_queue',
+        discount_amount: discountAmount,
+        points_redeemed: pointsRedeemed,
+        execution_status: allItemsAreProducts ? 'completed' : 'in_queue',
         payment_status: 'completed',
         payment_method: 'cash',
         payment_amount: totalAmount,
@@ -407,7 +419,7 @@ export const EnhancedLaundryPOS = () => {
   const processNonCashPayment = async (paymentMethod: string) => {
     try {
       const subtotal = getTotalPrice();
-      const totalAmount = subtotal;
+      const totalAmount = subtotal - discountAmount;
       const completionDate = getOrderCompletionTime();
 
       // Combine regular order items and dynamic items
@@ -419,6 +431,8 @@ export const EnhancedLaundryPOS = () => {
         service_type: item.serviceType,
         weight_kg: item.weight,
         unit_items: item.unitItems,
+        category: item.service.category,
+        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
       }));
 
       const dynamicOrderItems = dynamicItems.map(item => ({
@@ -429,16 +443,24 @@ export const EnhancedLaundryPOS = () => {
         service_type: 'unit' as const,
         weight_kg: undefined,
         unit_items: undefined,
+        category: 'other_goods',
+        item_type: 'service' as const,
       }));
+
+      // Check if all items are products (no services)
+      const allItems = [...regularItems, ...dynamicOrderItems];
+      const allItemsAreProducts = allItems.every(item => item.item_type === 'product');
 
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: [...regularItems, ...dynamicOrderItems],
+        items: allItems,
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
-        execution_status: 'in_queue',
+        discount_amount: discountAmount,
+        points_redeemed: pointsRedeemed,
+        execution_status: allItemsAreProducts ? 'completed' : 'in_queue',
         payment_status: 'completed',
         payment_method: paymentMethod,
         payment_amount: totalAmount,
@@ -501,6 +523,8 @@ export const EnhancedLaundryPOS = () => {
         service_type: item.serviceType,
         weight_kg: item.weight,
         unit_items: item.unitItems,
+        category: item.service.category,
+        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
       }));
 
       const dynamicOrderItems = dynamicItems.map(item => ({
@@ -511,54 +535,31 @@ export const EnhancedLaundryPOS = () => {
         service_type: 'unit' as const,
         weight_kg: undefined,
         unit_items: undefined,
+        category: 'other_goods',
+        item_type: 'service' as const,
       }));
+
+      // Check if all items are products (no services)
+      const allItems = [...regularItems, ...dynamicOrderItems];
+      const allItemsAreProducts = allItems.every(item => item.item_type === 'product');
 
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: [...regularItems, ...dynamicOrderItems],
+        items: allItems,
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
-        execution_status: 'in_queue',
+        execution_status: allItemsAreProducts ? 'completed' : 'in_queue',
         payment_status: 'pending',
         order_date: dropOffDate.toISOString(),
         estimated_completion: completionDate?.toISOString(),
       };
 
-      await createOrderMutation.mutateAsync(orderData);
+      const createdOrder = await createOrderMutation.mutateAsync(orderData);
 
-      setCurrentOrder([]);
-      setDynamicItems([]);
-      setCustomerName('');
-      setCustomerPhone('');
-      
-      toast.success(
-        <div className="flex items-start space-x-3 py-2">
-          <CheckCircle2 className="h-7 w-7 text-blue-600 mt-1 flex-shrink-0" />
-          <div className="flex-1">
-            <div className="text-lg font-bold text-blue-800 mb-1">📝 Order berhasil dibuat!</div>
-            <div className="text-sm text-blue-700 leading-relaxed">
-              <div className="font-medium">Menunggu pembayaran</div>
-              <div className="mt-1">Estimasi selesai: <span className="font-semibold">{completionDate ? formatDate(completionDate) : 'TBD'}</span></div>
-            </div>
-          </div>
-        </div>,
-        { 
-          duration: 6000,
-          style: {
-            background: '#eff6ff',
-            border: '2px solid #3b82f6',
-            color: '#1d4ed8',
-            minWidth: '320px',
-            maxWidth: '500px',
-            width: '90vw',
-            padding: '20px',
-            borderRadius: '16px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-          }
-        }
-      );
+      // Show order success dialog for draft order (same as paid orders)
+      showOrderSuccess(createdOrder, totalAmount, 'pending');
     } catch (error) {
       // Error is already handled in the hook
     }
@@ -576,7 +577,7 @@ export const EnhancedLaundryPOS = () => {
       whatsAppSent: true, // WhatsApp notification is sent asynchronously
       pointsEarned: createdOrder.points_earned || 0,
     });
-    
+
     // Show toast notification for points earned if applicable
     if (createdOrder.points_earned && createdOrder.points_earned > 0) {
       toast.success(`🎉 Pelanggan mendapat +${createdOrder.points_earned} poin!`, {
@@ -594,11 +595,13 @@ export const EnhancedLaundryPOS = () => {
         duration: 5000,
       });
     }
-    
-    // Clear the current order
+
+    // Clear the current order and discount
     setCurrentOrder([]);
     setDynamicItems([]);
-    
+    setDiscountAmount(0);
+    setPointsRedeemed(0);
+
     // Show success dialog
     setShowOrderSuccessDialog(true);
   };
@@ -848,13 +851,17 @@ export const EnhancedLaundryPOS = () => {
         updateQuantity={updateQuantity}
         removeFromOrder={removeServiceFromOrder}
         removeDynamicItem={removeDynamicItem}
+        discountAmount={discountAmount}
+        pointsRedeemed={pointsRedeemed}
+        onDiscountChange={setDiscountAmount}
+        onPointsRedeemedChange={setPointsRedeemed}
       />
 
       {/* Cash Payment Dialog */}
       <CashPaymentDialog
         isOpen={showCashPaymentDialog}
         onClose={() => setShowCashPaymentDialog(false)}
-        totalAmount={getTotalPrice()}
+        totalAmount={getTotalPrice() - discountAmount}
         onSubmit={processCashPayment}
       />
 

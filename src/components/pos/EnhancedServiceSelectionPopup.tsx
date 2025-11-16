@@ -18,6 +18,7 @@ interface Service {
   durationValue: number;
   durationUnit: 'hours' | 'days';
   category: string;
+  itemType?: 'service' | 'product';
   supportsUnit?: boolean;
   supportsKilo?: boolean;
   kiloPrice?: number;
@@ -74,11 +75,23 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
       durationValue: serviceData.duration_value,
       durationUnit: serviceData.duration_unit,
       category: serviceData.category,
+      itemType: serviceData.item_type || 'service',
       supportsUnit: serviceData.supports_unit,
       supportsKilo: serviceData.supports_kilo,
       kiloPrice: serviceData.kilo_price,
     }));
   }, [servicesData]);
+
+  // Separate services and products
+  const serviceItems = React.useMemo(() => 
+    services.filter(s => s.itemType === 'service' || !s.itemType), 
+    [services]
+  );
+  
+  const productItems = React.useMemo(() => 
+    services.filter(s => s.itemType === 'product'), 
+    [services]
+  );
 
   // Use external state if provided, otherwise use internal state
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
@@ -119,12 +132,33 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
 
   const getCategoryColor = (category: string) => {
     switch (category) {
+      // Service categories
       case 'wash': return 'bg-blue-100 text-blue-800';
       case 'dry': return 'bg-green-100 text-green-800';
       case 'special': return 'bg-purple-100 text-purple-800';
       case 'ironing': return 'bg-orange-100 text-orange-800';
       case 'folding': return 'bg-yellow-100 text-yellow-800';
+      // Product categories
+      case 'detergent': return 'bg-cyan-100 text-cyan-800';
+      case 'perfume': return 'bg-pink-100 text-pink-800';
+      case 'softener': return 'bg-indigo-100 text-indigo-800';
+      case 'other_goods': return 'bg-teal-100 text-teal-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'wash': return 'Cuci';
+      case 'dry': return 'Kering';
+      case 'special': return 'Khusus';
+      case 'ironing': return 'Setrika';
+      case 'folding': return 'Lipat';
+      case 'detergent': return 'Deterjen';
+      case 'perfume': return 'Parfum';
+      case 'softener': return 'Pelembut';
+      case 'other_goods': return 'Produk Lainnya';
+      default: return category;
     }
   };
 
@@ -250,12 +284,14 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
           Tambah Layanan & Item
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Tambah Layanan & Item Kustom</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 w-[95vw] sm:w-full">
+        <div className="px-6 pt-6 pb-4">
+          <DialogHeader>
+            <DialogTitle>Tambah Layanan & Item Kustom</DialogTitle>
+          </DialogHeader>
+        </div>
         
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto px-6 space-y-4">
           <Tabs defaultValue="services" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="services">Layanan Tersedia</TabsTrigger>
@@ -263,68 +299,131 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
             </TabsList>
             
             <TabsContent value="services" className="mt-4">
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {isLoading ? (
                   <div className="text-center py-4">Memuat layanan...</div>
                 ) : services.length > 0 ? (
-                  services.map((service) => (
-                    <Card key={service.id} className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold">{service.name}</h3>
-                            <Badge className={getCategoryColor(service.category)}>
-                              {service.category}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-gray-500 flex items-center">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Durasi: {service.duration}
-                          </p>
-                          <p className="text-xs text-green-600 font-medium">
-                            Siap: {formatDate(calculateFinishDate(service.durationValue, service.durationUnit))}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          {service.supportsUnit && service.price && (
-                            <div className="text-blue-600 font-semibold">
-                              Rp{service.price.toLocaleString('id-ID')}
+                  <>
+                    {/* Services Section */}
+                    {serviceItems.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                          <span className="w-1 h-4 bg-blue-500 rounded"></span>
+                          Layanan Laundry
+                        </h3>
+                        {serviceItems.map((service) => (
+                          <Card key={service.id} className="p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-semibold">{service.name}</h3>
+                                  <Badge className={getCategoryColor(service.category)}>
+                                    {getCategoryLabel(service.category)}
+                                  </Badge>
+                                </div>
+                                {service.durationValue > 0 && (
+                                  <>
+                                    <p className="text-xs text-gray-500 flex items-center">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Durasi: {service.duration}
+                                    </p>
+                                    <p className="text-xs text-green-600 font-medium">
+                                      Siap: {formatDate(calculateFinishDate(service.durationValue, service.durationUnit))}
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                {service.supportsUnit && service.price && (
+                                  <div className="text-blue-600 font-semibold">
+                                    Rp{service.price.toLocaleString('id-ID')}
+                                  </div>
+                                )}
+                                {service.supportsKilo && service.kiloPrice && (
+                                  <div className="text-sm text-gray-600">
+                                    Rp{service.kiloPrice.toLocaleString('id-ID')}/kg
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          )}
-                          {service.supportsKilo && service.kiloPrice && (
-                            <div className="text-sm text-gray-600">
-                              Rp{service.kiloPrice.toLocaleString('id-ID')}/kg
-                            </div>
-                          )}
-                        </div>
-                      </div>
 
-                      <div className="flex gap-2 mt-3">
-                        {service.supportsUnit && service.price && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => addService(service, 'unit')}
-                            className={`flex-1 transition-all ${animatingButton === `${service.id}-unit` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Tambah Satuan
-                          </Button>
-                        )}
-                        {service.supportsKilo && service.kiloPrice && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => addService(service, 'kilo')}
-                            className={`flex-1 transition-all ${animatingButton === `${service.id}-kilo` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Tambah Kilo
-                          </Button>
-                        )}
+                            <div className="flex gap-2 mt-3">
+                              {service.supportsUnit && service.price && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => addService(service, 'unit')}
+                                  className={`flex-1 transition-all ${animatingButton === `${service.id}-unit` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Tambah Satuan
+                                </Button>
+                              )}
+                              {service.supportsKilo && service.kiloPrice && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => addService(service, 'kilo')}
+                                  className={`flex-1 transition-all ${animatingButton === `${service.id}-kilo` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Tambah Kilo
+                                </Button>
+                              )}
+                            </div>
+                          </Card>
+                        ))}
                       </div>
-                    </Card>
-                  ))
+                    )}
+
+                    {/* Products Section */}
+                    {productItems.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                          <span className="w-1 h-4 bg-cyan-500 rounded"></span>
+                          Produk & Barang
+                        </h3>
+                        {productItems.map((product) => (
+                          <Card key={product.id} className="p-4 border-cyan-200 bg-cyan-50/30">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-semibold">{product.name}</h3>
+                                  <Badge className={getCategoryColor(product.category)}>
+                                    {getCategoryLabel(product.category)}
+                                  </Badge>
+                                </div>
+                                {product.description && (
+                                  <p className="text-xs text-gray-600">{product.description}</p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                {product.supportsUnit && product.price && (
+                                  <div className="text-cyan-700 font-semibold">
+                                    Rp{product.price.toLocaleString('id-ID')}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex gap-2 mt-3">
+                              {product.supportsUnit && product.price && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => addService(product, 'unit')}
+                                  className={`flex-1 transition-all border-cyan-300 hover:bg-cyan-100 ${animatingButton === `${product.id}-unit` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Tambah Produk
+                                </Button>
+                              )}
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <p>Tidak ada layanan tersedia.</p>
@@ -336,12 +435,12 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
             
             <TabsContent value="custom" className="mt-4">
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
                   <h4 className="font-semibold">Item Kustom</h4>
                   <Button
                     variant="outline"
                     onClick={addDynamicItem}
-                    className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100"
+                    className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 w-full sm:w-auto"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Tambah Item Kustom
@@ -370,7 +469,7 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                                 />
                               </div>
                               
-                              <div className="grid grid-cols-2 gap-3">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                   <label className="text-sm font-medium mb-1 block">Durasi Layanan *</label>
                                   <div className="flex gap-2">
@@ -508,10 +607,11 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
               </div>
             </TabsContent>
           </Tabs>
+        </div>
 
-          {/* Selected Items Summary */}
+          {/* Selected Items Summary - Fixed at Bottom */}
           {(selectedServices.length > 0 || dynamicItems.some(isDynamicItemValid)) && (
-            <div className="border-t pt-4">
+            <div className="border-t bg-white px-6 py-4 mt-auto">
               <h4 className="font-semibold mb-3">Item Terpilih</h4>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {/* Regular Services */}
@@ -602,22 +702,21 @@ export const EnhancedServiceSelectionPopup: React.FC<EnhancedServiceSelectionPop
                 ))}
               </div>
               
-              <div className="flex justify-between items-center mt-4 pt-3 border-t">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mt-4 pt-3 border-t">
                 <div className="font-semibold">
                   Total: Rp{getTotalPrice().toLocaleString('id-ID')}
                 </div>
-                <div className="flex gap-2 sm:gap-3">
-                  <Button variant="outline" onClick={handleCancel}>
+                <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+                  <Button variant="outline" onClick={handleCancel} className="flex-1 sm:flex-none">
                     Batal
                   </Button>
-                  <Button onClick={handleConfirm} disabled={!isFormValid()}>
+                  <Button onClick={handleConfirm} disabled={!isFormValid()} className="flex-1 sm:flex-none">
                     Tambah ke Pesanan
                   </Button>
                 </div>
               </div>
             </div>
           )}
-        </div>
       </DialogContent>
     </Dialog>
   );

@@ -9,7 +9,8 @@ export interface ServiceData {
   store_id: string;
   name: string;
   description?: string;
-  category: 'wash' | 'dry' | 'special' | 'ironing' | 'folding';
+  category: 'wash' | 'dry' | 'special' | 'ironing' | 'folding' | 'detergent' | 'perfume' | 'softener' | 'other_goods';
+  item_type?: 'service' | 'product';
   unit_price?: number;
   kilo_price?: number;
   supports_unit: boolean;
@@ -25,7 +26,8 @@ export interface ServiceData {
 export interface ServiceFormData {
   name: string;
   description?: string;
-  category: 'wash' | 'dry' | 'special' | 'ironing' | 'folding';
+  category: 'wash' | 'dry' | 'special' | 'ironing' | 'folding' | 'detergent' | 'perfume' | 'softener' | 'other_goods';
+  item_type?: 'service' | 'product';
   unit_price?: number;
   kilo_price?: number;
   supports_unit: boolean;

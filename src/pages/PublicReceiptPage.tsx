@@ -18,6 +18,8 @@ interface OrderData {
   payment_method: string;
   cash_received?: number;
   points_earned?: number;
+  discount_amount?: number;
+  points_redeemed?: number;
   order_date: string;
   estimated_completion: string;
   created_at: string;
@@ -29,6 +31,8 @@ interface OrderData {
     line_total: number;
     service_type: string;
     weight_kg?: number;
+    category?: string;
+    item_type?: 'service' | 'product';
   }>;
 }
 
@@ -336,6 +340,19 @@ export const PublicReceiptPage: React.FC = () => {
                 </span>
               </div>
 
+              {/* Points Redeemed - Only show if store has points enabled and points were redeemed */}
+              {storeInfo?.enable_points && order.points_redeemed && order.points_redeemed > 0 && (
+                <div className="flex justify-between items-center bg-blue-50 -mx-3 px-3 py-2 rounded">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-blue-500 fill-blue-500" />
+                    <span className="text-gray-600 font-medium">Poin Ditukar</span>
+                  </div>
+                  <span className="text-blue-600 font-bold">
+                    -{order.points_redeemed} poin (Rp. {((order.points_redeemed || 0) * 100).toLocaleString('id-ID')})
+                  </span>
+                </div>
+              )}
+
               {/* Points Earned - Only show if store has points enabled, payment is completed and points earned */}
               {storeInfo?.enable_points && order.payment_status === 'completed' && order.points_earned && order.points_earned > 0 && (
                 <div className="flex justify-between items-center bg-amber-50 -mx-3 px-3 py-2 rounded">
@@ -370,25 +387,64 @@ export const PublicReceiptPage: React.FC = () => {
 
             {/* Service Items - Expandable */}
             {showDetails && (
-              <div className="mt-4 space-y-3 border-t border-gray-200 pt-4">
-                <h3 className="font-medium text-gray-800 mb-3">Item Layanan:</h3>
-                {order.order_items.map((item, index) => (
-                  <div key={index} className="border-b border-gray-200 pb-3">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-800">
-                          {item.weight_kg ? `${item.weight_kg}Kg` : `${item.quantity}x`} ({item.service_name})
-                        </p>
-                        <p className="text-emerald-600 text-sm">Rp. {item.service_price.toLocaleString('id-ID')}</p>
+              <div className="mt-4 space-y-4 border-t border-gray-200 pt-4">
+                {/* Service Items Section */}
+                {order.order_items.filter(item => item.item_type !== 'product').length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                      <span className="w-1 h-4 bg-blue-500 rounded"></span>
+                      Layanan:
+                    </h3>
+                    {order.order_items
+                      .filter(item => item.item_type !== 'product')
+                      .map((item, index) => (
+                      <div key={`service-${index}`} className="border-b border-gray-200 pb-3">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-800">
+                              {item.weight_kg ? `${item.weight_kg}Kg` : `${item.quantity}x`} ({item.service_name})
+                            </p>
+                            <p className="text-emerald-600 text-sm">Rp. {item.service_price.toLocaleString('id-ID')}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-gray-800">
+                              Rp. {item.line_total.toLocaleString('id-ID')}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium text-gray-800">
-                          Rp. {item.line_total.toLocaleString('id-ID')}
-                        </p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                )}
+                
+                {/* Product Items Section */}
+                {order.order_items.filter(item => item.item_type === 'product').length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                      <span className="w-1 h-4 bg-cyan-500 rounded"></span>
+                      Produk & Barang:
+                    </h3>
+                    {order.order_items
+                      .filter(item => item.item_type === 'product')
+                      .map((item, index) => (
+                      <div key={`product-${index}`} className="border-b border-cyan-100 pb-3 bg-cyan-50/30 p-2 rounded">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-800">
+                              {item.quantity}x {item.service_name}
+                            </p>
+                            <p className="text-cyan-600 text-sm">Rp. {item.service_price.toLocaleString('id-ID')}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-gray-800">
+                              Rp. {item.line_total.toLocaleString('id-ID')}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -411,7 +467,11 @@ export const PublicReceiptPage: React.FC = () => {
               
               <div className="flex justify-between">
                 <span className="text-gray-600">Diskon</span>
-                <span className="text-gray-800">0</span>
+                <span className="text-gray-800">
+                  {order.discount_amount && order.discount_amount > 0
+                    ? `-Rp. ${order.discount_amount.toLocaleString('id-ID')}`
+                    : '0'}
+                </span>
               </div>
               
               <div className="border-t border-dashed border-gray-300 pt-2">

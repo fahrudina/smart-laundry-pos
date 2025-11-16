@@ -16,7 +16,8 @@ import { useServices, useCreateService, useUpdateService, useDeleteService, Serv
 interface ServiceFormData {
   name: string;
   description: string;
-  category: 'wash' | 'dry' | 'special' | 'ironing' | 'folding';
+  category: 'wash' | 'dry' | 'special' | 'ironing' | 'folding' | 'detergent' | 'perfume' | 'softener' | 'other_goods';
+  item_type?: 'service' | 'product';
   unit_price: number;
   kilo_price: number;
   supports_unit: boolean;
@@ -29,6 +30,7 @@ const initialFormData: ServiceFormData = {
   name: '',
   description: '',
   category: 'wash',
+  item_type: 'service',
   unit_price: 0,
   kilo_price: 0,
   supports_unit: true,
@@ -106,12 +108,33 @@ const ServiceManagement = () => {
 
   const getCategoryColor = (category: string) => {
     switch (category) {
+      // Service categories
       case 'wash': return 'bg-blue-100 text-blue-800';
       case 'dry': return 'bg-green-100 text-green-800';
       case 'special': return 'bg-purple-100 text-purple-800';
       case 'ironing': return 'bg-orange-100 text-orange-800';
       case 'folding': return 'bg-gray-100 text-gray-800';
+      // Product categories
+      case 'detergent': return 'bg-cyan-100 text-cyan-800';
+      case 'perfume': return 'bg-pink-100 text-pink-800';
+      case 'softener': return 'bg-indigo-100 text-indigo-800';
+      case 'other_goods': return 'bg-teal-100 text-teal-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'wash': return 'Cuci';
+      case 'dry': return 'Dry Clean';
+      case 'special': return 'Khusus';
+      case 'ironing': return 'Setrika';
+      case 'folding': return 'Lipat';
+      case 'detergent': return 'Deterjen';
+      case 'perfume': return 'Parfum';
+      case 'softener': return 'Pelembut';
+      case 'other_goods': return 'Produk Lainnya';
+      default: return category;
     }
   };
 
@@ -290,7 +313,7 @@ const ServiceManagement = () => {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{service.name}</CardTitle>
                 <Badge className={getCategoryColor(service.category)}>
-                  {service.category}
+                  {getCategoryLabel(service.category)}
                 </Badge>
               </div>
               {service.description && (
@@ -391,7 +414,17 @@ const ServiceManagement = () => {
                 <Label htmlFor="category">Kategori*</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value: any) => setFormData({ ...formData, category: value })}
+                  onValueChange={(value: any) => {
+                    const isProduct = ['detergent', 'perfume', 'softener', 'other_goods'].includes(value);
+                    setFormData({ 
+                      ...formData, 
+                      category: value,
+                      item_type: isProduct ? 'product' : 'service',
+                      // Products typically don't have duration
+                      duration_value: isProduct ? 0 : formData.duration_value || 1,
+                      supports_kilo: isProduct ? false : formData.supports_kilo
+                    });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -402,6 +435,10 @@ const ServiceManagement = () => {
                     <SelectItem value="ironing">Setrika</SelectItem>
                     <SelectItem value="folding">Lipat</SelectItem>
                     <SelectItem value="special">Khusus</SelectItem>
+                    <SelectItem value="detergent">Deterjen (Produk)</SelectItem>
+                    <SelectItem value="perfume">Parfum (Produk)</SelectItem>
+                    <SelectItem value="softener">Pelembut (Produk)</SelectItem>
+                    <SelectItem value="other_goods">Produk Lainnya</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

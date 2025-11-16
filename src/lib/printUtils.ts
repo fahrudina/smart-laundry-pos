@@ -698,9 +698,18 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   commands.push(ESC_POS.CRLF);
   commands.push(ESC_POS.BOLD_OFF);
   
-  // Items
-  if (receiptData.items && receiptData.items.length > 0) {
-    receiptData.items.forEach((item: any) => {
+  // Separate services and products
+  const serviceItems = receiptData.items?.filter((item: any) => item.item_type !== 'product') || [];
+  const productItems = receiptData.items?.filter((item: any) => item.item_type === 'product') || [];
+  
+  // Service Items
+  if (serviceItems.length > 0) {
+    commands.push(ESC_POS.BOLD_ON);
+    commands.push(textToBytes('LAYANAN:'));
+    commands.push(ESC_POS.CRLF);
+    commands.push(ESC_POS.BOLD_OFF);
+    
+    serviceItems.forEach((item: any) => {
       // Service name and quantity
       const qtyText = item.service_type === 'kilo' && item.weight_kg ? 
         `${item.weight_kg}kg` : `${item.quantity || 1}x`;
@@ -728,6 +737,33 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
     });
   }
   
+  // Product Items
+  if (productItems.length > 0) {
+    commands.push(ESC_POS.BOLD_ON);
+    commands.push(textToBytes('PRODUK & BARANG:'));
+    commands.push(ESC_POS.CRLF);
+    commands.push(ESC_POS.BOLD_OFF);
+    
+    productItems.forEach((item: any) => {
+      // Product name and quantity
+      const qtyText = `${item.quantity || 1}x`;
+      const itemLine = `${qtyText} ${item.service_name || item.name || ''}`;
+      commands.push(textToBytes(formatTextForThermal(itemLine, paperWidth - 10)));
+      commands.push(ESC_POS.CRLF);
+      
+      // Price aligned to the right
+      const price = item.line_total || item.service_price || item.price || 0;
+      const priceText = `Rp ${price.toLocaleString('id-ID')}`;
+      const spacesToAdd = Math.max(0, paperWidth - priceText.length);
+      const priceLine = ' '.repeat(spacesToAdd) + priceText;
+      commands.push(textToBytes(priceLine));
+      commands.push(ESC_POS.CRLF);
+      
+      // Add extra line for readability
+      commands.push(ESC_POS.LF);
+    });
+  }
+  
   // Separator
   commands.push(textToBytes(createLine('-', paperWidth)));
   commands.push(ESC_POS.CRLF);
@@ -739,14 +775,29 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
     commands.push(textToBytes(' '.repeat(spacesToAdd) + subtotalText));
     commands.push(ESC_POS.CRLF);
   }
-  
+
+  // Discount (if any)
+  if (receiptData.discountAmount && receiptData.discountAmount > 0) {
+    const discountText = `Diskon: -Rp ${receiptData.discountAmount.toLocaleString('id-ID')}`;
+    const spacesToAdd = Math.max(0, paperWidth - discountText.length);
+    commands.push(textToBytes(' '.repeat(spacesToAdd) + discountText));
+    commands.push(ESC_POS.CRLF);
+
+    // Points redeemed info (if discount from points)
+    if (receiptData.pointsRedeemed && receiptData.pointsRedeemed > 0) {
+      const pointsText = `  (${receiptData.pointsRedeemed} poin ditukar)`;
+      commands.push(textToBytes(pointsText));
+      commands.push(ESC_POS.CRLF);
+    }
+  }
+
   if (receiptData.taxAmount && receiptData.taxAmount > 0) {
     const taxText = `Pajak: Rp ${receiptData.taxAmount.toLocaleString('id-ID')}`;
     const spacesToAdd = Math.max(0, paperWidth - taxText.length);
     commands.push(textToBytes(' '.repeat(spacesToAdd) + taxText));
     commands.push(ESC_POS.CRLF);
   }
-  
+
   // Total
   commands.push(ESC_POS.BOLD_ON);
   commands.push(ESC_POS.SIZE_DOUBLE_WIDTH);
@@ -968,6 +1019,8 @@ export const fetchReceiptDataForThermal = async (orderId: string): Promise<any> 
       totalAmount: orderData.total_amount || 0,
       subtotal: orderData.subtotal || 0,
       taxAmount: orderData.tax_amount || 0,
+      discountAmount: orderData.discount_amount || 0,
+      pointsRedeemed: orderData.points_redeemed || 0,
       paymentMethod: orderData.payment_method || 'cash',
       paymentStatus: orderData.payment_status || 'pending',
       executionStatus: orderData.execution_status || 'in_queue',
