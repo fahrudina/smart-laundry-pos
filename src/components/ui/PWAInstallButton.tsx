@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Download, Smartphone, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { PWAInstallInstructions } from '@/components/ui/PWAInstallInstructions';
 
 interface PWAInstallButtonProps {
   variant?: 'default' | 'outline' | 'ghost';
@@ -16,7 +17,8 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
   className = '',
   showText = true
 }) => {
-  const { isInstallable, isInstalled, installPWA, canInstall } = usePWAInstall();
+  const { isInstallable, isInstalled, installPWA, canInstall, browserInfo, needsSpecialInstructions } = usePWAInstall();
+  const [showInstructions, setShowInstructions] = useState(false);
 
   // Don't show button if not installable or already installed
   if (!canInstall && !isInstalled) return null;
@@ -30,22 +32,42 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
     );
   }
 
+  const handleInstallClick = async () => {
+    // For devices that need special instructions (MIUI, iOS, etc), show dialog
+    if (needsSpecialInstructions || browserInfo.isMIUI) {
+      setShowInstructions(true);
+    } else {
+      // Otherwise, try standard PWA install
+      await installPWA();
+    }
+  };
+
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const buttonText = browserInfo.isMIUI ? 'Lihat Cara Install' :
+                     isIOS ? 'Tambah ke Home' :
+                     'Install App';
 
   return (
-    <Button
-      onClick={installPWA}
-      variant={variant}
-      size={size}
-      className={`flex items-center gap-2 bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100 ${className}`}
-      title={isIOS ? 'Tambah ke Layar Utama' : 'Install Aplikasi'}
-    >
-      {isIOS ? <Smartphone className="h-4 w-4" /> : <Download className="h-4 w-4" />}
-      {showText && (
-        <span className="hidden sm:inline">
-          {isIOS ? 'Tambah ke Home' : 'Install App'}
-        </span>
-      )}
-    </Button>
+    <>
+      <Button
+        onClick={handleInstallClick}
+        variant={variant}
+        size={size}
+        className={`flex items-center gap-2 bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100 ${className}`}
+        title={browserInfo.isMIUI ? 'Cara Install di MIUI' : isIOS ? 'Tambah ke Layar Utama' : 'Install Aplikasi'}
+      >
+        {isIOS ? <Smartphone className="h-4 w-4" /> : <Download className="h-4 w-4" />}
+        {showText && (
+          <span className="hidden sm:inline">
+            {buttonText}
+          </span>
+        )}
+      </Button>
+
+      <PWAInstallInstructions
+        open={showInstructions}
+        onOpenChange={setShowInstructions}
+      />
+    </>
   );
 };
