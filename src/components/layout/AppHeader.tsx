@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users, Check, MessageSquare, KeyRound } from 'lucide-react';
+import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users, Check, MessageSquare, TrendingUp, KeyRound } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,6 +72,12 @@ export const AppHeader: React.FC = () => {
     }
   };
 
+  const handleRevenueReportNavigation = () => {
+    if (location.pathname !== '/revenue-report') {
+      navigate('/revenue-report');
+    }
+  };
+
   if (!user) return null;
 
   const userInitials = user.full_name 
@@ -128,6 +134,10 @@ export const AppHeader: React.FC = () => {
                       <DropdownMenuItem onClick={handleWhatsAppBroadcastNavigation}>
                         <MessageSquare className="h-4 w-4 mr-2" />
                         Broadcast WhatsApp
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleRevenueReportNavigation}>
+                        <TrendingUp className="h-4 w-4 mr-2" />
+                        Laporan Pendapatan
                       </DropdownMenuItem>
                     </>
                   )}
@@ -209,10 +219,10 @@ export const AppHeader: React.FC = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    variant={['/services', '/stores', '/whatsapp-broadcast'].includes(location.pathname) ? "default" : "ghost"}
+                    variant={['/services', '/stores', '/whatsapp-broadcast', '/revenue-report'].includes(location.pathname) ? "default" : "ghost"}
                     size="sm"
                     className={`flex items-center gap-1.5 px-3 ${
-                      ['/services', '/stores', '/whatsapp-broadcast'].includes(location.pathname)
+                      ['/services', '/stores', '/whatsapp-broadcast', '/revenue-report'].includes(location.pathname)
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
@@ -242,6 +252,13 @@ export const AppHeader: React.FC = () => {
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Broadcast WhatsApp
                     {location.pathname === '/whatsapp-broadcast' && (
+                      <Check className="h-4 w-4 ml-auto text-blue-600" />
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleRevenueReportNavigation}>
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    Laporan Pendapatan
+                    {location.pathname === '/revenue-report' && (
                       <Check className="h-4 w-4 ml-auto text-blue-600" />
                     )}
                   </DropdownMenuItem>
