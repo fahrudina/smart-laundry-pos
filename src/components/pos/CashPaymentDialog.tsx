@@ -48,6 +48,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const cash = parseFloat(cashReceived);
+
     if (!isNaN(cash) && cash >= totalAmount) {
       onSubmit(cash);
     }
@@ -61,7 +62,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]" aria-describedby="cash-payment-description">
+      <DialogContent className="sm:max-w-[500px]" aria-describedby="cash-payment-description">
         <DialogHeader>
           <DialogTitle>Pembayaran Tunai</DialogTitle>
           <DialogDescription id="cash-payment-description">
@@ -76,7 +77,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
                 Rp {formatCurrency(totalAmount)}
               </p>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="cash-received">Uang Diterima</Label>
               <Input
@@ -90,7 +91,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
                 min={totalAmount}
               />
             </div>
-            
+
             <div className="flex justify-center gap-2 flex-wrap">
               {quickCashOptions.map((amount) => (
                 <Button
@@ -105,7 +106,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
                 </Button>
               ))}
             </div>
-            
+
             {parseFloat(cashReceived) >= totalAmount && change > 0 && (
               <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
                 <p className="text-sm text-green-700 font-medium">Kembalian</p>
@@ -114,7 +115,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
                 </p>
               </div>
             )}
-            
+
             {parseFloat(cashReceived) >= totalAmount && change === 0 && (
               <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <p className="text-sm text-blue-700 font-medium">Uang Pas</p>
@@ -123,7 +124,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
                 </p>
               </div>
             )}
-            
+
             {parseFloat(cashReceived) > 0 && parseFloat(cashReceived) < totalAmount && (
               <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
                 <p className="text-sm text-red-700 font-medium">Uang Kurang</p>

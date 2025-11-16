@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users, Check, MessageSquare, TrendingUp } from 'lucide-react';
+import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users, Check, MessageSquare, TrendingUp, KeyRound } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { AddCustomerDialog } from '@/components/pos/AddCustomerDialog';
 import { StoreSelector } from '@/components/stores/StoreSelector';
 import { PWAInstallButton } from '@/components/ui/PWAInstallButton';
+import { ChangePasswordDialog } from '@/components/auth/ChangePasswordDialog';
 
 export const AppHeader: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -370,6 +371,14 @@ export const AppHeader: React.FC = () => {
                   <Smartphone className="h-4 w-4 mr-2" />
                   Install Aplikasi
                 </DropdownMenuItem>
+                <ChangePasswordDialog
+                  trigger={
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <KeyRound className="h-4 w-4 mr-2" />
+                      Ubah Password
+                    </DropdownMenuItem>
+                  }
+                />
                 <DropdownMenuItem>
                   <Settings className="h-4 w-4 mr-2" />
                   Pengaturan

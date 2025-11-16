@@ -52,7 +52,8 @@ export class WhatsAppNotificationService {
    */
   async notifyOrderCreated(
     phoneNumber: string,
-    orderData: OrderCreatedData
+    orderData: OrderCreatedData,
+    fromNumber?: string
   ): Promise<NotificationResult> {
     if (!this.isConfigured()) {
       console.warn('WhatsApp service not configured, skipping notification');
@@ -63,10 +64,17 @@ export class WhatsAppNotificationService {
       const formattedPhone = WhatsAppClient.formatPhoneNumber(phoneNumber);
       const message = messageTemplates.orderCreated(orderData);
 
-      const response = await this.client.sendMessage({
+      const messagePayload: { to: string; message: string; from?: string } = {
         to: formattedPhone,
         message,
-      });
+      };
+
+      // Use store number as sender if provided
+      if (fromNumber) {
+        messagePayload.from = WhatsAppClient.formatPhoneNumber(fromNumber);
+      }
+
+      const response = await this.client.sendMessage(messagePayload);
 
       return {
         success: response.success,
@@ -122,7 +130,8 @@ export class WhatsAppNotificationService {
    */
   async notifyOrderReadyForPickup(
     phoneNumber: string,
-    orderData: OrderReadyForPickupData
+    orderData: OrderReadyForPickupData,
+    fromNumber?: string
   ): Promise<NotificationResult> {
     if (!this.isConfigured()) {
       console.warn('WhatsApp service not configured, skipping notification');
@@ -133,10 +142,17 @@ export class WhatsAppNotificationService {
       const formattedPhone = WhatsAppClient.formatPhoneNumber(phoneNumber);
       const message = messageTemplates.orderReadyForPickup(orderData);
 
-      const response = await this.client.sendMessage({
+      const messagePayload: { to: string; message: string; from?: string } = {
         to: formattedPhone,
         message,
-      });
+      };
+
+      // Use store number as sender if provided
+      if (fromNumber) {
+        messagePayload.from = WhatsAppClient.formatPhoneNumber(fromNumber);
+      }
+
+      const response = await this.client.sendMessage(messagePayload);
 
       return {
         success: response.success,
@@ -157,7 +173,8 @@ export class WhatsAppNotificationService {
    */
   async sendCustomMessage(
     phoneNumber: string,
-    message: string
+    message: string,
+    fromNumber?: string
   ): Promise<NotificationResult> {
     if (!this.isConfigured()) {
       console.warn('WhatsApp service not configured, skipping notification');
@@ -167,10 +184,17 @@ export class WhatsAppNotificationService {
     try {
       const formattedPhone = WhatsAppClient.formatPhoneNumber(phoneNumber);
 
-      const response = await this.client.sendMessage({
+      const messagePayload: { to: string; message: string; from?: string } = {
         to: formattedPhone,
         message,
-      });
+      };
+
+      // Use store number as sender if provided
+      if (fromNumber) {
+        messagePayload.from = WhatsAppClient.formatPhoneNumber(fromNumber);
+      }
+
+      const response = await this.client.sendMessage(messagePayload);
 
       return {
         success: response.success,
@@ -193,10 +217,11 @@ export class WhatsAppNotificationService {
     phoneNumber: string,
     customerName: string,
     orderId: string,
-    daysOverdue: number
+    daysOverdue: number,
+    fromNumber?: string
   ): Promise<NotificationResult> {
     const message = MessageBuilder.reminderMessage(customerName, orderId, daysOverdue);
-    return this.sendCustomMessage(phoneNumber, message);
+    return this.sendCustomMessage(phoneNumber, message, fromNumber);
   }
 
   /**
@@ -205,10 +230,11 @@ export class WhatsAppNotificationService {
   async sendPromotion(
     phoneNumber: string,
     customerName: string,
-    promoDetails: string
+    promoDetails: string,
+    fromNumber?: string
   ): Promise<NotificationResult> {
     const message = MessageBuilder.promotionalMessage(customerName, promoDetails);
-    return this.sendCustomMessage(phoneNumber, message);
+    return this.sendCustomMessage(phoneNumber, message, fromNumber);
   }
 
   /**
