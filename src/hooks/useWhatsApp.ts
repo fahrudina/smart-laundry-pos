@@ -90,7 +90,12 @@ export const useWhatsApp = () => {
     }
 
     try {
-      const result = await whatsAppService.notifyOrderCreated(phoneNumber, orderData);
+      // Determine sender phone number based on store configuration
+      const fromNumber = orderData.storeInfo?.wa_use_store_number && orderData.storeInfo?.phone
+        ? orderData.storeInfo.phone
+        : undefined;
+
+      const result = await whatsAppService.notifyOrderCreated(phoneNumber, orderData, fromNumber);
       
       if (result.success) {
         toast({
@@ -174,7 +179,12 @@ export const useWhatsApp = () => {
     }
 
     try {
-      const result = await whatsAppService.notifyOrderReadyForPickup(phoneNumber, orderData);
+      // Determine sender phone number based on store configuration
+      const fromNumber = orderData.storeInfo?.wa_use_store_number && orderData.storeInfo?.phone
+        ? orderData.storeInfo.phone
+        : undefined;
+
+      const result = await whatsAppService.notifyOrderReadyForPickup(phoneNumber, orderData, fromNumber);
       
       if (result.success) {
       } else {
