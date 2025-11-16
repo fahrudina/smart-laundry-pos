@@ -4,9 +4,6 @@
 -- Add wa_use_store_number column to stores table
 ALTER TABLE public.stores ADD COLUMN IF NOT EXISTS wa_use_store_number BOOLEAN NOT NULL DEFAULT false;
 
--- Create index for performance (filtering by stores with WhatsApp store number enabled)
-CREATE INDEX IF NOT EXISTS idx_stores_wa_use_store_number ON public.stores(wa_use_store_number);
-
 -- Add comment for documentation
 COMMENT ON COLUMN public.stores.wa_use_store_number IS 'Enable using store phone number as WhatsApp sender. When true and store phone exists, messages are sent from the store number using the "from" field in WhatsApp API.';
 
