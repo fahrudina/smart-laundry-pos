@@ -28,7 +28,12 @@ export class WhatsAppClient {
 
       // Validate phone number format (basic validation)
       if (!this.isValidPhoneNumber(message.to)) {
-        throw new Error('Invalid phone number format. Use international format like +1234567890');
+        throw new Error('Invalid phone number format. Use format like 6281234567890');
+      }
+
+      // Validate from field if provided
+      if (message.from && !this.isValidPhoneNumber(message.from)) {
+        throw new Error('Invalid sender phone number format. Use format like 6281234567890');
       }
 
       const controller = new AbortController();
@@ -128,7 +133,7 @@ export class WhatsAppClient {
   async testConnection(): Promise<boolean> {
     try {
       const testMessage: WhatsAppMessage = {
-        to: '+1234567890', // Test number that won't actually receive a message
+        to: '6281234567890', // Test number that won't actually receive a message
         message: 'Connection test - this message should not be sent',
       };
 
@@ -178,33 +183,33 @@ export class WhatsAppClient {
    * @returns true if valid, false otherwise
    */
   private isValidPhoneNumber(phoneNumber: string): boolean {
-    // More permissive validation to handle various international formats
-    // Examples: +62812345678, +6281280272326, +1234567890
-    const phoneRegex = /^\+[1-9]\d{7,15}$/;
+    // Accept both formats: with "+" prefix or direct "62" prefix
+    // Examples: +62812345678, 62812345678, +6281280272326, 6281280272326
+    const phoneRegex = /^(\+)?[1-9]\d{7,15}$/;
     return phoneRegex.test(phoneNumber);
   }
 
   /**
-   * Format phone number to international format
+   * Format phone number to use "62" prefix without "+" sign
    * @param phoneNumber The phone number to format
    * @param defaultCountryCode Default country code if not provided (e.g., '62' for Indonesia)
-   * @returns Formatted phone number
+   * @returns Formatted phone number with "62" prefix only (e.g., "6281234567890")
    */
   static formatPhoneNumber(phoneNumber: string, defaultCountryCode: string = '62'): string {
-    // Remove all non-digit characters
+    // Remove all non-digit characters (including "+")
     const cleaned = phoneNumber.replace(/\D/g, '');
     
     // If already starts with country code
     if (cleaned.startsWith(defaultCountryCode)) {
-      return `+${cleaned}`;
+      return cleaned;
     }
     
     // If starts with 0, replace with country code
     if (cleaned.startsWith('0')) {
-      return `+${defaultCountryCode}${cleaned.substring(1)}`;
+      return `${defaultCountryCode}${cleaned.substring(1)}`;
     }
     
-    // If doesn't start with + or country code, add default country code
-    return `+${defaultCountryCode}${cleaned}`;
+    // If doesn't start with country code, add default country code
+    return `${defaultCountryCode}${cleaned}`;
   }
 }
