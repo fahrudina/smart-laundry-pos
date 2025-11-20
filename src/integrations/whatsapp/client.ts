@@ -31,6 +31,11 @@ export class WhatsAppClient {
         throw new Error('Invalid phone number format. Use format like 6281234567890');
       }
 
+      // Validate from field if provided
+      if (message.from && !this.isValidPhoneNumber(message.from)) {
+        throw new Error('Invalid sender phone number format. Use format like 6281234567890');
+      }
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
