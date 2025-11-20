@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       timestamp: new Date().toISOString()
     });
 
-    const { to, message } = req.body;
+    const { to, message, from } = req.body;
     
     if (!to || !message) {
       return res.status(400).json({
@@ -59,13 +59,18 @@ export default async function handler(req, res) {
     console.log('🔗 Forwarding to:', whatsappApiEndpoint);
 
     // Forward the request to the actual WhatsApp API
+    const requestBody = { to, message };
+    if (from) {
+      requestBody.from = from;
+    }
+    
     const response = await fetch(whatsappApiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Basic ${credentials}`,
       },
-      body: JSON.stringify({ to, message }),
+      body: JSON.stringify(requestBody),
     });
 
     const responseText = await response.text();
