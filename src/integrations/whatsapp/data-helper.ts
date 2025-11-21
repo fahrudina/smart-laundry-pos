@@ -181,7 +181,7 @@ export class WhatsAppDataHelper {
    * Get WhatsApp sender phone number based on store configuration
    * Returns store phone if feature is enabled and phone is set, otherwise returns default sender
    */
-  static getWhatsAppSender(storeInfo: StoreInfo): string | undefined {
+  static getWhatsAppSender(storeInfo: StoreInfo): string {
     // Check if feature is enabled and store phone exists
     if (storeInfo.wa_use_store_number && storeInfo.phone && storeInfo.phone !== 'Nomor telepon belum diset') {
       return storeInfo.phone;
