@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { StoreInfo, OrderItem } from '@/integrations/whatsapp/types';
+import { defaultSender } from '@/lib/whatsapp-config';
 
 /**
  * Helper functions for WhatsApp notifications with database integration
@@ -178,14 +179,14 @@ export class WhatsAppDataHelper {
 
   /**
    * Get WhatsApp sender phone number based on store configuration
-   * Returns store phone if feature is enabled and phone is set, otherwise undefined
+   * Returns store phone if feature is enabled and phone is set, otherwise returns default sender
    */
   static getWhatsAppSender(storeInfo: StoreInfo): string | undefined {
     // Check if feature is enabled and store phone exists
     if (storeInfo.wa_use_store_number && storeInfo.phone && storeInfo.phone !== 'Nomor telepon belum diset') {
       return storeInfo.phone;
     }
-    // Return undefined to use default sender
-    return undefined;
+    // Return default sender when store number is not used
+    return defaultSender;
   }
 }
