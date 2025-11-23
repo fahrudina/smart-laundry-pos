@@ -1,8 +1,15 @@
 # Android Build - Quick Reference
 
+## Environment Check
+
+Run the automated environment validation:
+```bash
+./check-android-env.sh
+```
+
 ## Prerequisites Check
 ```bash
-# Verify all requirements
+# Verify all requirements manually
 node --version          # Should be 16+
 java -version          # Should be JDK 17
 echo $ANDROID_HOME     # Should point to Android SDK

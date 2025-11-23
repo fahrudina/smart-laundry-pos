@@ -76,6 +76,16 @@ cd android && ./gradlew --version
 
 ## Quick Start
 
+### Environment Validation
+
+Before starting, you can validate your environment with the included script:
+
+```bash
+./check-android-env.sh
+```
+
+This script will check all prerequisites and provide guidance on any missing requirements.
+
 ### First-Time Setup
 
 1. **Clone and Install Dependencies**
