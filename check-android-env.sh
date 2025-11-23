@@ -51,11 +51,17 @@ echo ""
 echo "3. Checking Java..."
 if check_command "java" "Java JDK"; then
     check_version "$(java -version 2>&1 | head -n 1)"
-    JAVA_VERSION=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | cut -d'.' -f1)
-    if [ "$JAVA_VERSION" -ge 17 ]; then
+    # Extract major version - works for Java 8 (1.8.x) and Java 9+ (9.x, 11.x, 17.x)
+    JAVA_VERSION_STRING=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2)
+    JAVA_MAJOR_VERSION=$(echo $JAVA_VERSION_STRING | cut -d'.' -f1)
+    # For Java 8 and earlier (1.x.x format), get second part
+    if [ "$JAVA_MAJOR_VERSION" = "1" ]; then
+        JAVA_MAJOR_VERSION=$(echo $JAVA_VERSION_STRING | cut -d'.' -f2)
+    fi
+    if [ "$JAVA_MAJOR_VERSION" -ge 17 ] 2>/dev/null; then
         echo -e "${GREEN}✓${NC} Java version is 17 or higher"
     else
-        echo -e "${YELLOW}⚠${NC} Java version should be 17 or higher"
+        echo -e "${YELLOW}⚠${NC} Java version should be 17 or higher (current: $JAVA_VERSION_STRING)"
         WARNINGS=$((WARNINGS + 1))
     fi
 fi
