@@ -151,6 +151,19 @@ Build the project for production:
 npm run build
 ```
 
+### 📱 Android APK Build
+
+This project can also be built as a native Android app! See the comprehensive [Android Build Guide](./ANDROID_BUILD.md) for:
+- Complete setup instructions
+- Build commands and scripts
+- Signing configuration for release
+- Troubleshooting common issues
+
+Quick start for Android build:
+```sh
+npm run android:build:debug
+```
+
 ## 🌐 Custom Domain
 
 Most hosting providers support custom domain configuration. Check your provider's documentation for specific instructions.
@@ -166,6 +179,12 @@ Most hosting providers support custom domain configuration. Check your provider'
 - ✅ Database schema improvements with proper migrations
 - ✅ Improved error handling and user feedback
 
+### Version 2.1 - Native Android Support
+- ✅ Android APK build configuration with Capacitor
+- ✅ Comprehensive build documentation and scripts
+- ✅ Support for Android 6.0+ (API 23+)
+- ✅ NPM scripts for streamlined Android workflow
+
 ## 🎯 Future Enhancements
 
 - [ ] User authentication and role-based access
@@ -174,7 +193,8 @@ Most hosting providers support custom domain configuration. Check your provider'
 - [ ] SMS/Email notifications for order status updates
 - [ ] Reporting and analytics dashboard
 - [ ] Multi-location support
-- [ ] Mobile app version
+- [x] Mobile app version (Android APK build available)
+- [ ] iOS app version
 - [ ] Receipt printing integration
 
 ## 🤝 Contributing
