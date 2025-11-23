@@ -79,24 +79,34 @@ if [ -n "$ANDROID_HOME" ] || [ -n "$ANDROID_SDK_ROOT" ]; then
         # Check for platforms
         if [ -d "$SDK_PATH/platforms" ]; then
             PLATFORMS=$(ls -1 "$SDK_PATH/platforms" 2>/dev/null | wc -l)
-            echo -e "${GREEN}✓${NC} Found $PLATFORMS Android platform(s)"
-            ls -1 "$SDK_PATH/platforms" 2>/dev/null | head -3 | while read line; do
-                echo -e "  ${YELLOW}→${NC} $line"
-            done
+            if [ "$PLATFORMS" -gt 0 ]; then
+                echo -e "${GREEN}✓${NC} Found $PLATFORMS Android platform(s)"
+                ls -1 "$SDK_PATH/platforms" 2>/dev/null | head -3 | while read line; do
+                    echo -e "  ${YELLOW}→${NC} $line"
+                done
+            else
+                echo -e "${RED}✗${NC} No Android platforms found"
+                ERRORS=$((ERRORS + 1))
+            fi
         else
-            echo -e "${RED}✗${NC} No Android platforms found"
+            echo -e "${RED}✗${NC} Platforms directory not found"
             ERRORS=$((ERRORS + 1))
         fi
         
         # Check for build-tools
         if [ -d "$SDK_PATH/build-tools" ]; then
             BUILD_TOOLS=$(ls -1 "$SDK_PATH/build-tools" 2>/dev/null | wc -l)
-            echo -e "${GREEN}✓${NC} Found $BUILD_TOOLS build-tools version(s)"
-            ls -1 "$SDK_PATH/build-tools" 2>/dev/null | head -3 | while read line; do
-                echo -e "  ${YELLOW}→${NC} $line"
-            done
+            if [ "$BUILD_TOOLS" -gt 0 ]; then
+                echo -e "${GREEN}✓${NC} Found $BUILD_TOOLS build-tools version(s)"
+                ls -1 "$SDK_PATH/build-tools" 2>/dev/null | head -3 | while read line; do
+                    echo -e "  ${YELLOW}→${NC} $line"
+                done
+            else
+                echo -e "${RED}✗${NC} No build-tools found"
+                ERRORS=$((ERRORS + 1))
+            fi
         else
-            echo -e "${RED}✗${NC} No build-tools found"
+            echo -e "${RED}✗${NC} Build-tools directory not found"
             ERRORS=$((ERRORS + 1))
         fi
     else
