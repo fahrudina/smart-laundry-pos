@@ -32,3 +32,25 @@ public/favicon-generator.html
 
 
 research/
+# Android local files
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/
+
+# Android signing keys - NEVER commit these!
+android/**/*.jks
+android/**/*.keystore
+*.jks
+*.keystore
+
+# Documentation (optional - remove if you want to commit docs)
+# THERMAL_PRINTER_ANDROID.md
+# ANDROID_BUILD.md
+# ANDROID_QUICK_REFERENCE.md
+
+# backups
+*.bak
+*.backup
+*.bak*
