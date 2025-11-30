@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useServices, useCreateService, useUpdateService, useDeleteService, ServiceFormData as ServiceFormType } from '@/hooks/useServices';
+import { SectionLoading } from '@/components/ui/loading-spinner';
 
 interface ServiceFormData {
   name: string;
@@ -253,14 +254,7 @@ const ServiceManagement = () => {
       </div>
 
       {/* Loading State */}
-      {loading && (
-        <div className="flex items-center justify-center py-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-            <p className="text-muted-foreground">Memuat layanan...</p>
-          </div>
-        </div>
-      )}
+      {loading && <SectionLoading text="Memuat layanan..." />}
 
       {/* Error State */}
       {error && (

@@ -3,6 +3,7 @@ import { authService } from '@/services/authService';
 import { StoreContextType, StoreWithOwnershipInfo } from '@/types/multi-tenant';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from './AuthContext';
+import { PageLoading } from '@/components/ui/loading-spinner';
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
@@ -205,7 +206,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Only show loading screen on initial load, not during store operations
   if (loading && userStores.length === 0 && !currentStore) {
-    return <div>Loading stores...</div>;
+    return <PageLoading text="Memuat toko..." />;
   }
 
   return (
