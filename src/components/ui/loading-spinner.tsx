@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
 
 type LoadingSpinnerSize = "sm" | "md" | "lg"
-type LoadingSpinnerVariant = "default" | "primary" | "muted"
+type LoadingSpinnerVariant = "default" | "primary" | "muted" | "white"
 
 interface LoadingSpinnerProps {
   /** Size of the spinner: sm (16px), md (32px), lg (48px) */
@@ -21,13 +21,14 @@ interface LoadingSpinnerProps {
 const sizeClasses: Record<LoadingSpinnerSize, string> = {
   sm: "h-4 w-4 border-2",
   md: "h-8 w-8 border-2",
-  lg: "h-12 w-12 border-3"
+  lg: "h-12 w-12 border-4"
 }
 
 const variantClasses: Record<LoadingSpinnerVariant, string> = {
   default: "border-blue-600",
   primary: "border-primary",
-  muted: "border-muted-foreground"
+  muted: "border-muted-foreground",
+  white: "border-white"
 }
 
 export function LoadingSpinner({
