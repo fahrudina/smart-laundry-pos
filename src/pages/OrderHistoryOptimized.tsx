@@ -21,7 +21,7 @@ import { usePageTitle, updatePageTitleWithCount } from '@/hooks/usePageTitle';
 import { useStore } from '@/contexts/StoreContext';
 import { toast } from 'sonner';
 import { DateRange } from 'react-day-picker';
-import { startOfDay, endOfDay } from 'date-fns';
+import { startOfDay, endOfDay, subDays, subMonths } from 'date-fns';
 
 interface FilterState {
   executionStatus: string;
@@ -96,22 +96,19 @@ export const OrderHistory = () => {
         return { from: from.toISOString(), to: to.toISOString() };
       }
       case 'yesterday': {
-        const yesterday = new Date(now);
-        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterday = subDays(now, 1);
         const from = startOfDay(yesterday);
         const to = endOfDay(yesterday);
         return { from: from.toISOString(), to: to.toISOString() };
       }
       case 'week': {
-        const weekAgo = new Date(now);
-        weekAgo.setDate(weekAgo.getDate() - 7);
+        const weekAgo = subDays(now, 7);
         const from = startOfDay(weekAgo);
         const to = endOfDay(now);
         return { from: from.toISOString(), to: to.toISOString() };
       }
       case 'month': {
-        const monthAgo = new Date(now);
-        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        const monthAgo = subMonths(now, 1);
         const from = startOfDay(monthAgo);
         const to = endOfDay(now);
         return { from: from.toISOString(), to: to.toISOString() };
@@ -124,7 +121,9 @@ export const OrderHistory = () => {
         }
         return {};
       }
+      case 'all':
       default:
+        // No date filtering - return empty object to fetch all orders
         return {};
     }
   }, []);
