@@ -76,6 +76,8 @@ interface OrderFilters {
   paymentStatus?: string;
   paymentMethod?: string;
   searchTerm?: string;
+  dateRangeFrom?: string; // ISO date string for start of range
+  dateRangeTo?: string;   // ISO date string for end of range
 }
 
 const ORDERS_QUERY_KEY = ['orders'];
@@ -200,6 +202,14 @@ export const useOrdersInfinite = (filters?: OrderFilters) => {
           ].join(',');
           
           query = query.or(searchQuery);
+        }
+        
+        // Apply date range filter (server-side)
+        if (filters?.dateRangeFrom) {
+          query = query.gte('created_at', filters.dateRangeFrom);
+        }
+        if (filters?.dateRangeTo) {
+          query = query.lte('created_at', filters.dateRangeTo);
         }
 
         const { data, error, count } = await query;
