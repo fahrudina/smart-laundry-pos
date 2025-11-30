@@ -7,6 +7,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { QrCode, Settings, Save, Star } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface StoreSettings {
   enable_qr: boolean;
@@ -152,7 +153,7 @@ export const StoreSettingsCard: React.FC = () => {
       <CardContent className="space-y-6">
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <LoadingSpinner size="md" variant="primary" />
           </div>
         ) : (
           <>
@@ -257,7 +258,7 @@ export const StoreSettingsCard: React.FC = () => {
               >
                 {saving ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <LoadingSpinner size="sm" variant="muted" className="border-white" />
                     Menyimpan...
                   </>
                 ) : (
