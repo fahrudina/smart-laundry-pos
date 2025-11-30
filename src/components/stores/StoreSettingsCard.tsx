@@ -258,7 +258,7 @@ export const StoreSettingsCard: React.FC = () => {
               >
                 {saving ? (
                   <>
-                    <LoadingSpinner size="sm" variant="muted" className="border-white" />
+                    <LoadingSpinner size="sm" variant="white" />
                     Menyimpan...
                   </>
                 ) : (
