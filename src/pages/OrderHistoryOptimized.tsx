@@ -21,7 +21,7 @@ import { usePageTitle, updatePageTitleWithCount } from '@/hooks/usePageTitle';
 import { useStore } from '@/contexts/StoreContext';
 import { toast } from 'sonner';
 import { DateRange } from 'react-day-picker';
-import { startOfDay, endOfDay, isWithinInterval } from 'date-fns';
+import { startOfDay, endOfDay } from 'date-fns';
 
 interface FilterState {
   executionStatus: string;
@@ -85,13 +85,62 @@ export const OrderHistory = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  // Helper function to calculate date range for server-side filtering
+  const getDateRangeForFilter = useCallback((dateRangeType: string, customRange?: DateRange): { from?: string; to?: string } => {
+    const now = new Date();
+    
+    switch (dateRangeType) {
+      case 'today': {
+        const from = startOfDay(now);
+        const to = endOfDay(now);
+        return { from: from.toISOString(), to: to.toISOString() };
+      }
+      case 'yesterday': {
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const from = startOfDay(yesterday);
+        const to = endOfDay(yesterday);
+        return { from: from.toISOString(), to: to.toISOString() };
+      }
+      case 'week': {
+        const weekAgo = new Date(now);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        const from = startOfDay(weekAgo);
+        const to = endOfDay(now);
+        return { from: from.toISOString(), to: to.toISOString() };
+      }
+      case 'month': {
+        const monthAgo = new Date(now);
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        const from = startOfDay(monthAgo);
+        const to = endOfDay(now);
+        return { from: from.toISOString(), to: to.toISOString() };
+      }
+      case 'custom': {
+        if (customRange?.from) {
+          const from = startOfDay(customRange.from);
+          const to = customRange.to ? endOfDay(customRange.to) : endOfDay(customRange.from);
+          return { from: from.toISOString(), to: to.toISOString() };
+        }
+        return {};
+      }
+      default:
+        return {};
+    }
+  }, []);
+
   // Memoize query filters to prevent unnecessary re-renders
-  const queryFilters = useMemo<OrderFilters>(() => ({
-    executionStatus: filters.executionStatus !== 'all' ? filters.executionStatus : undefined,
-    paymentStatus: filters.paymentStatus !== 'all' ? filters.paymentStatus : undefined,
-    paymentMethod: filters.paymentMethod !== 'all' ? filters.paymentMethod : undefined,
-    searchTerm: debouncedSearchTerm.trim() || undefined,
-  }), [filters.executionStatus, filters.paymentStatus, filters.paymentMethod, debouncedSearchTerm]);
+  const queryFilters = useMemo<OrderFilters>(() => {
+    const dateRange = getDateRangeForFilter(filters.dateRange, customDateRange);
+    return {
+      executionStatus: filters.executionStatus !== 'all' ? filters.executionStatus : undefined,
+      paymentStatus: filters.paymentStatus !== 'all' ? filters.paymentStatus : undefined,
+      paymentMethod: filters.paymentMethod !== 'all' ? filters.paymentMethod : undefined,
+      searchTerm: debouncedSearchTerm.trim() || undefined,
+      dateRangeFrom: dateRange.from,
+      dateRangeTo: dateRange.to,
+    };
+  }, [filters.executionStatus, filters.paymentStatus, filters.paymentMethod, filters.dateRange, customDateRange, debouncedSearchTerm, getDateRangeForFilter]);
 
   // Use optimized hooks
   const { 
@@ -107,48 +156,10 @@ export const OrderHistory = () => {
   const updateOrderMutation = useUpdateOrderStatusWithNotifications();
 
   // Enhanced filtering function with sorting (client-side for complex filters)
+  // Note: Date range filtering is now handled server-side for better performance
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
-      // Date range filter (not handled by server)
-      if (filters.dateRange && filters.dateRange !== 'all') {
-        const orderDate = new Date(order.created_at);
-        const now = new Date();
-        
-        switch (filters.dateRange) {
-          case 'today':
-            if (orderDate.toDateString() !== now.toDateString()) return false;
-            break;
-          case 'yesterday':
-            const yesterday = new Date(now);
-            yesterday.setDate(yesterday.getDate() - 1);
-            if (orderDate.toDateString() !== yesterday.toDateString()) return false;
-            break;
-          case 'week':
-            const weekAgo = new Date(now);
-            weekAgo.setDate(weekAgo.getDate() - 7);
-            if (orderDate < weekAgo) return false;
-            break;
-          case 'month':
-            const monthAgo = new Date(now);
-            monthAgo.setMonth(monthAgo.getMonth() - 1);
-            if (orderDate < monthAgo) return false;
-            break;
-          case 'custom':
-            // Custom date range filter - only apply if date range is selected
-            if (customDateRange?.from) {
-              const fromDate = startOfDay(customDateRange.from);
-              const toDate = customDateRange.to ? endOfDay(customDateRange.to) : endOfDay(customDateRange.from);
-              
-              if (!isWithinInterval(orderDate, { start: fromDate, end: toDate })) {
-                return false;
-              }
-            }
-            // If custom is selected but no date range set, show all orders
-            break;
-        }
-      }
-
-      // Overdue filter
+      // Overdue filter (client-side only)
       if (filters.isOverdue && !isOrderOverdue(order)) {
         return false;
       }
@@ -192,7 +203,7 @@ export const OrderHistory = () => {
       if (aValue > bValue) return sortBy.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [orders, filters, sortBy, customDateRange]);
+  }, [orders, filters, sortBy]);
 
   // Apply pending filters
   const applyFilters = useCallback(() => {
