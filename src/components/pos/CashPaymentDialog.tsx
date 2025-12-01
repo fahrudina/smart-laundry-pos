@@ -26,6 +26,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
 }) => {
   const [cashReceived, setCashReceived] = useState('');
   const [change, setChange] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -33,6 +34,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
       setTimeout(() => inputRef.current?.focus(), 100);
       setCashReceived('');
       setChange(0);
+      setIsSubmitting(false);
     }
   }, [isOpen]);
 
@@ -47,9 +49,16 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      return;
+    }
+    
     const cash = parseFloat(cashReceived);
 
     if (!isNaN(cash) && cash >= totalAmount) {
+      setIsSubmitting(true);
       onSubmit(cash);
     }
   };
@@ -136,15 +145,15 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
           </div>
 
           <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               Batal
             </Button>
             <Button
               type="submit"
-              disabled={parseFloat(cashReceived) < totalAmount}
+              disabled={parseFloat(cashReceived) < totalAmount || isSubmitting}
               className="bg-green-600 hover:bg-green-700"
             >
-              Konfirmasi Pembayaran
+              {isSubmitting ? 'Memproses...' : 'Konfirmasi Pembayaran'}
             </Button>
           </DialogFooter>
         </form>
