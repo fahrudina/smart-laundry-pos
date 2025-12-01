@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { PageLoading } from '@/components/ui/loading-spinner';
 
 interface LoginForm {
   email: string;
@@ -80,11 +81,7 @@ export const Login: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <PageLoading text="Memuat..." />;
   }
 
   return (

@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStore } from '@/contexts/StoreContext';
-import { Skeleton } from '@/components/ui/skeleton';
+import { PageLoading } from '@/components/ui/loading-spinner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,16 +18,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="space-y-4 w-[350px]">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-3/4" />
-          <Skeleton className="h-8 w-1/2" />
-          <div className="text-center text-sm text-gray-500 mt-4">
-            {authLoading ? 'Authenticating...' : 'Loading stores...'}
-          </div>
-        </div>
-      </div>
+      <PageLoading text={authLoading ? 'Mengautentikasi...' : 'Memuat toko...'} />
     );
   }
 
