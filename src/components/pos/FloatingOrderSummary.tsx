@@ -137,14 +137,22 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
     }
   }, [isProcessing, isPaymentStarted]);
 
-  // Handle payment button click
+  // Handle payment button click with duplicate prevention
   const handlePaymentClick = (paymentMethod: string) => {
+    // Prevent duplicate clicks - check both local state and processing state
+    if (isPaymentStarted || isProcessing) {
+      return;
+    }
     setIsPaymentStarted(true);
     onProcessPayment(paymentMethod);
   };
 
-  // Handle draft order button click
+  // Handle draft order button click with duplicate prevention
   const handleDraftClick = () => {
+    // Prevent duplicate clicks - check both local state and processing state
+    if (isPaymentStarted || isProcessing) {
+      return;
+    }
     setIsPaymentStarted(true);
     onCreateDraft();
   };
