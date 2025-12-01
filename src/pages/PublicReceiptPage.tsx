@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { WhatsAppDataHelper } from '@/integrations/whatsapp/data-helper';
 import { StoreInfo } from '@/integrations/whatsapp/types';
 import { CustomerPointsCard } from '@/components/customers/CustomerPointsCard';
+import { PageLoading } from '@/components/ui/loading-spinner';
 
 interface OrderData {
   id: string;
@@ -167,14 +168,7 @@ export const PublicReceiptPage: React.FC = () => {
   // };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Memuat nota digital...</p>
-        </div>
-      </div>
-    );
+    return <PageLoading text="Memuat nota digital..." />;
   }
 
   if (error || !order) {

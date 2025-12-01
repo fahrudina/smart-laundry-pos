@@ -22,6 +22,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { toast } from 'sonner';
 import { DateRange } from 'react-day-picker';
 import { startOfDay, endOfDay, subDays, subMonths } from 'date-fns';
+import { SectionLoading, InlineLoading } from '@/components/ui/loading-spinner';
 
 interface FilterState {
   executionStatus: string;
@@ -642,10 +643,7 @@ export const OrderHistory = () => {
               </CardHeader> */}
               <CardContent className="p-2 sm:p-6">
                 {loading && filteredOrders.length === 0 ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    <span className="ml-2">Memuat pesanan...</span>
-                  </div>
+                  <SectionLoading text="Memuat pesanan..." />
                 ) : filteredOrders.length === 0 ? (
                   <div className="text-center py-8">
                     <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -688,10 +686,7 @@ export const OrderHistory = () => {
                       className="px-8 py-2"
                     >
                       {loading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-                          Memuat...
-                        </>
+                        <InlineLoading text="Memuat..." />
                       ) : (
                         'Muat Lebih Banyak Pesanan'
                       )}

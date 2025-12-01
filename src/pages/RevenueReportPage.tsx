@@ -10,6 +10,7 @@ import { CalendarIcon, Download, TrendingUp, TrendingDown } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { SectionLoading } from '@/components/ui/loading-spinner';
 
 type DateRangePreset = 'today' | '7days' | '1month' | '6months' | 'custom';
 
@@ -246,9 +247,7 @@ export const RevenueReportPage = () => {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500">Memuat data...</p>
-        </div>
+        <SectionLoading text="Memuat data..." />
       ) : (
         <>
           {/* Gross Profit Section */}

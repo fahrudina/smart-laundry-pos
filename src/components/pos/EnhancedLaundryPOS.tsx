@@ -16,6 +16,7 @@ import { FloatingOrderSummary } from './FloatingOrderSummary';
 import { CashPaymentDialog } from './CashPaymentDialog';
 import { OrderSuccessDialog } from './OrderSuccessDialog';
 import { ThermalPrintDialog } from '@/components/thermal/ThermalPrintDialog';
+import { SectionLoading } from '@/components/ui/loading-spinner';
 
 export const EnhancedLaundryPOS = () => {
   const [currentOrder, setCurrentOrder] = useState<EnhancedOrderItem[]>([]);
@@ -643,14 +644,7 @@ export const EnhancedLaundryPOS = () => {
   };
 
   if (servicesLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Memuat layanan...</p>
-        </div>
-      </div>
-    );
+    return <SectionLoading text="Memuat layanan..." />;
   }
 
   if (servicesError) {
