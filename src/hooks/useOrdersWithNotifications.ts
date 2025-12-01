@@ -246,8 +246,6 @@ export const useCreateOrderWithNotifications = () => {
     },
     onError: (error) => {
       console.error('Error creating order:', error);
-      // Also reset the flag on error (though finally should handle this)
-      isCreatingRef.current = false;
       toast({
         title: "Error",
         description: "Failed to process order. Please try again.",
