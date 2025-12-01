@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/contexts/StoreContext';
@@ -17,17 +18,27 @@ export const useCreateOrderWithNotifications = () => {
   const { toast } = useToast();
   const { notifyOrderCreated } = useWhatsApp();
   const { currentStore } = useStore();
+  
+  // Ref to track if a mutation is in progress to prevent duplicate submissions
+  const isCreatingRef = useRef(false);
 
   return useMutation({
     mutationFn: async (orderData: CreateOrderData) => {
-      // First, insert the order
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          customer_name: orderData.customer_name,
-          customer_phone: orderData.customer_phone,
-          subtotal: orderData.subtotal,
-          tax_amount: orderData.tax_amount,
+      // Prevent duplicate concurrent order creation
+      if (isCreatingRef.current) {
+        throw new Error('Order creation already in progress');
+      }
+      isCreatingRef.current = true;
+      
+      try {
+        // First, insert the order
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            customer_name: orderData.customer_name,
+            customer_phone: orderData.customer_phone,
+            subtotal: orderData.subtotal,
+            tax_amount: orderData.tax_amount,
           total_amount: orderData.total_amount,
           discount_amount: orderData.discount_amount || 0,
           points_redeemed: orderData.points_redeemed || 0,
@@ -220,6 +231,10 @@ export const useCreateOrderWithNotifications = () => {
         ...order,
         points_earned: pointsEarned,
       };
+      } finally {
+        // Reset the flag after mutation completes (success or failure)
+        isCreatingRef.current = false;
+      }
     },
     onSuccess: () => {
       // Invalidate all order queries to refresh the data
@@ -231,6 +246,8 @@ export const useCreateOrderWithNotifications = () => {
     },
     onError: (error) => {
       console.error('Error creating order:', error);
+      // Also reset the flag on error (though finally should handle this)
+      isCreatingRef.current = false;
       toast({
         title: "Error",
         description: "Failed to process order. Please try again.",
