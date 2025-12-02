@@ -17,9 +17,9 @@ const Index = () => {
           <p className="text-muted-foreground">Buat order laundry baru</p>
         </div>
         <Button
-          variant="outline"
+          variant="default"
           onClick={() => navigate('/order-history')}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
         >
           <History className="h-4 w-4" />
           <span className="hidden sm:inline">Riwayat Order</span>
