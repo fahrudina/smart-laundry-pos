@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users, Check, MessageSquare, TrendingUp, KeyRound } from 'lucide-react';
+import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users, Check, MessageSquare, TrendingUp, KeyRound, Wallet } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,6 +78,12 @@ export const AppHeader: React.FC = () => {
     }
   };
 
+  const handleExpensesNavigation = () => {
+    if (location.pathname !== '/expenses') {
+      navigate('/expenses');
+    }
+  };
+
   if (!user) return null;
 
   const userInitials = user.full_name 
@@ -88,6 +94,7 @@ export const AppHeader: React.FC = () => {
   const isOnPOS = location.pathname === '/pos';
   const isOnHistory = location.pathname === '/order-history';
   const isOnCustomers = location.pathname === '/customers';
+  const isOnExpenses = location.pathname === '/expenses';
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm backdrop-blur-sm">
@@ -119,6 +126,10 @@ export const AppHeader: React.FC = () => {
                   <DropdownMenuItem onClick={handleCustomersNavigation}>
                     <Users className="h-4 w-4 mr-2" />
                     Pelanggan
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExpensesNavigation}>
+                    <Wallet className="h-4 w-4 mr-2" />
+                    Pengeluaran
                   </DropdownMenuItem>
                   {isOwner && (
                     <>
@@ -212,6 +223,20 @@ export const AppHeader: React.FC = () => {
             >
               <Users className="h-4 w-4" />
               <span>Pelanggan</span>
+            </Button>
+
+            <Button
+              variant={isOnExpenses ? "default" : "ghost"}
+              size="sm"
+              onClick={handleExpensesNavigation}
+              className={`flex items-center gap-1.5 px-3 ${
+                isOnExpenses
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <Wallet className="h-4 w-4" />
+              <span>Pengeluaran</span>
             </Button>
 
             {/* Owner-only Navigation - Consolidated Dropdown */}
