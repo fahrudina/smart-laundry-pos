@@ -375,8 +375,11 @@ export const ExpensesPage = () => {
                 type="number"
                 min="0"
                 step="100"
-                value={formData.amount || ''}
-                onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                value={formData.amount === 0 ? '' : formData.amount}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFormData({ ...formData, amount: value === '' ? 0 : Number(value) });
+                }}
                 placeholder="0"
                 required
               />
