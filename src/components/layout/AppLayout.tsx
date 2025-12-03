@@ -13,28 +13,28 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { isOwner } = useStore();
   
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="w-full overflow-x-hidden">
         {/* Top Header Bar with trigger */}
-        <header className="sticky top-0 z-40 flex h-14 items-center gap-2 border-b bg-background px-4">
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-6" />
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <span className="text-sm font-medium text-muted-foreground hidden sm:inline">
               Smart Laundry POS
             </span>
           </div>
           {/* Store Selector for Owners */}
           {isOwner && (
-            <div className="ml-auto">
+            <div className="ml-auto shrink-0">
               <StoreSelector />
             </div>
           )}
         </header>
         {/* Main Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl">
+        <main className="flex-1 overflow-x-hidden bg-gray-50">
+          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
             {children}
           </div>
         </main>
