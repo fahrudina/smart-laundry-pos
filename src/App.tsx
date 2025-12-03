@@ -12,6 +12,7 @@ import { SmartHomePage } from "./pages/SmartHomePage";
 import NotFound from "./pages/NotFound";
 import { StoreManagementPage } from "./pages/StoreManagementPage";
 import ServiceManagement from "./pages/ServiceManagement";
+import { ExpensesPage } from "./pages/ExpensesPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import { StoreProvider } from "./contexts/StoreContext";
 import { ThermalPrinterProvider } from "./contexts/ThermalPrinterContext";
@@ -142,6 +143,16 @@ const App = () => (
                           <RevenueReportPage />
                         </AppLayout>
                       </OwnerRoute>
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/expenses" 
+                  element={
+                    <ProtectedRoute>
+                      <AppLayout>
+                        <ExpensesPage />
+                      </AppLayout>
                     </ProtectedRoute>
                   } 
                 />

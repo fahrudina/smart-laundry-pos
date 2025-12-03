@@ -1,6 +1,7 @@
 import React from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useTodayExpenses } from '@/hooks/useRevenue';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,6 +27,7 @@ export const HomePage: React.FC = () => {
   usePageTitle('Beranda - Smart Laundry POS');
   const { currentStore, isOwner } = useStore();
   const { metrics, loading } = useDashboard();
+  const { data: todayExpensesData, isLoading: loadingExpenses } = useTodayExpenses();
   const navigate = useNavigate();
   const { shouldShowCoachmark, hideCoachmark } = useCoachmark();
 
@@ -62,8 +64,9 @@ export const HomePage: React.FC = () => {
     : 'K';
 
   const todayIncome = metrics?.todayRevenue?.amount || 0;
-  const todayExpenses = 0; // Placeholder - can be calculated from actual data
+  const todayExpenses = todayExpensesData || 0;
   const todayIncomeChange = metrics?.todayRevenue?.changeFromYesterday || 0;
+  const isLoadingData = loading || loadingExpenses;
 
   const quickActions = [
     {
@@ -97,8 +100,8 @@ export const HomePage: React.FC = () => {
       icon: Package,
       color: 'text-rose-400',
       bgColor: 'bg-rose-50',
-      onClick: () => navigate('/order-history'), // Navigate to order history for now
-      disabled: true // Mark as coming soon
+      onClick: () => navigate('/expenses'),
+      disabled: false
     },
     {
       id: 'scan-qr',
@@ -198,7 +201,7 @@ export const HomePage: React.FC = () => {
                 <TrendingUp className="h-4 w-4 text-green-500" />
               </div>
               <p className="text-lg font-bold text-gray-900">
-                {loading ? '...' : formatCurrency(todayIncome)}
+                {isLoadingData ? '...' : formatCurrency(todayIncome)}
               </p>
               {todayIncomeChange !== 0 && (
                 <p className={`text-xs mt-1 ${todayIncomeChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -215,7 +218,7 @@ export const HomePage: React.FC = () => {
                 <TrendingDown className="h-4 w-4 text-orange-500" />
               </div>
               <p className="text-lg font-bold text-gray-900">
-                {loading ? '...' : formatCurrency(todayExpenses)}
+                {isLoadingData ? '...' : formatCurrency(todayExpenses)}
               </p>
             </CardContent>
           </Card>
