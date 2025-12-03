@@ -210,6 +210,7 @@ export const useCreateExpense = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['revenue-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['today-expenses'] });
       toast({
         title: 'Berhasil',
         description: 'Pengeluaran berhasil ditambahkan',
@@ -219,6 +220,46 @@ export const useCreateExpense = () => {
       toast({
         title: 'Gagal',
         description: error.message || 'Gagal menambahkan pengeluaran',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+// Hook to update an expense
+export const useUpdateExpense = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: ExpenseFormData }) => {
+      const { data: result, error } = await supabase
+        .from('expenses')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating expense:', error);
+        throw error;
+      }
+
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['revenue-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['today-expenses'] });
+      toast({
+        title: 'Berhasil',
+        description: 'Pengeluaran berhasil diperbarui',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Gagal',
+        description: error.message || 'Gagal memperbarui pengeluaran',
         variant: 'destructive',
       });
     },
@@ -245,6 +286,7 @@ export const useDeleteExpense = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['revenue-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['today-expenses'] });
       toast({
         title: 'Berhasil',
         description: 'Pengeluaran berhasil dihapus',
@@ -257,5 +299,37 @@ export const useDeleteExpense = () => {
         variant: 'destructive',
       });
     },
+  });
+};
+
+// Hook to fetch today's total expenses for dashboard
+export const useTodayExpenses = () => {
+  const { currentStore } = useStore();
+  
+  return useQuery({
+    queryKey: ['today-expenses', currentStore?.store_id],
+    queryFn: async (): Promise<number> => {
+      if (!currentStore?.store_id) {
+        throw new Error('No store selected');
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('amount')
+        .eq('store_id', currentStore.store_id)
+        .eq('expense_date', today);
+
+      if (error) {
+        console.error('Error fetching today expenses:', error);
+        throw error;
+      }
+
+      const total = (data || []).reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+      return total;
+    },
+    enabled: !!currentStore?.store_id,
+    staleTime: 1 * 60 * 1000, // 1 minute
   });
 };
