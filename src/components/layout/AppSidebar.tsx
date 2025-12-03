@@ -50,6 +50,10 @@ import {
 import { AddCustomerDialog } from '@/components/pos/AddCustomerDialog';
 import { ChangePasswordDialog } from '@/components/auth/ChangePasswordDialog';
 
+// Constants for display truncation
+const USER_INITIALS_MAX_LENGTH = 2;
+const STORE_NAME_MAX_LENGTH = 10;
+
 export const AppSidebar: React.FC = () => {
   const { user, signOut } = useAuth();
   const { currentStore, isOwner } = useStore();
@@ -73,9 +77,16 @@ export const AppSidebar: React.FC = () => {
 
   if (!user) return null;
 
+  // Safely extract user initials, filtering out empty strings from split
   const userInitials = user.full_name
-    ? user.full_name.split(' ').map((n) => n[0]).join('').toUpperCase().substring(0, 2)
-    : user.email?.substring(0, 2).toUpperCase() || 'U';
+    ? user.full_name
+        .split(' ')
+        .filter((n) => n.length > 0)
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, USER_INITIALS_MAX_LENGTH)
+    : user.email?.substring(0, USER_INITIALS_MAX_LENGTH).toUpperCase() || 'U';
 
   // Main navigation items
   const mainMenuItems = [
@@ -275,8 +286,8 @@ export const AppSidebar: React.FC = () => {
                   </div>
                   {currentStore && (
                     <Badge variant="secondary" className="text-xs ml-auto flex-shrink-0">
-                      {currentStore.store_name.substring(0, 10)}
-                      {currentStore.store_name.length > 10 ? '...' : ''}
+                      {currentStore.store_name.substring(0, STORE_NAME_MAX_LENGTH)}
+                      {currentStore.store_name.length > STORE_NAME_MAX_LENGTH ? '...' : ''}
                     </Badge>
                   )}
                 </SidebarMenuButton>
