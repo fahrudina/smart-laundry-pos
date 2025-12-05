@@ -208,7 +208,7 @@ export const useWhatsApp = () => {
     phoneNumber: string,
     orderData: PaymentConfirmationData
   ): Promise<NotificationResult> => {
-    if (!whatsAppFeatures.notifyOnOrderCreated) {
+    if (!whatsAppFeatures.notifyOnPaymentConfirmation) {
       return { success: false, error: 'Feature disabled' };
     }
 
