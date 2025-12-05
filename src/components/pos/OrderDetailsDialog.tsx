@@ -1,9 +1,10 @@
 import React from 'react';
-import { Calendar, User, Phone, CreditCard, AlertTriangle } from 'lucide-react';
+import { Calendar, User, Phone, CreditCard, AlertTriangle, Star } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatDateLong, isDateOverdue } from '@/lib/utils';
+import { POINTS_TO_CURRENCY_RATE } from '@/components/orders/PayLaterPaymentDialog';
 
 interface OrderDetailsDialogProps {
   order: any;
@@ -255,10 +256,49 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
 
           {/* Order Summary */}
           <div className="space-y-2 sm:space-y-3 bg-secondary/30 p-3 sm:p-4 rounded-lg">
-            <div className="flex justify-between text-lg sm:text-xl font-bold">
+            <div className="flex justify-between text-sm sm:text-base">
+              <span className="text-muted-foreground">Subtotal:</span>
+              <span>Rp{(order.subtotal || order.total_amount).toLocaleString('id-ID')}</span>
+            </div>
+            
+            {/* Points Redeemed */}
+            {order.points_redeemed && order.points_redeemed > 0 && (
+              <div className="flex justify-between items-center text-sm sm:text-base bg-blue-50 -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 rounded">
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-blue-500 fill-blue-500" />
+                  <span className="text-blue-700 font-medium">Poin Ditukar:</span>
+                </div>
+                <span className="text-blue-600 font-semibold">
+                  -{order.points_redeemed} poin (-Rp{(order.discount_amount || order.points_redeemed * POINTS_TO_CURRENCY_RATE).toLocaleString('id-ID')})
+                </span>
+              </div>
+            )}
+            
+            {/* Discount if any (without points) */}
+            {order.discount_amount && order.discount_amount > 0 && !order.points_redeemed && (
+              <div className="flex justify-between text-sm sm:text-base">
+                <span className="text-muted-foreground">Diskon:</span>
+                <span className="text-green-600">-Rp{order.discount_amount.toLocaleString('id-ID')}</span>
+              </div>
+            )}
+            
+            <div className="flex justify-between text-lg sm:text-xl font-bold border-t pt-2">
               <span>Total:</span>
               <span>Rp{order.total_amount.toLocaleString('id-ID')}</span>
             </div>
+            
+            {/* Points Earned */}
+            {order.points_earned && order.points_earned > 0 && (
+              <div className="flex justify-between items-center text-sm sm:text-base bg-amber-50 -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 rounded mt-2">
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                  <span className="text-amber-700 font-medium">Poin Didapat:</span>
+                </div>
+                <span className="text-amber-600 font-semibold">
+                  +{order.points_earned} poin
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>

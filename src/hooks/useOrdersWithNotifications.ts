@@ -7,6 +7,7 @@ import { useWhatsApp } from '@/hooks/useWhatsApp';
 import { WhatsAppDataHelper } from '@/integrations/whatsapp/data-helper';
 import { OrderCreatedData, OrderCompletedData, OrderReadyForPickupData } from '@/integrations/whatsapp/types';
 import type { CreateOrderData, UnitItem } from './useOrdersOptimized';
+import { POINTS_TO_CURRENCY_RATE } from '@/components/orders/PayLaterPaymentDialog';
 
 // Re-export types for convenience
 export type { CreateOrderData, UnitItem };
@@ -217,6 +218,8 @@ export const useCreateOrderWithNotifications = () => {
             orderItems,
             storeInfo,
             pointsEarned: pointsEarned > 0 ? pointsEarned : undefined,
+            pointsRedeemed: orderData.points_redeemed && orderData.points_redeemed > 0 ? orderData.points_redeemed : undefined,
+            discountAmount: orderData.discount_amount && orderData.discount_amount > 0 ? orderData.discount_amount : undefined,
           };
 
           await notifyOrderCreated(orderData.customer_phone, notificationData);
@@ -271,6 +274,8 @@ export const useUpdateOrderStatusWithNotifications = () => {
       paymentNotes,
       executionNotes,
       cashReceived,
+      pointsRedeemed,
+      discountAmount,
     }: {
       orderId: string;
       executionStatus?: string;
@@ -280,6 +285,8 @@ export const useUpdateOrderStatusWithNotifications = () => {
       paymentNotes?: string;
       executionNotes?: string;
       cashReceived?: number;
+      pointsRedeemed?: number;
+      discountAmount?: number;
     }) => {
       // Fetch current order data for WhatsApp notification
       const { data: orderData } = await supabase
@@ -302,6 +309,33 @@ export const useUpdateOrderStatusWithNotifications = () => {
       // Explicitly check if orderData exists, throw if not found
       if (!orderData) {
         throw new Error('Order not found');
+      }
+
+      // Validate points availability BEFORE updating order (if points redemption is requested)
+      let customerPointsData: { point_id: number; current_points: number } | null = null;
+      if (pointsRedeemed && pointsRedeemed > 0 && currentStore?.enable_points) {
+        const { data: existingPoints, error: pointsError } = await supabase
+          .from('points')
+          .select('point_id, current_points')
+          .eq('customer_phone', orderData.customer_phone)
+          .eq('store_id', currentStore?.store_id)
+          .single();
+
+        if (pointsError) {
+          console.error('Error fetching customer points:', pointsError);
+          throw new Error(`Failed to lookup customer points: ${pointsError.message}`);
+        }
+        
+        if (!existingPoints) {
+          throw new Error('Customer does not have a points record');
+        }
+
+        if (existingPoints.current_points < pointsRedeemed) {
+          throw new Error(`Insufficient points: customer has ${existingPoints.current_points} but tried to redeem ${pointsRedeemed}`);
+        }
+
+        // Store for later use after order update succeeds
+        customerPointsData = existingPoints;
       }
 
       // Calculate and award points if payment is being changed to "completed" AND store has points enabled
@@ -391,6 +425,12 @@ export const useUpdateOrderStatusWithNotifications = () => {
       if (paymentNotes !== undefined) updateData.payment_notes = paymentNotes;
       if (executionNotes !== undefined) updateData.execution_notes = executionNotes;
       if (cashReceived !== undefined) updateData.cash_received = cashReceived;
+      if (pointsRedeemed !== undefined && pointsRedeemed > 0) updateData.points_redeemed = pointsRedeemed;
+      if (discountAmount !== undefined && discountAmount > 0) {
+        updateData.discount_amount = discountAmount;
+        // Update total_amount to reflect the discount (subtract discount from original total)
+        updateData.total_amount = orderData.total_amount - discountAmount;
+      }
       if (pointsEarned > 0) updateData.points_earned = pointsEarned;
 
       const { error } = await supabase
@@ -400,24 +440,64 @@ export const useUpdateOrderStatusWithNotifications = () => {
 
       if (error) throw error;
 
-      // Send WhatsApp notification when payment is completed with points earned
-      if (wasPaymentPending && isPaymentCompleted && pointsEarned > 0 && orderData) {
+      // Deduct points AFTER order update succeeds (to prevent points loss if order update fails)
+      if (customerPointsData && pointsRedeemed && pointsRedeemed > 0) {
+        // Deduct points
+        const { error: pointsUpdateError } = await supabase
+          .from('points')
+          .update({
+            current_points: customerPointsData.current_points - pointsRedeemed,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('point_id', customerPointsData.point_id);
+
+        if (pointsUpdateError) {
+          console.error('Error deducting points:', pointsUpdateError);
+          // Note: Order is already updated at this point, so we log but don't throw
+          // Consider implementing a compensation mechanism if this becomes a problem
+        }
+
+        // Create point transaction record for redemption
+        const { error: transactionError } = await supabase
+          .from('point_transactions')
+          .insert({
+            point_id: customerPointsData.point_id,
+            order_id: orderId,
+            points_changed: -pointsRedeemed,
+            transaction_type: 'redemption',
+            transaction_date: new Date().toISOString(),
+            notes: `Points redeemed for order ${orderId.slice(0, 8)} (Rp${discountAmount || pointsRedeemed * POINTS_TO_CURRENCY_RATE} discount)`,
+          });
+
+        if (transactionError) {
+          console.error('Error creating point transaction:', transactionError);
+          // Note: Points already deducted, so we log but don't throw
+        }
+      }
+
+      // Send WhatsApp notification when payment is completed with points earned or when points were redeemed
+      if (wasPaymentPending && isPaymentCompleted && orderData) {
         (async () => {
           try {
             // Use store context data directly instead of querying by ID
             const storeInfo = WhatsAppDataHelper.getStoreInfoFromContext(currentStore);
             const orderItems = WhatsAppDataHelper.formatOrderItems(orderData.order_items || []);
 
+            // Calculate the final amount: use the payment amount if provided, otherwise use order total minus discount
+            const finalAmount = paymentAmount || (orderData.total_amount - (discountAmount || 0));
+
             const notificationData: OrderCreatedData = {
               orderId: orderId,
               customerName: orderData.customer_name,
-              totalAmount: orderData.total_amount,
+              totalAmount: finalAmount,
               subtotal: orderData.subtotal,
               estimatedCompletion: WhatsAppDataHelper.formatEstimatedCompletion(orderData.estimated_completion),
               paymentStatus: 'completed',
               orderItems,
               storeInfo,
-              pointsEarned: pointsEarned,
+              pointsEarned: pointsEarned > 0 ? pointsEarned : undefined,
+              pointsRedeemed: pointsRedeemed && pointsRedeemed > 0 ? pointsRedeemed : undefined,
+              discountAmount: discountAmount && discountAmount > 0 ? discountAmount : undefined,
             };
 
             await notifyOrderCreated(orderData.customer_phone, notificationData);
