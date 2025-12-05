@@ -11,6 +11,7 @@ interface VirtualizedOrderListProps {
   onOrderClick: (order: Order) => void;
   onUpdatePayment: (orderId: string, status: string, method?: string) => void;
   onUpdateExecution: (orderId: string, status: string) => void;
+  onShowPaymentDialog?: (order: Order) => void;
   height: number;
   onViewReceipt?: (orderId: string) => void;
   onPrintReceipt?: (orderId: string) => void;
@@ -23,6 +24,7 @@ interface ItemData {
   onOrderClick: (order: Order) => void;
   onUpdatePayment: (orderId: string, status: string, method?: string) => void;
   onUpdateExecution: (orderId: string, status: string) => void;
+  onShowPaymentDialog?: (order: Order) => void;
   onViewReceipt?: (orderId: string) => void;
   onPrintReceipt?: (orderId: string) => void;
   onPrintThermal?: (orderId: string) => void;
@@ -202,24 +204,14 @@ const OrderItem = memo(({ index, style, data }: {
 
                 {/* Row 4: Payment Actions */}
                 {order.payment_status === 'pending' && (
-                  <div className="grid grid-cols-2 gap-1 sm:gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onUpdatePayment(order.id, 'completed', 'cash')}
-                      className="text-xs border-green-300 text-green-700 hover:bg-green-50"
-                    >
-                      💵 Cash
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onUpdatePayment(order.id, 'completed', 'qris')}
-                      className="text-xs border-blue-300 text-blue-700 hover:bg-blue-50"
-                    >
-                      📱 QRIS
-                    </Button>
-                  </div>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => data.onShowPaymentDialog ? data.onShowPaymentDialog(order) : onUpdatePayment(order.id, 'completed', 'cash')}
+                    className="w-full text-xs bg-green-600 hover:bg-green-700"
+                  >
+                    💳 Proses Pembayaran
+                  </Button>
                 )}
               </div>
             </div>
@@ -237,6 +229,7 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
   onOrderClick,
   onUpdatePayment,
   onUpdateExecution,
+  onShowPaymentDialog,
   height,
   onViewReceipt,
   onPrintReceipt,
@@ -261,6 +254,7 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
     onOrderClick,
     onUpdatePayment,
     onUpdateExecution,
+    onShowPaymentDialog,
     onViewReceipt,
     onPrintReceipt,
     onPrintThermal,
