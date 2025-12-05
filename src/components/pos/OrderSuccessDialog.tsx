@@ -6,6 +6,7 @@ import {
   DialogHeader,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { POINTS_TO_CURRENCY_RATE } from '@/components/orders/PayLaterPaymentDialog';
 
 interface OrderSuccessDialogProps {
   isOpen: boolean;
@@ -112,7 +113,7 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
                 </div>
               </div>
               <p className="text-xs text-blue-600 text-center mt-2">
-                🎁 Diskon Rp {(discountAmount || pointsRedeemed * 100).toLocaleString('id-ID')}
+                🎁 Diskon Rp {(discountAmount || pointsRedeemed * POINTS_TO_CURRENCY_RATE).toLocaleString('id-ID')}
               </p>
             </div>
           )}

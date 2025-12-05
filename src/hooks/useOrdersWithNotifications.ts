@@ -479,10 +479,13 @@ export const useUpdateOrderStatusWithNotifications = () => {
             const storeInfo = WhatsAppDataHelper.getStoreInfoFromContext(currentStore);
             const orderItems = WhatsAppDataHelper.formatOrderItems(orderData.order_items || []);
 
+            // Calculate the final amount: use the payment amount if provided, otherwise use order total minus discount
+            const finalAmount = paymentAmount || (orderData.total_amount - (discountAmount || 0));
+
             const notificationData: OrderCreatedData = {
               orderId: orderId,
               customerName: orderData.customer_name,
-              totalAmount: orderData.total_amount - (discountAmount || 0),
+              totalAmount: finalAmount,
               subtotal: orderData.subtotal,
               estimatedCompletion: WhatsAppDataHelper.formatEstimatedCompletion(orderData.estimated_completion),
               paymentStatus: 'completed',

@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatDateLong, isDateOverdue } from '@/lib/utils';
+import { POINTS_TO_CURRENCY_RATE } from '@/components/orders/PayLaterPaymentDialog';
 
 interface OrderDetailsDialogProps {
   order: any;
@@ -268,7 +269,7 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                   <span className="text-blue-700 font-medium">Poin Ditukar:</span>
                 </div>
                 <span className="text-blue-600 font-semibold">
-                  -{order.points_redeemed} poin (-Rp{(order.discount_amount || order.points_redeemed * 100).toLocaleString('id-ID')})
+                  -{order.points_redeemed} poin (-Rp{(order.discount_amount || order.points_redeemed * POINTS_TO_CURRENCY_RATE).toLocaleString('id-ID')})
                 </span>
               </div>
             )}
