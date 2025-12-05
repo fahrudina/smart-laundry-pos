@@ -218,6 +218,8 @@ export const useCreateOrderWithNotifications = () => {
             orderItems,
             storeInfo,
             pointsEarned: pointsEarned > 0 ? pointsEarned : undefined,
+            pointsRedeemed: orderData.points_redeemed && orderData.points_redeemed > 0 ? orderData.points_redeemed : undefined,
+            discountAmount: orderData.discount_amount && orderData.discount_amount > 0 ? orderData.discount_amount : undefined,
           };
 
           await notifyOrderCreated(orderData.customer_phone, notificationData);
@@ -469,8 +471,8 @@ export const useUpdateOrderStatusWithNotifications = () => {
         }
       }
 
-      // Send WhatsApp notification when payment is completed with points earned
-      if (wasPaymentPending && isPaymentCompleted && pointsEarned > 0 && orderData) {
+      // Send WhatsApp notification when payment is completed with points earned or when points were redeemed
+      if (wasPaymentPending && isPaymentCompleted && orderData) {
         (async () => {
           try {
             // Use store context data directly instead of querying by ID
@@ -480,13 +482,15 @@ export const useUpdateOrderStatusWithNotifications = () => {
             const notificationData: OrderCreatedData = {
               orderId: orderId,
               customerName: orderData.customer_name,
-              totalAmount: orderData.total_amount,
+              totalAmount: orderData.total_amount - (discountAmount || 0),
               subtotal: orderData.subtotal,
               estimatedCompletion: WhatsAppDataHelper.formatEstimatedCompletion(orderData.estimated_completion),
               paymentStatus: 'completed',
               orderItems,
               storeInfo,
-              pointsEarned: pointsEarned,
+              pointsEarned: pointsEarned > 0 ? pointsEarned : undefined,
+              pointsRedeemed: pointsRedeemed && pointsRedeemed > 0 ? pointsRedeemed : undefined,
+              discountAmount: discountAmount && discountAmount > 0 ? discountAmount : undefined,
             };
 
             await notifyOrderCreated(orderData.customer_phone, notificationData);

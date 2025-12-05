@@ -17,6 +17,8 @@ interface OrderSuccessDialogProps {
   customerName: string;
   whatsAppSent: boolean;
   pointsEarned?: number;
+  pointsRedeemed?: number;
+  discountAmount?: number;
   onPrintReceipt: () => void;
   onNewTransaction: () => void;
 }
@@ -31,6 +33,8 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
   customerName,
   whatsAppSent,
   pointsEarned,
+  pointsRedeemed,
+  discountAmount,
   onPrintReceipt,
   onNewTransaction,
 }) => {
@@ -92,6 +96,24 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
                   Receipt sent to member via WhatsApp
                 </span>
               </div>
+            </div>
+          )}
+
+          {/* Points Redeemed */}
+          {pointsRedeemed && pointsRedeemed > 0 && (
+            <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg p-4">
+              <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-blue-500 rounded-full">
+                  <Star className="h-5 w-5 text-white fill-white" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-blue-700 font-medium">Poin Ditukar</p>
+                  <p className="text-2xl font-bold text-blue-600">-{pointsRedeemed} Poin</p>
+                </div>
+              </div>
+              <p className="text-xs text-blue-600 text-center mt-2">
+                🎁 Diskon Rp {(discountAmount || pointsRedeemed * 100).toLocaleString('id-ID')}
+              </p>
             </div>
           )}
 
