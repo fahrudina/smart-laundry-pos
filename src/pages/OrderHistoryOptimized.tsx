@@ -15,6 +15,7 @@ import { CashPaymentDialog } from '@/components/pos/CashPaymentDialog';
 import { ThermalPrintDialog } from '@/components/thermal/ThermalPrintDialog';
 import { VirtualizedOrderList } from '@/components/orders/VirtualizedOrderList';
 import { PaymentSummaryCards } from '@/components/orders/PaymentSummaryCards';
+import { PayLaterPaymentDialog } from '@/components/orders/PayLaterPaymentDialog';
 import { formatDate, isDateOverdue } from '@/lib/utils';
 import { openReceiptForView, openReceiptForPrint, generateReceiptPDFFromUrl, sanitizeFilename } from '@/lib/printUtils';
 import { usePageTitle, updatePageTitleWithCount } from '@/hooks/usePageTitle';
@@ -48,8 +49,10 @@ export const OrderHistory = () => {
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [showCashPaymentDialog, setShowCashPaymentDialog] = useState(false);
   const [showThermalPrintDialog, setShowThermalPrintDialog] = useState(false);
+  const [showPayLaterPaymentDialog, setShowPayLaterPaymentDialog] = useState(false);
   const [cashPaymentOrder, setCashPaymentOrder] = useState<Order | null>(null);
   const [thermalPrintOrder, setThermalPrintOrder] = useState<Order | null>(null);
+  const [payLaterPaymentOrder, setPayLaterPaymentOrder] = useState<Order | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     executionStatus: 'all',
@@ -343,6 +346,36 @@ export const OrderHistory = () => {
     setShowCashPaymentDialog(false);
     setCashPaymentOrder(null);
   }, [updateOrderMutation, cashPaymentOrder]);
+
+  // Handler to show the PayLaterPaymentDialog
+  const handleShowPaymentDialog = useCallback((order: Order) => {
+    setPayLaterPaymentOrder(order);
+    setShowPayLaterPaymentDialog(true);
+  }, []);
+
+  // Handler for PayLaterPaymentDialog submission
+  const handlePayLaterPaymentSubmit = useCallback(async (data: {
+    paymentMethod: string;
+    cashReceived?: number;
+    pointsRedeemed?: number;
+    discountAmount?: number;
+  }) => {
+    if (!payLaterPaymentOrder) return;
+    
+    updateOrderMutation.mutate({
+      orderId: payLaterPaymentOrder.id,
+      paymentStatus: 'completed',
+      paymentMethod: data.paymentMethod,
+      paymentAmount: payLaterPaymentOrder.total_amount - (data.discountAmount || 0),
+      cashReceived: data.cashReceived,
+      pointsRedeemed: data.pointsRedeemed,
+      discountAmount: data.discountAmount,
+    });
+    
+    // Close the dialog and clear state
+    setShowPayLaterPaymentDialog(false);
+    setPayLaterPaymentOrder(null);
+  }, [updateOrderMutation, payLaterPaymentOrder]);
 
   const handleViewOrder = useCallback((order: Order) => {
     setSelectedOrder(order);
@@ -667,6 +700,7 @@ export const OrderHistory = () => {
                       onOrderClick={handleViewOrder}
                       onUpdatePayment={handleUpdatePaymentStatus}
                       onUpdateExecution={handleUpdateExecutionStatus}
+                      onShowPaymentDialog={handleShowPaymentDialog}
                       onViewReceipt={handleViewReceipt}
                       onPrintReceipt={handlePrintReceipt}
                       onPrintThermal={handleThermalPrint}
@@ -737,6 +771,22 @@ export const OrderHistory = () => {
           orderId={thermalPrintOrder?.id || null}
           customerName={thermalPrintOrder?.customer_name}
         />
+
+        {/* Pay Later Payment Dialog */}
+        {payLaterPaymentOrder && (
+          <PayLaterPaymentDialog
+            isOpen={showPayLaterPaymentDialog}
+            onClose={() => {
+              setShowPayLaterPaymentDialog(false);
+              setPayLaterPaymentOrder(null);
+            }}
+            totalAmount={payLaterPaymentOrder.total_amount}
+            customerPhone={payLaterPaymentOrder.customer_phone}
+            customerName={payLaterPaymentOrder.customer_name}
+            orderId={payLaterPaymentOrder.id}
+            onSubmit={handlePayLaterPaymentSubmit}
+          />
+        )}
       </div>
     </div>
   );

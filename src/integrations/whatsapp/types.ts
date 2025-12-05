@@ -53,6 +53,8 @@ export interface OrderCreatedData {
   orderItems: OrderItem[];
   storeInfo: StoreInfo;
   pointsEarned?: number;
+  pointsRedeemed?: number;
+  discountAmount?: number;
 }
 
 export interface OrderCompletedData {
