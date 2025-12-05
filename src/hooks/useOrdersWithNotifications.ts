@@ -426,7 +426,11 @@ export const useUpdateOrderStatusWithNotifications = () => {
       if (executionNotes !== undefined) updateData.execution_notes = executionNotes;
       if (cashReceived !== undefined) updateData.cash_received = cashReceived;
       if (pointsRedeemed !== undefined && pointsRedeemed > 0) updateData.points_redeemed = pointsRedeemed;
-      if (discountAmount !== undefined && discountAmount > 0) updateData.discount_amount = discountAmount;
+      if (discountAmount !== undefined && discountAmount > 0) {
+        updateData.discount_amount = discountAmount;
+        // Update total_amount to reflect the discount (subtract discount from original total)
+        updateData.total_amount = orderData.total_amount - discountAmount;
+      }
       if (pointsEarned > 0) updateData.points_earned = pointsEarned;
 
       const { error } = await supabase
