@@ -23,6 +23,7 @@ export interface MessageTemplate {
   orderCreated: (data: OrderCreatedData) => string;
   orderCompleted: (data: OrderCompletedData) => string;
   orderReadyForPickup: (data: OrderReadyForPickupData) => string;
+  paymentConfirmation: (data: PaymentConfirmationData) => string;
 }
 
 export interface StoreInfo {
@@ -74,6 +75,14 @@ export interface OrderReadyForPickupData {
   orderItems: OrderItem[];
   storeInfo: StoreInfo;
   paymentStatus: string;
+}
+
+export interface PaymentConfirmationData {
+  orderId: string;
+  customerName: string;
+  paymentStatus: string;
+  pointsEarned?: number;
+  storeInfo: StoreInfo;
 }
 
 export interface NotificationResult {
