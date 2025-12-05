@@ -309,7 +309,8 @@ export const useUpdateOrderStatusWithNotifications = () => {
         throw new Error('Order not found');
       }
 
-      // Deduct points if customer redeemed points for discount during payment
+      // Validate points availability BEFORE updating order (if points redemption is requested)
+      let customerPointsData: { point_id: number; current_points: number } | null = null;
       if (pointsRedeemed && pointsRedeemed > 0 && currentStore?.enable_points) {
         const { data: existingPoints, error: pointsError } = await supabase
           .from('points')
@@ -331,26 +332,8 @@ export const useUpdateOrderStatusWithNotifications = () => {
           throw new Error(`Insufficient points: customer has ${existingPoints.current_points} but tried to redeem ${pointsRedeemed}`);
         }
 
-        // Deduct points
-        await supabase
-          .from('points')
-          .update({
-            current_points: existingPoints.current_points - pointsRedeemed,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('point_id', existingPoints.point_id);
-
-        // Create point transaction record for redemption
-        await supabase
-          .from('point_transactions')
-          .insert({
-            point_id: existingPoints.point_id,
-            order_id: orderId,
-            points_changed: -pointsRedeemed,
-            transaction_type: 'redemption',
-            transaction_date: new Date().toISOString(),
-            notes: `Points redeemed for order ${orderId.slice(0, 8)} (Rp${discountAmount || pointsRedeemed * POINTS_TO_CURRENCY_RATE} discount)`,
-          });
+        // Store for later use after order update succeeds
+        customerPointsData = existingPoints;
       }
 
       // Calculate and award points if payment is being changed to "completed" AND store has points enabled
@@ -450,6 +433,41 @@ export const useUpdateOrderStatusWithNotifications = () => {
         .eq('id', orderId);
 
       if (error) throw error;
+
+      // Deduct points AFTER order update succeeds (to prevent points loss if order update fails)
+      if (customerPointsData && pointsRedeemed && pointsRedeemed > 0) {
+        // Deduct points
+        const { error: pointsUpdateError } = await supabase
+          .from('points')
+          .update({
+            current_points: customerPointsData.current_points - pointsRedeemed,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('point_id', customerPointsData.point_id);
+
+        if (pointsUpdateError) {
+          console.error('Error deducting points:', pointsUpdateError);
+          // Note: Order is already updated at this point, so we log but don't throw
+          // Consider implementing a compensation mechanism if this becomes a problem
+        }
+
+        // Create point transaction record for redemption
+        const { error: transactionError } = await supabase
+          .from('point_transactions')
+          .insert({
+            point_id: customerPointsData.point_id,
+            order_id: orderId,
+            points_changed: -pointsRedeemed,
+            transaction_type: 'redemption',
+            transaction_date: new Date().toISOString(),
+            notes: `Points redeemed for order ${orderId.slice(0, 8)} (Rp${discountAmount || pointsRedeemed * POINTS_TO_CURRENCY_RATE} discount)`,
+          });
+
+        if (transactionError) {
+          console.error('Error creating point transaction:', transactionError);
+          // Note: Points already deducted, so we log but don't throw
+        }
+      }
 
       // Send WhatsApp notification when payment is completed with points earned
       if (wasPaymentPending && isPaymentCompleted && pointsEarned > 0 && orderData) {
