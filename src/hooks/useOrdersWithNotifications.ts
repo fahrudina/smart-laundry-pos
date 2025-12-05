@@ -271,6 +271,8 @@ export const useUpdateOrderStatusWithNotifications = () => {
       paymentNotes,
       executionNotes,
       cashReceived,
+      pointsRedeemed,
+      discountAmount,
     }: {
       orderId: string;
       executionStatus?: string;
@@ -280,6 +282,8 @@ export const useUpdateOrderStatusWithNotifications = () => {
       paymentNotes?: string;
       executionNotes?: string;
       cashReceived?: number;
+      pointsRedeemed?: number;
+      discountAmount?: number;
     }) => {
       // Fetch current order data for WhatsApp notification
       const { data: orderData } = await supabase
@@ -302,6 +306,45 @@ export const useUpdateOrderStatusWithNotifications = () => {
       // Explicitly check if orderData exists, throw if not found
       if (!orderData) {
         throw new Error('Order not found');
+      }
+
+      // Deduct points if customer redeemed points for discount during payment
+      if (pointsRedeemed && pointsRedeemed > 0 && currentStore?.enable_points) {
+        const { data: existingPoints, error: pointsError } = await supabase
+          .from('points')
+          .select('point_id, current_points')
+          .eq('customer_phone', orderData.customer_phone)
+          .eq('store_id', currentStore?.store_id)
+          .single();
+
+        if (pointsError || !existingPoints) {
+          throw new Error('Customer points not found');
+        }
+
+        if (existingPoints.current_points < pointsRedeemed) {
+          throw new Error('Insufficient points');
+        }
+
+        // Deduct points
+        await supabase
+          .from('points')
+          .update({
+            current_points: existingPoints.current_points - pointsRedeemed,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('point_id', existingPoints.point_id);
+
+        // Create point transaction record for redemption
+        await supabase
+          .from('point_transactions')
+          .insert({
+            point_id: existingPoints.point_id,
+            order_id: orderId,
+            points_changed: -pointsRedeemed,
+            transaction_type: 'redemption',
+            transaction_date: new Date().toISOString(),
+            notes: `Points redeemed for order ${orderId.slice(0, 8)} (Rp${discountAmount || pointsRedeemed * 100} discount)`,
+          });
       }
 
       // Calculate and award points if payment is being changed to "completed" AND store has points enabled
@@ -391,6 +434,8 @@ export const useUpdateOrderStatusWithNotifications = () => {
       if (paymentNotes !== undefined) updateData.payment_notes = paymentNotes;
       if (executionNotes !== undefined) updateData.execution_notes = executionNotes;
       if (cashReceived !== undefined) updateData.cash_received = cashReceived;
+      if (pointsRedeemed !== undefined && pointsRedeemed > 0) updateData.points_redeemed = pointsRedeemed;
+      if (discountAmount !== undefined && discountAmount > 0) updateData.discount_amount = discountAmount;
       if (pointsEarned > 0) updateData.points_earned = pointsEarned;
 
       const { error } = await supabase
