@@ -38,6 +38,8 @@ export const EnhancedLaundryPOS = () => {
     customerName: string;
     whatsAppSent: boolean;
     pointsEarned?: number;
+    pointsRedeemed?: number;
+    discountAmount?: number;
   } | null>(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [pointsRedeemed, setPointsRedeemed] = useState(0);
@@ -577,6 +579,8 @@ export const EnhancedLaundryPOS = () => {
       customerName: customerName,
       whatsAppSent: true, // WhatsApp notification is sent asynchronously
       pointsEarned: createdOrder.points_earned || 0,
+      pointsRedeemed: pointsRedeemed > 0 ? pointsRedeemed : undefined,
+      discountAmount: discountAmount > 0 ? discountAmount : undefined,
     });
 
     // Show toast notification for points earned if applicable
@@ -871,6 +875,8 @@ export const EnhancedLaundryPOS = () => {
           customerName={lastCreatedOrder.customerName}
           whatsAppSent={lastCreatedOrder.whatsAppSent}
           pointsEarned={lastCreatedOrder.pointsEarned}
+          pointsRedeemed={lastCreatedOrder.pointsRedeemed}
+          discountAmount={lastCreatedOrder.discountAmount}
           onPrintReceipt={handlePrintReceipt}
           onNewTransaction={handleNewTransaction}
         />
