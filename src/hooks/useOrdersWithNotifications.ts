@@ -7,6 +7,7 @@ import { useWhatsApp } from '@/hooks/useWhatsApp';
 import { WhatsAppDataHelper } from '@/integrations/whatsapp/data-helper';
 import { OrderCreatedData, OrderCompletedData, OrderReadyForPickupData } from '@/integrations/whatsapp/types';
 import type { CreateOrderData, UnitItem } from './useOrdersOptimized';
+import { POINTS_TO_CURRENCY_RATE } from '@/components/orders/PayLaterPaymentDialog';
 
 // Re-export types for convenience
 export type { CreateOrderData, UnitItem };
@@ -317,12 +318,17 @@ export const useUpdateOrderStatusWithNotifications = () => {
           .eq('store_id', currentStore?.store_id)
           .single();
 
-        if (pointsError || !existingPoints) {
-          throw new Error('Customer points not found');
+        if (pointsError) {
+          console.error('Error fetching customer points:', pointsError);
+          throw new Error(`Failed to lookup customer points: ${pointsError.message}`);
+        }
+        
+        if (!existingPoints) {
+          throw new Error('Customer does not have a points record');
         }
 
         if (existingPoints.current_points < pointsRedeemed) {
-          throw new Error('Insufficient points');
+          throw new Error(`Insufficient points: customer has ${existingPoints.current_points} but tried to redeem ${pointsRedeemed}`);
         }
 
         // Deduct points
@@ -343,7 +349,7 @@ export const useUpdateOrderStatusWithNotifications = () => {
             points_changed: -pointsRedeemed,
             transaction_type: 'redemption',
             transaction_date: new Date().toISOString(),
-            notes: `Points redeemed for order ${orderId.slice(0, 8)} (Rp${discountAmount || pointsRedeemed * 100} discount)`,
+            notes: `Points redeemed for order ${orderId.slice(0, 8)} (Rp${discountAmount || pointsRedeemed * POINTS_TO_CURRENCY_RATE} discount)`,
           });
       }
 

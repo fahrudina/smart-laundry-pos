@@ -203,15 +203,35 @@ const OrderItem = memo(({ index, style, data }: {
                 )}
 
                 {/* Row 4: Payment Actions */}
-                {order.payment_status === 'pending' && (
+                {order.payment_status === 'pending' && data.onShowPaymentDialog && (
                   <Button
                     variant="default"
                     size="sm"
-                    onClick={() => data.onShowPaymentDialog ? data.onShowPaymentDialog(order) : onUpdatePayment(order.id, 'completed', 'cash')}
+                    onClick={() => data.onShowPaymentDialog!(order)}
                     className="w-full text-xs bg-green-600 hover:bg-green-700"
                   >
                     💳 Proses Pembayaran
                   </Button>
+                )}
+                {order.payment_status === 'pending' && !data.onShowPaymentDialog && (
+                  <div className="grid grid-cols-2 gap-1 sm:gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onUpdatePayment(order.id, 'completed', 'cash')}
+                      className="text-xs border-green-300 text-green-700 hover:bg-green-50"
+                    >
+                      💵 Cash
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onUpdatePayment(order.id, 'completed', 'qris')}
+                      className="text-xs border-blue-300 text-blue-700 hover:bg-blue-50"
+                    >
+                      📱 QRIS
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
