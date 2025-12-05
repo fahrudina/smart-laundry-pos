@@ -16,6 +16,9 @@ import { Banknote, QrCode, Smartphone, Gift, Percent } from 'lucide-react';
 import { useCustomerPoints } from '@/hooks/useCustomerPoints';
 import { useStore } from '@/contexts/StoreContext';
 
+// Points to currency conversion rate (1 point = 100 Rupiah)
+export const POINTS_TO_CURRENCY_RATE = 100;
+
 interface PayLaterPaymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -108,7 +111,7 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
   const handlePointsToRedeemChange = (value: string) => {
     setPointsToRedeem(value);
     const points = parseFloat(value) || 0;
-    const amount = points * 100;
+    const amount = points * POINTS_TO_CURRENCY_RATE;
     setDiscountAmount(amount);
     setPointsRedeemed(points);
   };
@@ -123,7 +126,7 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
     } else {
       setCustomDiscount('');
       const points = parseFloat(pointsToRedeem) || 0;
-      setDiscountAmount(points * 100);
+      setDiscountAmount(points * POINTS_TO_CURRENCY_RATE);
       setPointsRedeemed(points);
     }
   };
@@ -237,7 +240,7 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
                       <>
                         <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                           <span>Poin tersedia: {pointsAvailable}</span>
-                          <span>1 poin = Rp100</span>
+                          <span>1 poin = Rp{POINTS_TO_CURRENCY_RATE}</span>
                         </div>
                         <Input
                           type="number"
@@ -253,7 +256,7 @@ export const PayLaterPaymentDialog: React.FC<PayLaterPaymentDialogProps> = ({
                         )}
                         {parseFloat(pointsToRedeem) > 0 && !pointsError && (
                           <p className="text-xs text-green-600 text-center">
-                            Diskon: Rp {formatCurrency(parseFloat(pointsToRedeem) * 100)}
+                            Diskon: Rp {formatCurrency(parseFloat(pointsToRedeem) * POINTS_TO_CURRENCY_RATE)}
                           </p>
                         )}
                       </>
