@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/contexts/StoreContext';
 import { useWhatsApp } from '@/hooks/useWhatsApp';
 import { WhatsAppDataHelper } from '@/integrations/whatsapp/data-helper';
-import { OrderCreatedData, OrderCompletedData, OrderReadyForPickupData } from '@/integrations/whatsapp/types';
+import { OrderCreatedData, OrderCompletedData, OrderReadyForPickupData, PaymentConfirmationData } from '@/integrations/whatsapp/types';
 import type { CreateOrderData, UnitItem } from './useOrdersOptimized';
 import { POINTS_TO_CURRENCY_RATE } from '@/components/orders/PayLaterPaymentDialog';
 
@@ -261,7 +261,7 @@ export const useCreateOrderWithNotifications = () => {
 export const useUpdateOrderStatusWithNotifications = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { notifyOrderReadyForPickup, notifyOrderCreated } = useWhatsApp();
+  const { notifyOrderReadyForPickup, notifyPaymentConfirmation } = useWhatsApp();
   const { currentStore } = useStore();
 
   return useMutation({
@@ -481,26 +481,16 @@ export const useUpdateOrderStatusWithNotifications = () => {
           try {
             // Use store context data directly instead of querying by ID
             const storeInfo = WhatsAppDataHelper.getStoreInfoFromContext(currentStore);
-            const orderItems = WhatsAppDataHelper.formatOrderItems(orderData.order_items || []);
 
-            // Calculate the final amount: use the payment amount if provided, otherwise use order total minus discount
-            const finalAmount = paymentAmount || (orderData.total_amount - (discountAmount || 0));
-
-            const notificationData: OrderCreatedData = {
+            const notificationData: PaymentConfirmationData = {
               orderId: orderId,
               customerName: orderData.customer_name,
-              totalAmount: finalAmount,
-              subtotal: orderData.subtotal,
-              estimatedCompletion: WhatsAppDataHelper.formatEstimatedCompletion(orderData.estimated_completion),
               paymentStatus: 'completed',
-              orderItems,
               storeInfo,
               pointsEarned: pointsEarned > 0 ? pointsEarned : undefined,
-              pointsRedeemed: pointsRedeemed && pointsRedeemed > 0 ? pointsRedeemed : undefined,
-              discountAmount: discountAmount && discountAmount > 0 ? discountAmount : undefined,
             };
 
-            await notifyOrderCreated(orderData.customer_phone, notificationData);
+            await notifyPaymentConfirmation(orderData.customer_phone, notificationData);
           } catch (error) {
             // Log WhatsApp notification errors but don't fail the status update
             console.warn('WhatsApp notification failed:', error);
