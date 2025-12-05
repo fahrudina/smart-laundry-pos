@@ -1,4 +1,5 @@
 import { MessageTemplate, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData } from './types';
+import { POINTS_TO_CURRENCY_RATE } from '@/components/orders/PayLaterPaymentDialog';
 
 /**
  * Configuration for receipt URLs
@@ -70,7 +71,7 @@ export const messageTemplates: MessageTemplate = {
 
     // Build points redeemed message if points were used for discount
     const pointsRedeemedMessage = data.pointsRedeemed && data.pointsRedeemed > 0
-      ? `\n🎁 Poin Ditukar : ${data.pointsRedeemed} poin (-Rp. ${(data.discountAmount || data.pointsRedeemed * 100).toLocaleString('id-ID')},-)`
+      ? `\n🎁 Poin Ditukar : ${data.pointsRedeemed} poin (-Rp. ${(data.discountAmount || data.pointsRedeemed * POINTS_TO_CURRENCY_RATE).toLocaleString('id-ID')},-)`
       : '';
 
     // Build points earned message if points were earned
@@ -83,6 +84,11 @@ export const messageTemplates: MessageTemplate = {
       ? `${pointsRedeemedMessage}${pointsEarnedMessage}\n====================`
       : '';
 
+    // Build discount section for the pricing block
+    const discountSection = data.pointsRedeemed && data.pointsRedeemed > 0
+      ? `\nDiskon Poin = -Rp. ${(data.discountAmount || data.pointsRedeemed * POINTS_TO_CURRENCY_RATE).toLocaleString('id-ID')},-\nTotal = Rp. ${data.totalAmount.toLocaleString('id-ID')},-`
+      : '';
+
     return `${data.storeInfo.name}
 ${data.storeInfo.address}
 No. HP ${data.storeInfo.phone}
@@ -93,7 +99,7 @@ Nama : ${data.customerName}
 
 ${servicesList}
 
-Subtotal = Rp. ${data.subtotal.toLocaleString('id-ID')},-${pointsRedeemedMessage ? `\nDiskon Poin = -Rp. ${(data.discountAmount || (data.pointsRedeemed || 0) * 100).toLocaleString('id-ID')},-\nTotal = Rp. ${data.totalAmount.toLocaleString('id-ID')},-` : ''}
+Subtotal = Rp. ${data.subtotal.toLocaleString('id-ID')},-${discountSection}
 
 ====================
 Perkiraan Selesai : 
