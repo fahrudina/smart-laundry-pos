@@ -9,5 +9,6 @@ export type {
   MessageTemplate,
   OrderCreatedData,
   OrderCompletedData,
+  PaymentConfirmationData,
   NotificationResult,
 } from './types';

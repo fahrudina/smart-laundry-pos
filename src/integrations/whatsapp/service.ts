@@ -1,6 +1,6 @@
 import { WhatsAppClient } from './client';
 import { messageTemplates, MessageBuilder } from './templates';
-import { WhatsAppConfig, NotificationResult, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData } from './types';
+import { WhatsAppConfig, NotificationResult, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData, PaymentConfirmationData } from './types';
 
 /**
  * WhatsApp Notification Service
@@ -161,6 +161,54 @@ export class WhatsAppNotificationService {
       };
     } catch (error) {
       console.error('Failed to send order ready for pickup notification:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Send payment confirmation notification (for pay later payments)
+   * @param phoneNumber - Customer's WhatsApp number
+   * @param orderData - Payment confirmation data including order ID, customer name, and points earned
+   * @param fromNumber - Optional sender phone number for multi-sender support
+   * @returns Promise resolving to notification result with success status and message ID
+   * @throws Error if service is not configured or message sending fails
+   */
+  async notifyPaymentConfirmation(
+    phoneNumber: string,
+    orderData: PaymentConfirmationData,
+    fromNumber?: string
+  ): Promise<NotificationResult> {
+    if (!this.isConfigured()) {
+      console.warn('WhatsApp service not configured, skipping notification');
+      return { success: false, error: 'Service not configured' };
+    }
+
+    try {
+      const formattedPhone = WhatsAppClient.formatPhoneNumber(phoneNumber);
+      const message = messageTemplates.paymentConfirmation(orderData);
+
+      const messagePayload: { to: string; message: string; from?: string } = {
+        to: formattedPhone,
+        message,
+      };
+
+      // Use store number as sender if provided
+      if (fromNumber) {
+        messagePayload.from = WhatsAppClient.formatPhoneNumber(fromNumber);
+      }
+
+      const response = await this.client.sendMessage(messagePayload);
+
+      return {
+        success: response.success,
+        messageId: response.id,
+        error: response.error,
+      };
+    } catch (error) {
+      console.error('Failed to send payment confirmation notification:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
