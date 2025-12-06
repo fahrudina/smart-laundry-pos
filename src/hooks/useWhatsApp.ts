@@ -203,6 +203,9 @@ export const useWhatsApp = () => {
 
   /**
    * Send payment confirmation notification (for pay later payments)
+   * @param phoneNumber - Customer's WhatsApp number
+   * @param orderData - Payment confirmation data including order ID, customer name, and points earned
+   * @returns Promise resolving to notification result with success status
    */
   const notifyPaymentConfirmation = async (
     phoneNumber: string,
