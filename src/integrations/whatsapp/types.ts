@@ -77,6 +77,10 @@ export interface OrderReadyForPickupData {
   paymentStatus: string;
 }
 
+/**
+ * Payment confirmation notification data for pay-later orders
+ * Used when confirming payment after order completion
+ */
 export interface PaymentConfirmationData {
   orderId: string;
   customerName: string;

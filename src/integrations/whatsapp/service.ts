@@ -170,6 +170,11 @@ export class WhatsAppNotificationService {
 
   /**
    * Send payment confirmation notification (for pay later payments)
+   * @param phoneNumber - Customer's WhatsApp number
+   * @param orderData - Payment confirmation data including order ID, customer name, and points earned
+   * @param fromNumber - Optional sender phone number for multi-sender support
+   * @returns Promise resolving to notification result with success status and message ID
+   * @throws Error if service is not configured or message sending fails
    */
   async notifyPaymentConfirmation(
     phoneNumber: string,
