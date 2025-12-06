@@ -1,4 +1,4 @@
-import { MessageTemplate, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData } from './types';
+import { MessageTemplate, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData, PaymentConfirmationData } from './types';
 import { POINTS_TO_CURRENCY_RATE } from '@/components/orders/PayLaterPaymentDialog';
 
 /**
@@ -204,6 +204,28 @@ No Nota : ${data.orderId.slice(-8).toUpperCase()}
 
 Total Bayar : Rp. ${data.totalAmount.toLocaleString('id-ID')},-
 Status Bayar: ${getPaymentStatusIndonesian(data.paymentStatus)}
+
+Terima kasih telah menggunakan layanan kami! 🙏
+====================
+Klik link dibawah ini untuk melihat nota digital
+${getReceiptBaseUrl()}/receipt/${data.orderId}`;
+  },
+
+  /**
+   * Template for payment confirmation notification (pay later payments)
+   */
+  paymentConfirmation: (data: PaymentConfirmationData): string => {
+    // Build points earned message if points were earned
+    const pointsEarnedMessage = data.pointsEarned && data.pointsEarned > 0
+      ? `\n🎉 Selamat! Anda mendapatkan ${data.pointsEarned} poin laundry! 🎉`
+      : '';
+
+    return `✅ *KONFIRMASI PEMBAYARAN* ✅
+
+Hai ${data.customerName},
+
+Pembayaran Anda telah dikonfirmasi.
+Status Bayar: ${getPaymentStatusIndonesian(data.paymentStatus)}${pointsEarnedMessage}
 
 Terima kasih telah menggunakan layanan kami! 🙏
 ====================

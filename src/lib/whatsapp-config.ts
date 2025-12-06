@@ -30,6 +30,7 @@ export const whatsAppFeatures = {
   notifyOnOrderCreated: import.meta.env.VITE_WHATSAPP_NOTIFY_ORDER_CREATED !== 'false',
   notifyOnOrderCompleted: import.meta.env.VITE_WHATSAPP_NOTIFY_ORDER_COMPLETED !== 'false',
   notifyOnOrderReadyForPickup: import.meta.env.VITE_WHATSAPP_NOTIFY_ORDER_READY_FOR_PICKUP !== 'false',
+  notifyOnPaymentConfirmation: import.meta.env.VITE_WHATSAPP_NOTIFY_PAYMENT_CONFIRMATION !== 'false',
   
   // Development mode (set to true to only log messages, false to send real messages)
   developmentMode: import.meta.env.VITE_WHATSAPP_DEVELOPMENT_MODE === 'true',

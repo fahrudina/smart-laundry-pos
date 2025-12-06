@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { whatsAppService } from '@/integrations/whatsapp';
 import { whatsAppConfig, whatsAppFeatures, validateWhatsAppConfig } from '@/lib/whatsapp-config';
 import { useToast } from '@/hooks/use-toast';
-import type { NotificationResult, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData } from '@/integrations/whatsapp/types';
+import type { NotificationResult, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData, PaymentConfirmationData } from '@/integrations/whatsapp/types';
 
 /**
  * Custom hook for WhatsApp integration
@@ -202,6 +202,60 @@ export const useWhatsApp = () => {
   };
 
   /**
+   * Send payment confirmation notification (for pay later payments)
+   * @param phoneNumber - Customer's WhatsApp number
+   * @param orderData - Payment confirmation data including order ID, customer name, and points earned
+   * @returns Promise resolving to notification result with success status
+   */
+  const notifyPaymentConfirmation = async (
+    phoneNumber: string,
+    orderData: PaymentConfirmationData
+  ): Promise<NotificationResult> => {
+    if (!whatsAppFeatures.notifyOnPaymentConfirmation) {
+      return { success: false, error: 'Feature disabled' };
+    }
+
+    if (whatsAppFeatures.developmentMode) {
+      return { success: true, messageId: 'dev-mode-id' };
+    }
+
+    if (!isConfigured) {
+      console.warn('WhatsApp not configured, skipping payment confirmation notification');
+      return { success: false, error: 'Service not configured' };
+    }
+
+    try {
+      // Determine sender phone number based on store configuration
+      const fromNumber = orderData.storeInfo?.wa_use_store_number && orderData.storeInfo?.phone
+        ? orderData.storeInfo.phone
+        : undefined;
+
+      const result = await whatsAppService.notifyPaymentConfirmation(phoneNumber, orderData, fromNumber);
+      
+      if (result.success) {
+        toast({
+          title: "WhatsApp Sent",
+          description: `Payment confirmation sent to ${phoneNumber}`,
+        });
+      } else {
+        toast({
+          title: "WhatsApp Failed",
+          description: `Failed to send notification: ${result.error}`,
+          variant: "destructive",
+        });
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error sending payment confirmation notification:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  };
+
+  /**
    * Send custom WhatsApp message
    */
   const sendCustomMessage = async (
@@ -258,6 +312,7 @@ export const useWhatsApp = () => {
     notifyOrderCreated,
    // notifyOrderCompleted,
     notifyOrderReadyForPickup,
+    notifyPaymentConfirmation,
     sendCustomMessage,
     features: whatsAppFeatures,
   };
