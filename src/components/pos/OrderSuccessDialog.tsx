@@ -42,6 +42,7 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
   const formatPaymentMethod = (method: string) => {
     const methodMap: Record<string, string> = {
       'cash': 'TUNAI',
+      'cash_dp': 'TUNAI (DP)',
       'qris': 'QRIS',
       'transfer': 'TRANSFER',
       'debit': 'DEBIT',
