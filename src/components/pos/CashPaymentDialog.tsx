@@ -165,7 +165,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
                 className="text-lg h-12 text-center"
                 placeholder={paymentType === 'full' ? "Contoh: 50000" : "Masukkan jumlah DP"}
                 min={paymentType === 'full' ? totalAmount : 1}
-                max={totalAmount}
+                max={paymentType === 'down_payment' ? totalAmount : undefined}
               />
             </div>
 
