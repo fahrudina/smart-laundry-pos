@@ -131,7 +131,7 @@ const OrderItem = memo(({ index, style, data }: {
               </div>
 
               {/* Down Payment Information */}
-              {order.payment_status === 'down_payment' && order.payment_amount && (
+              {order.payment_status === 'down_payment' && order.payment_amount !== null && order.payment_amount !== undefined && (
                 <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
