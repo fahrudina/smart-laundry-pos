@@ -818,17 +818,35 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   commands.push(ESC_POS.BOLD_OFF);
   
   // Payment status
-  const paymentStatusText = receiptData.paymentStatus === 'completed' ? 'LUNAS' : 'BELUM LUNAS';
+  const paymentStatusText = receiptData.paymentStatus === 'completed' ? 'LUNAS' : 
+                            receiptData.paymentStatus === 'down_payment' ? 'DP (BELUM LUNAS)' : 'BELUM LUNAS';
   commands.push(textToBytes(`Status: ${paymentStatusText}`));
   commands.push(ESC_POS.CRLF);
   
   // Payment method
   if (receiptData.paymentMethod) {
-    commands.push(textToBytes(`Metode: ${receiptData.paymentMethod.toUpperCase()}`));
+    const methodText = receiptData.paymentMethod.toUpperCase() + 
+                      (receiptData.paymentStatus === 'down_payment' ? ' (DP)' : '');
+    commands.push(textToBytes(`Metode: ${methodText}`));
     commands.push(ESC_POS.CRLF);
     
-    // Cash payment details
+    // Down payment details
+    if (receiptData.paymentStatus === 'down_payment' || 
+        (receiptData.paymentAmount && receiptData.paymentAmount < receiptData.totalAmount)) {
+      commands.push(ESC_POS.CRLF);
+      commands.push(ESC_POS.BOLD_ON);
+      commands.push(textToBytes(`Bayar DP: Rp ${(receiptData.paymentAmount || 0).toLocaleString('id-ID')}`));
+      commands.push(ESC_POS.CRLF);
+      commands.push(ESC_POS.BOLD_OFF);
+      
+      const remaining = receiptData.totalAmount - (receiptData.paymentAmount || 0);
+      commands.push(textToBytes(`Sisa Bayar: Rp ${remaining.toLocaleString('id-ID')}`));
+      commands.push(ESC_POS.CRLF);
+    }
+    
+    // Cash payment details (for completed payments)
     if (receiptData.paymentMethod === 'cash' && receiptData.cashReceived && receiptData.paymentStatus === 'completed') {
+      commands.push(ESC_POS.CRLF);
       commands.push(textToBytes(`Uang Diterima: Rp ${receiptData.cashReceived.toLocaleString('id-ID')}`));
       commands.push(ESC_POS.CRLF);
       
@@ -1023,6 +1041,7 @@ export const fetchReceiptDataForThermal = async (orderId: string): Promise<any> 
       pointsRedeemed: orderData.points_redeemed || 0,
       paymentMethod: orderData.payment_method || 'cash',
       paymentStatus: orderData.payment_status || 'pending',
+      paymentAmount: orderData.payment_amount || null,
       executionStatus: orderData.execution_status || 'in_queue',
       estimatedCompletion: orderData.estimated_completion || null,
       cashReceived: orderData.cash_received || null,
