@@ -431,7 +431,9 @@ export const useUpdateOrderStatusWithNotifications = () => {
         const totalDiscount = existingDiscount + discountAmount;
         updateData.discount_amount = totalDiscount;
         // Update total_amount to reflect the total discount
-        updateData.total_amount = orderData.subtotal - totalDiscount;
+        // Ensure subtotal exists and is valid
+        const subtotal = orderData.subtotal || orderData.total_amount || 0;
+        updateData.total_amount = subtotal - totalDiscount;
       }
       if (pointsRedeemed !== undefined && pointsRedeemed > 0) {
         // Add the new points redeemed to any existing points redeemed
