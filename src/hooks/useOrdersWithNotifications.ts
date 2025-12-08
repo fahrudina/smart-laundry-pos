@@ -431,12 +431,16 @@ export const useUpdateOrderStatusWithNotifications = () => {
         const totalDiscount = existingDiscount + discountAmount;
         updateData.discount_amount = totalDiscount;
         // Update total_amount to reflect the total discount
-        // Ensure subtotal exists and is valid
-        const subtotal = orderData.subtotal || orderData.total_amount || 0;
-        updateData.total_amount = subtotal - totalDiscount;
+        // Note: subtotal should always exist in the order data
+        if (!orderData.subtotal) {
+          throw new Error('Order subtotal is missing - cannot calculate discount');
+        }
+        updateData.total_amount = orderData.subtotal - totalDiscount;
       }
       if (pointsRedeemed !== undefined && pointsRedeemed > 0) {
         // Add the new points redeemed to any existing points redeemed
+        // Note: pointsRedeemed is for tracking only; the monetary value
+        // is already included in discountAmount (points × 100 Rupiah)
         const existingPointsRedeemed = orderData.points_redeemed || 0;
         const totalPointsRedeemed = existingPointsRedeemed + pointsRedeemed;
         updateData.points_redeemed = totalPointsRedeemed;
