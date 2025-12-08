@@ -362,12 +362,8 @@ export const OrderHistory = () => {
   }) => {
     if (!payLaterPaymentOrder) return;
     
-    // Calculate the amount to be paid
-    // For down_payment status, we need to pay the remaining balance
+    // Calculate the full amount after discount
     const totalAmount = payLaterPaymentOrder.total_amount - (data.discountAmount || 0);
-    const remainingBalance = payLaterPaymentOrder.payment_status === 'down_payment' 
-      ? totalAmount - (payLaterPaymentOrder.payment_amount || 0)
-      : totalAmount;
     
     updateOrderMutation.mutate({
       orderId: payLaterPaymentOrder.id,

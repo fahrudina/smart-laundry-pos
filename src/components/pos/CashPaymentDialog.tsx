@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,9 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Memoize parsed cash value to avoid repeated parsing
+  const cashValue = useMemo(() => parseFloat(cashReceived) || 0, [cashReceived]);
+
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -43,17 +46,16 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
   }, [isOpen]);
 
   useEffect(() => {
-    const cash = parseFloat(cashReceived);
-    if (!isNaN(cash)) {
-      if (paymentType === 'full' && cash >= totalAmount) {
-        setChange(cash - totalAmount);
+    if (!isNaN(cashValue)) {
+      if (paymentType === 'full' && cashValue >= totalAmount) {
+        setChange(cashValue - totalAmount);
       } else {
         setChange(0);
       }
     } else {
       setChange(0);
     }
-  }, [cashReceived, totalAmount, paymentType]);
+  }, [cashValue, totalAmount, paymentType]);
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,20 +64,18 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
     if (isSubmitting) {
       return;
     }
-    
-    const cash = parseFloat(cashReceived);
 
     // Validation based on payment type
     if (paymentType === 'full') {
-      if (!isNaN(cash) && cash >= totalAmount) {
+      if (!isNaN(cashValue) && cashValue >= totalAmount) {
         setIsSubmitting(true);
-        onSubmit(cash, false);
+        onSubmit(cashValue, false);
       }
     } else {
       // Down payment: must be greater than 0 and less than total
-      if (!isNaN(cash) && cash > 0 && cash <= totalAmount) {
+      if (!isNaN(cashValue) && cashValue > 0 && cashValue <= totalAmount) {
         setIsSubmitting(true);
-        onSubmit(cash, true);
+        onSubmit(cashValue, true);
       }
     }
   };
@@ -87,21 +87,23 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
   };
 
   // Calculate remaining balance for down payment
-  const remainingBalance = paymentType === 'down_payment' && parseFloat(cashReceived) > 0 
-    ? totalAmount - parseFloat(cashReceived) 
-    : 0;
+  const remainingBalance = useMemo(() => 
+    paymentType === 'down_payment' && cashValue > 0 
+      ? totalAmount - cashValue 
+      : 0,
+    [paymentType, cashValue, totalAmount]
+  );
 
   // Check if submit button should be enabled
-  const isSubmitEnabled = () => {
-    const cash = parseFloat(cashReceived);
-    if (isNaN(cash) || isSubmitting) return false;
+  const isSubmitEnabled = useMemo(() => {
+    if (isNaN(cashValue) || isSubmitting) return false;
     
     if (paymentType === 'full') {
-      return cash >= totalAmount;
+      return cashValue >= totalAmount;
     } else {
-      return cash > 0 && cash <= totalAmount;
+      return cashValue > 0 && cashValue <= totalAmount;
     }
-  };
+  }, [cashValue, isSubmitting, paymentType, totalAmount]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -183,7 +185,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
             </div>
 
             {/* Full Payment - Show change */}
-            {paymentType === 'full' && parseFloat(cashReceived) >= totalAmount && change > 0 && (
+            {paymentType === 'full' && cashValue >= totalAmount && change > 0 && (
               <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
                 <p className="text-sm text-green-700 font-medium">Kembalian</p>
                 <p className="text-2xl font-bold text-green-600">
@@ -192,7 +194,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
               </div>
             )}
 
-            {paymentType === 'full' && parseFloat(cashReceived) >= totalAmount && change === 0 && (
+            {paymentType === 'full' && cashValue >= totalAmount && change === 0 && (
               <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <p className="text-sm text-blue-700 font-medium">Uang Pas</p>
                 <p className="text-lg font-semibold text-blue-600">
@@ -201,22 +203,22 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
               </div>
             )}
 
-            {paymentType === 'full' && parseFloat(cashReceived) > 0 && parseFloat(cashReceived) < totalAmount && (
+            {paymentType === 'full' && cashValue > 0 && cashValue < totalAmount && (
               <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
                 <p className="text-sm text-red-700 font-medium">Uang Kurang</p>
                 <p className="text-lg font-semibold text-red-600">
-                  Kurang Rp {formatCurrency(totalAmount - parseFloat(cashReceived))}
+                  Kurang Rp {formatCurrency(totalAmount - cashValue)}
                 </p>
               </div>
             )}
 
             {/* Down Payment - Show remaining balance */}
-            {paymentType === 'down_payment' && parseFloat(cashReceived) > 0 && parseFloat(cashReceived) <= totalAmount && (
+            {paymentType === 'down_payment' && cashValue > 0 && cashValue <= totalAmount && (
               <div className="space-y-2">
                 <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                   <p className="text-sm text-yellow-700 font-medium">Uang Muka (DP)</p>
                   <p className="text-2xl font-bold text-yellow-600">
-                    Rp {formatCurrency(parseFloat(cashReceived))}
+                    Rp {formatCurrency(cashValue)}
                   </p>
                 </div>
                 <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
@@ -231,7 +233,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
               </div>
             )}
 
-            {paymentType === 'down_payment' && parseFloat(cashReceived) > totalAmount && (
+            {paymentType === 'down_payment' && cashValue > totalAmount && (
               <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
                 <p className="text-sm text-red-700 font-medium">Jumlah Melebihi Total</p>
                 <p className="text-sm text-red-600">
@@ -247,7 +249,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
             </Button>
             <Button
               type="submit"
-              disabled={!isSubmitEnabled()}
+              disabled={!isSubmitEnabled}
               className="bg-green-600 hover:bg-green-700"
             >
               {isSubmitting ? 'Memproses...' : paymentType === 'full' ? 'Konfirmasi Pembayaran' : 'Konfirmasi DP'}
