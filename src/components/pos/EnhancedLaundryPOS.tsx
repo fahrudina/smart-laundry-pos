@@ -518,7 +518,7 @@ export const EnhancedLaundryPOS = () => {
 
     try {
       const subtotal = getTotalPrice();
-      const totalAmount = subtotal;
+      const totalAmount = subtotal - discountAmount;
       const completionDate = getOrderCompletionTime();
 
       // Combine regular order items and dynamic items
@@ -557,6 +557,8 @@ export const EnhancedLaundryPOS = () => {
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
+        discount_amount: discountAmount,
+        points_redeemed: pointsRedeemed,
         execution_status: allItemsAreProducts ? 'completed' : 'in_queue',
         payment_status: 'pending',
         order_date: dropOffDate.toISOString(),
