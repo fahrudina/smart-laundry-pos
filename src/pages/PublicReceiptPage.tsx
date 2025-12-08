@@ -17,6 +17,7 @@ interface OrderData {
   execution_status: string;
   payment_status: string;
   payment_method: string;
+  payment_amount?: number;
   cash_received?: number;
   points_earned?: number;
   discount_amount?: number;
@@ -323,7 +324,8 @@ export const PublicReceiptPage: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">Status</span>
                 <span className="text-emerald-600 font-medium">
-                  {order.payment_status === 'completed' ? 'LUNAS' : 'BELUM LUNAS'}
+                  {order.payment_status === 'completed' ? 'LUNAS' : 
+                   order.payment_status === 'down_payment' ? 'DP (BELUM LUNAS)' : 'BELUM LUNAS'}
                 </span>
               </div>
               
@@ -331,6 +333,7 @@ export const PublicReceiptPage: React.FC = () => {
                 <span className="text-gray-600">Metode Pembayaran</span>
                 <span className="text-emerald-600 font-medium">
                   {order.payment_method?.toUpperCase() || 'CASH'}
+                  {order.payment_status === 'down_payment' && ' (DP)'}
                 </span>
               </div>
 
@@ -475,37 +478,45 @@ export const PublicReceiptPage: React.FC = () => {
                 </div>
               </div>
               
-              <div className="flex justify-between">
-                <span className="text-gray-600">Bayar DP</span>
-                <span className="text-gray-800">Rp. 0</span>
-              </div>
+              {/* Down Payment Section - Only show for down_payment or if DP was made */}
+              {(order.payment_status === 'down_payment' || (order.payment_amount && order.payment_amount < order.total_amount)) && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Bayar DP</span>
+                    <span className="text-yellow-600 font-medium">
+                      Rp. {(order.payment_amount || 0).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Sisa Bayar</span>
+                    <span className="text-orange-600 font-medium">
+                      Rp. {((order.total_amount || 0) - (order.payment_amount || 0)).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                </>
+              )}
               
-              <div className="flex justify-between">
-                <span className="text-gray-600">Sisa Bayar</span>
-                <span className="text-gray-800">Rp. {order.total_amount.toLocaleString('id-ID')}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">DiBayar</span>
-                <span className="text-gray-800">
-                  Rp. {order.payment_status === 'completed' ? 
-                    (order.cash_received || order.total_amount).toLocaleString('id-ID') : 
-                    '0'
-                  }
-                </span>
-              </div>
-              
-              <div className="border-t border-dashed border-gray-300 pt-2">
-                <div className="flex justify-between font-semibold text-lg">
-                  <span className="text-gray-800">Kembalian</span>
-                  <span className="text-emerald-600">
-                    Rp. {order.payment_status === 'completed' && order.cash_received ? 
-                      Math.max(0, order.cash_received - order.total_amount).toLocaleString('id-ID') : 
-                      '0'
-                    }
-                  </span>
-                </div>
-              </div>
+              {/* Cash payment details - only for completed cash payments */}
+              {order.payment_method === 'cash' && order.payment_status === 'completed' && order.cash_received && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">DiBayar</span>
+                    <span className="text-gray-800">
+                      Rp. {order.cash_received.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  
+                  <div className="border-t border-dashed border-gray-300 pt-2">
+                    <div className="flex justify-between font-semibold text-lg">
+                      <span className="text-gray-800">Kembalian</span>
+                      <span className="text-emerald-600">
+                        Rp. {Math.max(0, order.cash_received - order.total_amount).toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
             {/* Payment Info */}
             <div className="mt-4 pt-4 border-t border-dashed border-gray-300 text-sm text-gray-500 space-y-1">
