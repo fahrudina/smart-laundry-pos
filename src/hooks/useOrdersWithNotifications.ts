@@ -425,11 +425,19 @@ export const useUpdateOrderStatusWithNotifications = () => {
       if (paymentNotes !== undefined) updateData.payment_notes = paymentNotes;
       if (executionNotes !== undefined) updateData.execution_notes = executionNotes;
       if (cashReceived !== undefined) updateData.cash_received = cashReceived;
-      if (pointsRedeemed !== undefined && pointsRedeemed > 0) updateData.points_redeemed = pointsRedeemed;
       if (discountAmount !== undefined && discountAmount > 0) {
-        updateData.discount_amount = discountAmount;
-        // Update total_amount to reflect the discount (subtract discount from original total)
-        updateData.total_amount = orderData.total_amount - discountAmount;
+        // Add the new discount to any existing discount
+        const existingDiscount = orderData.discount_amount || 0;
+        const totalDiscount = existingDiscount + discountAmount;
+        updateData.discount_amount = totalDiscount;
+        // Update total_amount to reflect the total discount
+        updateData.total_amount = orderData.subtotal - totalDiscount;
+      }
+      if (pointsRedeemed !== undefined && pointsRedeemed > 0) {
+        // Add the new points redeemed to any existing points redeemed
+        const existingPointsRedeemed = orderData.points_redeemed || 0;
+        const totalPointsRedeemed = existingPointsRedeemed + pointsRedeemed;
+        updateData.points_redeemed = totalPointsRedeemed;
       }
       if (pointsEarned > 0) updateData.points_earned = pointsEarned;
 
