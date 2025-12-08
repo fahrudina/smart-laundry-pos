@@ -353,7 +353,7 @@ export const EnhancedLaundryPOS = () => {
     }
   };
 
-  const processCashPayment = async (cashReceived: number) => {
+  const processCashPayment = async (cashReceived: number, isDownPayment?: boolean) => {
     try {
       const subtotal = getTotalPrice();
       const totalAmount = subtotal - discountAmount;
@@ -388,6 +388,10 @@ export const EnhancedLaundryPOS = () => {
       const allItems = [...regularItems, ...dynamicOrderItems];
       const allItemsAreProducts = allItems.every(item => item.item_type === 'product');
 
+      // Determine payment status based on whether it's a down payment
+      const paymentStatus = isDownPayment ? 'down_payment' : 'completed';
+      const paymentAmount = isDownPayment ? cashReceived : totalAmount;
+
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
@@ -398,9 +402,9 @@ export const EnhancedLaundryPOS = () => {
         discount_amount: discountAmount,
         points_redeemed: pointsRedeemed,
         execution_status: allItemsAreProducts ? 'completed' : 'in_queue',
-        payment_status: 'completed',
+        payment_status: paymentStatus,
         payment_method: 'cash',
-        payment_amount: totalAmount,
+        payment_amount: paymentAmount,
         cash_received: cashReceived, // Add the cash received amount
         order_date: dropOffDate.toISOString(),
         estimated_completion: completionDate?.toISOString(),
@@ -412,7 +416,7 @@ export const EnhancedLaundryPOS = () => {
       setShowCashPaymentDialog(false);
       
       // Show order success dialog
-      showOrderSuccess(createdOrder, totalAmount, 'cash');
+      showOrderSuccess(createdOrder, totalAmount, paymentStatus === 'down_payment' ? 'cash_dp' : 'cash');
     } catch (error) {
       // Error is already handled in the hook
       setShowCashPaymentDialog(false);
