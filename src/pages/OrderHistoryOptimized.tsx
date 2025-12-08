@@ -362,11 +362,18 @@ export const OrderHistory = () => {
   }) => {
     if (!payLaterPaymentOrder) return;
     
+    // Calculate the amount to be paid
+    // For down_payment status, we need to pay the remaining balance
+    const totalAmount = payLaterPaymentOrder.total_amount - (data.discountAmount || 0);
+    const remainingBalance = payLaterPaymentOrder.payment_status === 'down_payment' 
+      ? totalAmount - (payLaterPaymentOrder.payment_amount || 0)
+      : totalAmount;
+    
     updateOrderMutation.mutate({
       orderId: payLaterPaymentOrder.id,
       paymentStatus: 'completed',
       paymentMethod: data.paymentMethod,
-      paymentAmount: payLaterPaymentOrder.total_amount - (data.discountAmount || 0),
+      paymentAmount: totalAmount, // Full amount after discount
       cashReceived: data.cashReceived,
       pointsRedeemed: data.pointsRedeemed,
       discountAmount: data.discountAmount,
@@ -780,7 +787,11 @@ export const OrderHistory = () => {
               setShowPayLaterPaymentDialog(false);
               setPayLaterPaymentOrder(null);
             }}
-            totalAmount={payLaterPaymentOrder.total_amount}
+            totalAmount={
+              payLaterPaymentOrder.payment_status === 'down_payment' 
+                ? payLaterPaymentOrder.total_amount - (payLaterPaymentOrder.payment_amount || 0)
+                : payLaterPaymentOrder.total_amount
+            }
             customerPhone={payLaterPaymentOrder.customer_phone}
             customerName={payLaterPaymentOrder.customer_name}
             orderId={payLaterPaymentOrder.id}
