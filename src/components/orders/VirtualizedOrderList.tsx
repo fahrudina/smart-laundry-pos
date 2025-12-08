@@ -130,6 +130,26 @@ const OrderItem = memo(({ index, style, data }: {
                 </div>
               </div>
 
+              {/* Down Payment Information */}
+              {order.payment_status === 'down_payment' && order.payment_amount && (
+                <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-yellow-700 font-medium">DP Dibayar: </span>
+                      <span className="font-bold text-yellow-900">
+                        Rp{order.payment_amount.toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-orange-700 font-medium">Sisa: </span>
+                      <span className="font-bold text-orange-900">
+                        Rp{(order.total_amount - order.payment_amount).toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Mobile-optimized Action Buttons */}
               <div className="space-y-1 sm:space-y-2 mt-3 sm:mt-4">
                 {/* Row 1: Main Actions in grid */}
@@ -211,6 +231,16 @@ const OrderItem = memo(({ index, style, data }: {
                     className="w-full text-xs bg-green-600 hover:bg-green-700"
                   >
                     💳 Proses Pembayaran
+                  </Button>
+                )}
+                {order.payment_status === 'down_payment' && data.onShowPaymentDialog && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => data.onShowPaymentDialog!(order)}
+                    className="w-full text-xs bg-orange-600 hover:bg-orange-700"
+                  >
+                    💰 Selesaikan Pembayaran DP
                   </Button>
                 )}
                 {order.payment_status === 'pending' && !data.onShowPaymentDialog && (
