@@ -10,6 +10,7 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useNavigate } from 'react-router-dom';
 import { useOrders, OrderFilters, Order } from '@/hooks/useOrdersOptimized';
 import { useUpdateOrderStatusWithNotifications } from '@/hooks/useOrdersWithNotifications';
+import { useResendOrderNotification } from '@/hooks/useResendOrderNotification';
 import { OrderDetailsDialog } from '@/components/pos/OrderDetailsDialog';
 import { CashPaymentDialog } from '@/components/pos/CashPaymentDialog';
 import { ThermalPrintDialog } from '@/components/thermal/ThermalPrintDialog';
@@ -157,6 +158,7 @@ export const OrderHistory = () => {
   } = useOrders(queryFilters);
 
   const updateOrderMutation = useUpdateOrderStatusWithNotifications();
+  const { resendNotification, isResending } = useResendOrderNotification();
 
   // Enhanced filtering function with sorting (client-side for complex filters)
   // Note: Date range filtering is now handled server-side for better performance
@@ -417,6 +419,10 @@ export const OrderHistory = () => {
       loadMore();
     }
   }, [hasMore, loading, loadMore]);
+
+  const handleResendNotification = useCallback(async (orderId: string) => {
+    await resendNotification(orderId);
+  }, [resendNotification]);
 
   return (
     <div className="min-h-screen bg-gray-50 -mx-4 sm:-mx-6 lg:-mx-8 -my-8">
@@ -708,6 +714,7 @@ export const OrderHistory = () => {
                       onPrintReceipt={handlePrintReceipt}
                       onPrintThermal={handleThermalPrint}
                       onExportReceiptPDF={handleExportReceiptPDF}
+                      onResendNotification={handleResendNotification}
                       height={500} // Fixed responsive height
                     />
                   </div>
