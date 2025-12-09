@@ -455,9 +455,12 @@ export const OrderHistory = () => {
   const handleResendNotification = useCallback(async (orderId: string) => {
     setProcessingOrderId(orderId);
     setProcessingAction('resend_notification');
-    await resendNotification(orderId);
-    setProcessingOrderId(null);
-    setProcessingAction(null);
+    try {
+      await resendNotification(orderId);
+    } finally {
+      setProcessingOrderId(null);
+      setProcessingAction(null);
+    }
   }, [resendNotification]);
 
   return (
