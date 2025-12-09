@@ -159,6 +159,10 @@ export const OrderHistory = () => {
 
   const updateOrderMutation = useUpdateOrderStatusWithNotifications();
   const { resendNotification, isResending } = useResendOrderNotification();
+  
+  // Track which order is currently being processed
+  const [processingOrderId, setProcessingOrderId] = useState<string | null>(null);
+  const [processingAction, setProcessingAction] = useState<string | null>(null);
 
   // Enhanced filtering function with sorting (client-side for complex filters)
   // Note: Date range filtering is now handled server-side for better performance
@@ -308,9 +312,16 @@ export const OrderHistory = () => {
   };
 
   const handleUpdateExecutionStatus = useCallback(async (orderId: string, status: string) => {
+    setProcessingOrderId(orderId);
+    setProcessingAction(`execution_${status}`);
     updateOrderMutation.mutate({
       orderId,
       executionStatus: status,
+    }, {
+      onSettled: () => {
+        setProcessingOrderId(null);
+        setProcessingAction(null);
+      }
     });
   }, [updateOrderMutation]);
 
@@ -325,23 +336,37 @@ export const OrderHistory = () => {
     }
     
     // For other payment methods, process directly with points and notifications
+    setProcessingOrderId(orderId);
+    setProcessingAction(`payment_${status}_${method || 'default'}`);
     updateOrderMutation.mutate({
       orderId,
       paymentStatus: status,
       paymentMethod: method,
       paymentAmount: order?.total_amount,
+    }, {
+      onSettled: () => {
+        setProcessingOrderId(null);
+        setProcessingAction(null);
+      }
     });
   }, [updateOrderMutation, orders]);
 
   const handleCashPaymentSubmit = useCallback(async (cashReceived: number) => {
     if (!cashPaymentOrder) return;
     
+    setProcessingOrderId(cashPaymentOrder.id);
+    setProcessingAction('payment_completed_cash');
     updateOrderMutation.mutate({
       orderId: cashPaymentOrder.id,
       paymentStatus: 'completed',
       paymentMethod: 'cash',
       paymentAmount: cashPaymentOrder.total_amount,
       cashReceived: cashReceived,
+    }, {
+      onSettled: () => {
+        setProcessingOrderId(null);
+        setProcessingAction(null);
+      }
     });
     
     // Close the dialog and clear state
@@ -367,6 +392,8 @@ export const OrderHistory = () => {
     // Calculate the full amount after discount
     const totalAmount = payLaterPaymentOrder.total_amount - (data.discountAmount || 0);
     
+    setProcessingOrderId(payLaterPaymentOrder.id);
+    setProcessingAction('payment_completed_paylater');
     updateOrderMutation.mutate({
       orderId: payLaterPaymentOrder.id,
       paymentStatus: 'completed',
@@ -375,6 +402,11 @@ export const OrderHistory = () => {
       cashReceived: data.cashReceived,
       pointsRedeemed: data.pointsRedeemed,
       discountAmount: data.discountAmount,
+    }, {
+      onSettled: () => {
+        setProcessingOrderId(null);
+        setProcessingAction(null);
+      }
     });
     
     // Close the dialog and clear state
@@ -421,7 +453,14 @@ export const OrderHistory = () => {
   }, [hasMore, loading, loadMore]);
 
   const handleResendNotification = useCallback(async (orderId: string) => {
-    await resendNotification(orderId);
+    setProcessingOrderId(orderId);
+    setProcessingAction('resend_notification');
+    try {
+      await resendNotification(orderId);
+    } finally {
+      setProcessingOrderId(null);
+      setProcessingAction(null);
+    }
   }, [resendNotification]);
 
   return (
@@ -715,6 +754,8 @@ export const OrderHistory = () => {
                       onPrintThermal={handleThermalPrint}
                       onExportReceiptPDF={handleExportReceiptPDF}
                       onResendNotification={handleResendNotification}
+                      processingOrderId={processingOrderId}
+                      processingAction={processingAction}
                       height={500} // Fixed responsive height
                     />
                   </div>
