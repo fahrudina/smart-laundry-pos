@@ -286,10 +286,10 @@ const OrderItem = memo(({ index, style, data }: {
                     variant="default"
                     size="sm"
                     onClick={() => data.onShowPaymentDialog!(order)}
-                    disabled={isButtonLoading(order.id, 'payment_completed')}
+                    disabled={isButtonLoading(order.id, 'payment')}
                     className="w-full text-xs bg-green-600 hover:bg-green-700"
                   >
-                    {isButtonLoading(order.id, 'payment_completed') ? (
+                    {isButtonLoading(order.id, 'payment') ? (
                       <>
                         <Loader2 className="h-3 w-3 animate-spin mr-1" />
                         Memproses...
@@ -304,10 +304,10 @@ const OrderItem = memo(({ index, style, data }: {
                     variant="default"
                     size="sm"
                     onClick={() => data.onShowPaymentDialog!(order)}
-                    disabled={isButtonLoading(order.id, 'payment_completed')}
+                    disabled={isButtonLoading(order.id, 'payment')}
                     className="w-full text-xs bg-orange-600 hover:bg-orange-700"
                   >
-                    {isButtonLoading(order.id, 'payment_completed') ? (
+                    {isButtonLoading(order.id, 'payment') ? (
                       <>
                         <Loader2 className="h-3 w-3 animate-spin mr-1" />
                         Memproses...
