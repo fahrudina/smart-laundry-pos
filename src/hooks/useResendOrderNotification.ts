@@ -9,6 +9,14 @@ import { useStore } from '@/contexts/StoreContext';
 /**
  * Custom hook to resend order created WhatsApp notification
  * Fetches complete order details and resends the notification
+ * 
+ * @returns {Object} Object containing:
+ *   - resendNotification: Function to resend notification for a given order ID
+ *   - isResending: Boolean indicating if a resend operation is in progress
+ * 
+ * @example
+ * const { resendNotification, isResending } = useResendOrderNotification();
+ * await resendNotification(orderId);
  */
 export const useResendOrderNotification = () => {
   const [isResending, setIsResending] = useState(false);
@@ -38,7 +46,8 @@ export const useResendOrderNotification = () => {
         .single();
 
       if (orderError || !order) {
-        throw new Error('Failed to fetch order details');
+        const errorMsg = orderError?.message || 'Order not found';
+        throw new Error(`Failed to fetch order details: ${errorMsg}`);
       }
 
       // Get store info from context

@@ -328,8 +328,9 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
     onResendNotification,
   };
 
-  // Responsive item size - much larger for mobile to prevent overlap
-  // Increased size to account for WhatsApp resend button
+  // Responsive item size - accounts for all action buttons including WhatsApp resend
+  // Mobile: 460px to prevent button overlap on small screens
+  // Desktop: 410px provides adequate spacing for all buttons
   const itemSize = isMobile ? 460 : 410;
 
   return (
