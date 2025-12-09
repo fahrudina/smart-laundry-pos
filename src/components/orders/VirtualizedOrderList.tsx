@@ -3,7 +3,7 @@ import { FixedSizeList as List } from 'react-window';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, Printer, Download, Receipt, Bluetooth, MessageSquare } from 'lucide-react';
+import { Eye, Printer, Download, Receipt, Bluetooth, MessageSquare, Loader2 } from 'lucide-react';
 import { Order } from '@/hooks/useOrdersOptimized';
 
 interface VirtualizedOrderListProps {
@@ -18,6 +18,8 @@ interface VirtualizedOrderListProps {
   onPrintThermal?: (orderId: string) => void;
   onExportReceiptPDF?: (orderId: string, customerName: string) => void;
   onResendNotification?: (orderId: string) => void;
+  processingOrderId?: string | null;
+  processingAction?: string | null;
 }
 
 interface ItemData {
@@ -31,6 +33,8 @@ interface ItemData {
   onPrintThermal?: (orderId: string) => void;
   onExportReceiptPDF?: (orderId: string, customerName: string) => void;
   onResendNotification?: (orderId: string) => void;
+  processingOrderId?: string | null;
+  processingAction?: string | null;
 }
 
 const OrderItem = memo(({ index, style, data }: { 
@@ -38,10 +42,15 @@ const OrderItem = memo(({ index, style, data }: {
   style: React.CSSProperties; 
   data: ItemData;
 }) => {
-  const { orders, onOrderClick, onUpdatePayment, onUpdateExecution } = data;
+  const { orders, onOrderClick, onUpdatePayment, onUpdateExecution, processingOrderId, processingAction } = data;
   const order = orders[index];
 
   if (!order) return null;
+
+  // Helper to check if this specific button is loading
+  const isButtonLoading = (orderId: string, action: string) => {
+    return processingOrderId === orderId && processingAction?.startsWith(action);
+  };
 
   const getExecutionStatusColor = (status: string) => {
     switch (status) {
@@ -198,10 +207,20 @@ const OrderItem = memo(({ index, style, data }: {
                     variant="outline"
                     size="sm"
                     onClick={() => data.onResendNotification!(order.id)}
+                    disabled={isButtonLoading(order.id, 'resend_notification')}
                     className="w-full flex items-center justify-center space-x-1 text-xs border-green-200 text-green-700 hover:bg-green-50"
                   >
-                    <MessageSquare className="h-3 w-3" />
-                    <span>Kirim Ulang WA</span>
+                    {isButtonLoading(order.id, 'resend_notification') ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>Mengirim...</span>
+                      </>
+                    ) : (
+                      <>
+                        <MessageSquare className="h-3 w-3" />
+                        <span>Kirim Ulang WA</span>
+                      </>
+                    )}
                   </Button>
                 )}
 
@@ -211,9 +230,17 @@ const OrderItem = memo(({ index, style, data }: {
                     variant="default"
                     size="sm"
                     onClick={() => onUpdateExecution(order.id, 'in_progress')}
+                    disabled={isButtonLoading(order.id, 'execution_in_progress')}
                     className="w-full text-xs bg-blue-600 hover:bg-blue-700"
                   >
-                    🔄 Mulai Proses
+                    {isButtonLoading(order.id, 'execution_in_progress') ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        Memproses...
+                      </>
+                    ) : (
+                      <>🔄 Mulai Proses</>
+                    )}
                   </Button>
                 )}
                 {order.execution_status === 'in_progress' && (
@@ -221,9 +248,17 @@ const OrderItem = memo(({ index, style, data }: {
                     variant="default"
                     size="sm"
                     onClick={() => onUpdateExecution(order.id, 'ready_for_pickup')}
+                    disabled={isButtonLoading(order.id, 'execution_ready_for_pickup')}
                     className="w-full text-xs bg-orange-600 hover:bg-orange-700"
                   >
-                    📦 Siap Diambil
+                    {isButtonLoading(order.id, 'execution_ready_for_pickup') ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        Memproses...
+                      </>
+                    ) : (
+                      <>📦 Siap Diambil</>
+                    )}
                   </Button>
                 )}
                 {order.execution_status === 'ready_for_pickup' && (
@@ -231,9 +266,17 @@ const OrderItem = memo(({ index, style, data }: {
                     variant="default"
                     size="sm"
                     onClick={() => onUpdateExecution(order.id, 'completed')}
+                    disabled={isButtonLoading(order.id, 'execution_completed')}
                     className="w-full text-xs bg-green-600 hover:bg-green-700"
                   >
-                    ✅ Mark as Picked Up
+                    {isButtonLoading(order.id, 'execution_completed') ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        Memproses...
+                      </>
+                    ) : (
+                      <>✅ Mark as Picked Up</>
+                    )}
                   </Button>
                 )}
 
@@ -243,9 +286,17 @@ const OrderItem = memo(({ index, style, data }: {
                     variant="default"
                     size="sm"
                     onClick={() => data.onShowPaymentDialog!(order)}
+                    disabled={isButtonLoading(order.id, 'payment_completed')}
                     className="w-full text-xs bg-green-600 hover:bg-green-700"
                   >
-                    💳 Proses Pembayaran
+                    {isButtonLoading(order.id, 'payment_completed') ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        Memproses...
+                      </>
+                    ) : (
+                      <>💳 Proses Pembayaran</>
+                    )}
                   </Button>
                 )}
                 {order.payment_status === 'down_payment' && data.onShowPaymentDialog && (
@@ -253,9 +304,17 @@ const OrderItem = memo(({ index, style, data }: {
                     variant="default"
                     size="sm"
                     onClick={() => data.onShowPaymentDialog!(order)}
+                    disabled={isButtonLoading(order.id, 'payment_completed')}
                     className="w-full text-xs bg-orange-600 hover:bg-orange-700"
                   >
-                    💰 Selesaikan Pembayaran DP
+                    {isButtonLoading(order.id, 'payment_completed') ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        Memproses...
+                      </>
+                    ) : (
+                      <>💰 Selesaikan Pembayaran DP</>
+                    )}
                   </Button>
                 )}
                 {order.payment_status === 'pending' && !data.onShowPaymentDialog && (
@@ -264,17 +323,33 @@ const OrderItem = memo(({ index, style, data }: {
                       variant="outline"
                       size="sm"
                       onClick={() => onUpdatePayment(order.id, 'completed', 'cash')}
+                      disabled={isButtonLoading(order.id, 'payment_completed_cash')}
                       className="text-xs border-green-300 text-green-700 hover:bg-green-50"
                     >
-                      💵 Cash
+                      {isButtonLoading(order.id, 'payment_completed_cash') ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                          ...
+                        </>
+                      ) : (
+                        <>💵 Cash</>
+                      )}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => onUpdatePayment(order.id, 'completed', 'qris')}
+                      disabled={isButtonLoading(order.id, 'payment_completed_qris')}
                       className="text-xs border-blue-300 text-blue-700 hover:bg-blue-50"
                     >
-                      📱 QRIS
+                      {isButtonLoading(order.id, 'payment_completed_qris') ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                          ...
+                        </>
+                      ) : (
+                        <>📱 QRIS</>
+                      )}
                     </Button>
                   </div>
                 )}
@@ -300,7 +375,9 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
   onPrintReceipt,
   onPrintThermal,
   onExportReceiptPDF,
-  onResendNotification
+  onResendNotification,
+  processingOrderId,
+  processingAction
 }) => {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -326,6 +403,8 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
     onPrintThermal,
     onExportReceiptPDF,
     onResendNotification,
+    processingOrderId,
+    processingAction,
   };
 
   // Responsive item size - accounts for all action buttons including WhatsApp resend
