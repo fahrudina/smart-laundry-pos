@@ -3,7 +3,7 @@ import { FixedSizeList as List } from 'react-window';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, Printer, Download, Receipt, Bluetooth } from 'lucide-react';
+import { Eye, Printer, Download, Receipt, Bluetooth, MessageSquare } from 'lucide-react';
 import { Order } from '@/hooks/useOrdersOptimized';
 
 interface VirtualizedOrderListProps {
@@ -17,6 +17,7 @@ interface VirtualizedOrderListProps {
   onPrintReceipt?: (orderId: string) => void;
   onPrintThermal?: (orderId: string) => void;
   onExportReceiptPDF?: (orderId: string, customerName: string) => void;
+  onResendNotification?: (orderId: string) => void;
 }
 
 interface ItemData {
@@ -29,6 +30,7 @@ interface ItemData {
   onPrintReceipt?: (orderId: string) => void;
   onPrintThermal?: (orderId: string) => void;
   onExportReceiptPDF?: (orderId: string, customerName: string) => void;
+  onResendNotification?: (orderId: string) => void;
 }
 
 const OrderItem = memo(({ index, style, data }: { 
@@ -190,6 +192,19 @@ const OrderItem = memo(({ index, style, data }: {
                   </Button>
                 )}
 
+                {/* Row 2.5: WhatsApp Resend Action */}
+                {data.onResendNotification && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => data.onResendNotification!(order.id)}
+                    className="w-full flex items-center justify-center space-x-1 text-xs border-green-200 text-green-700 hover:bg-green-50"
+                  >
+                    <MessageSquare className="h-3 w-3" />
+                    <span>Kirim Ulang WA</span>
+                  </Button>
+                )}
+
                 {/* Row 3: Status Action */}
                 {order.execution_status === 'in_queue' && (
                   <Button
@@ -284,7 +299,8 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
   onViewReceipt,
   onPrintReceipt,
   onPrintThermal,
-  onExportReceiptPDF
+  onExportReceiptPDF,
+  onResendNotification
 }) => {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -309,10 +325,13 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
     onPrintReceipt,
     onPrintThermal,
     onExportReceiptPDF,
+    onResendNotification,
   };
 
-  // Responsive item size - much larger for mobile to prevent overlap
-  const itemSize = isMobile ? 420 : 380;
+  // Responsive item size - accounts for all action buttons including WhatsApp resend
+  // Mobile: 460px to prevent button overlap on small screens
+  // Desktop: 410px provides adequate spacing for all buttons
+  const itemSize = isMobile ? 460 : 410;
 
   return (
     <List
