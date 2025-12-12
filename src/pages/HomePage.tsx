@@ -164,7 +164,7 @@ export const HomePage: React.FC = () => {
   ].filter(item => !item.hidden);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-purple-50 pb-24">
       {/* Coachmark */}
       <Coachmark open={shouldShowCoachmark} onClose={hideCoachmark} />
       
