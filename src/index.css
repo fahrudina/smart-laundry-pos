@@ -373,7 +373,196 @@ All colors MUST be HSL.
     border: 1px solid #ddd;
   }
 
-  /* Y2K/Early 2000s Bottom Navigation Styles */
+  /* Y2K/Early 2000s Dashboard Styles */
+  
+  /* Header Styles */
+  .y2k-header {
+    background: linear-gradient(145deg, 
+      rgba(255, 105, 180, 0.95) 0%,
+      rgba(255, 20, 147, 1) 50%,
+      rgba(199, 21, 133, 1) 100%);
+    box-shadow: 
+      0 8px 30px rgba(255, 20, 147, 0.4),
+      0 4px 15px rgba(138, 43, 226, 0.3),
+      inset 0 2px 4px rgba(255, 255, 255, 0.5),
+      inset 0 -3px 6px rgba(0, 0, 0, 0.2);
+    border-bottom: 3px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+  }
+  
+  .y2k-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, 
+      rgba(255, 255, 255, 0.4) 0%, 
+      rgba(255, 255, 255, 0) 100%);
+    border-radius: 0 0 50% 50%;
+    pointer-events: none;
+  }
+  
+  .y2k-header-text {
+    text-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.5),
+      0 0 12px rgba(255, 255, 255, 0.8),
+      0 -1px 2px rgba(255, 255, 255, 0.4);
+    font-weight: 800;
+    letter-spacing: 1px;
+  }
+  
+  /* Card Styles */
+  .y2k-card {
+    background: linear-gradient(145deg, 
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(240, 240, 255, 0.98) 100%);
+    border-radius: 24px;
+    box-shadow: 
+      0 6px 25px rgba(138, 43, 226, 0.2),
+      0 3px 12px rgba(255, 20, 147, 0.15),
+      inset 0 2px 3px rgba(255, 255, 255, 0.8),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+    border: 3px solid rgba(255, 255, 255, 0.6);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .y2k-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(180deg, 
+      rgba(255, 255, 255, 0.5) 0%, 
+      rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+  }
+  
+  /* Revenue Card Variants */
+  .y2k-card-income {
+    background: linear-gradient(145deg, 
+      rgba(144, 238, 144, 0.3) 0%,
+      rgba(152, 251, 152, 0.4) 50%,
+      rgba(255, 255, 255, 0.95) 100%);
+    border: 3px solid rgba(50, 205, 50, 0.3);
+  }
+  
+  .y2k-card-expense {
+    background: linear-gradient(145deg, 
+      rgba(255, 200, 124, 0.3) 0%,
+      rgba(255, 218, 185, 0.4) 50%,
+      rgba(255, 255, 255, 0.95) 100%);
+    border: 3px solid rgba(255, 140, 0, 0.3);
+  }
+  
+  /* Store Avatar */
+  .y2k-avatar {
+    background: linear-gradient(145deg, 
+      rgba(255, 182, 193, 0.9) 0%,
+      rgba(255, 105, 180, 0.95) 50%,
+      rgba(219, 112, 147, 1) 100%);
+    box-shadow: 
+      0 4px 20px rgba(255, 20, 147, 0.4),
+      inset 0 2px 3px rgba(255, 255, 255, 0.6),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+    border: 3px solid rgba(255, 255, 255, 0.7);
+  }
+  
+  /* Quick Action Buttons */
+  .y2k-action-btn {
+    position: relative;
+    background: linear-gradient(145deg, 
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(240, 240, 255, 1) 100%);
+    border-radius: 24px;
+    box-shadow: 
+      0 6px 20px rgba(138, 43, 226, 0.25),
+      0 3px 10px rgba(255, 20, 147, 0.15),
+      inset 0 2px 3px rgba(255, 255, 255, 0.8),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+    border: 3px solid rgba(255, 255, 255, 0.6);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .y2k-action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, 
+      rgba(255, 255, 255, 0.6) 0%, 
+      rgba(255, 255, 255, 0) 100%);
+    border-radius: 24px 24px 50% 50%;
+    pointer-events: none;
+  }
+  
+  .y2k-action-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 
+      0 8px 30px rgba(138, 43, 226, 0.35),
+      0 4px 15px rgba(255, 20, 147, 0.25),
+      inset 0 2px 4px rgba(255, 255, 255, 0.9),
+      inset 0 -2px 5px rgba(0, 0, 0, 0.15);
+  }
+  
+  .y2k-action-btn:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 
+      0 3px 12px rgba(138, 43, 226, 0.3),
+      inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .y2k-action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  
+  /* Action Button Icon Container */
+  .y2k-action-icon {
+    background: linear-gradient(145deg, 
+      rgba(255, 182, 193, 0.5) 0%,
+      rgba(255, 105, 180, 0.6) 50%,
+      rgba(219, 112, 147, 0.7) 100%);
+    border-radius: 18px;
+    box-shadow: 
+      0 3px 12px rgba(255, 20, 147, 0.3),
+      inset 0 1px 2px rgba(255, 255, 255, 0.5),
+      inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+  }
+  
+  .y2k-action-icon svg {
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3))
+            drop-shadow(0 0 6px rgba(255, 255, 255, 0.5));
+  }
+  
+  /* Text styling for cards */
+  .y2k-text-amount {
+    text-shadow: 
+      0 1px 2px rgba(0, 0, 0, 0.2),
+      0 0 6px rgba(138, 43, 226, 0.3);
+    font-weight: 800;
+    background: linear-gradient(145deg, 
+      rgba(138, 43, 226, 1) 0%,
+      rgba(75, 0, 130, 1) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .y2k-text-label {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    font-weight: 600;
+  }
+
+  /* Bottom Navigation Styles */
   .y2k-bottom-nav {
     background: linear-gradient(180deg, 
       rgba(220, 220, 240, 0.95) 0%, 

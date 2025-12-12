@@ -164,64 +164,58 @@ export const HomePage: React.FC = () => {
   ].filter(item => !item.hidden);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-purple-50 pb-20 sm:pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 pb-20 sm:pb-24">
       {/* Coachmark */}
       <Coachmark open={shouldShowCoachmark} onClose={hideCoachmark} />
       
-      {/* Header with coral/salmon background */}
-      <div className="bg-gradient-to-r from-rose-400 to-rose-500 text-white px-4 pt-8 pb-12 rounded-b-3xl shadow-lg">
-        <h1 className="text-2xl font-bold text-center">Beranda</h1>
+      {/* Header with Y2K style */}
+      <div className="y2k-header text-white px-4 pt-8 pb-12 rounded-b-3xl">
+        <h1 className="y2k-header-text text-2xl text-center">Beranda</h1>
       </div>
 
       <div className="px-4 -mt-6 space-y-4 pb-6">
         {/* Store Info Card */}
-        <Card className="shadow-lg border-0">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-4">
-              <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-rose-500 font-bold text-2xl">{userInitials}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-xl font-bold text-gray-900 mb-1">{currentStore.store_name}</h2>
-                <p className="text-sm text-gray-600 line-clamp-2 mb-1">
-                  {currentStore.store_address || 'Alamat tidak tersedia'}
-                </p>
-                <p className="text-sm text-gray-600">{currentStore.store_phone || 'Telepon tidak tersedia'}</p>
-              </div>
+        <div className="y2k-card p-4">
+          <div className="flex items-start gap-4">
+            <div className="y2k-avatar w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-bold text-2xl drop-shadow-lg">{userInitials}</span>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-bold text-gray-900 mb-1 y2k-text-label">{currentStore.store_name}</h2>
+              <p className="text-sm text-gray-700 line-clamp-2 mb-1">
+                {currentStore.store_address || 'Alamat tidak tersedia'}
+              </p>
+              <p className="text-sm text-gray-700">{currentStore.store_phone || 'Telepon tidak tersedia'}</p>
+            </div>
+          </div>
+        </div>
 
         {/* Revenue Cards */}
         <div className="grid grid-cols-2 gap-3">
-          <Card className="shadow-md border-0">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-2">
-                <p className="text-xs text-gray-600">Pendapatan Hari Ini</p>
-                <TrendingUp className="h-4 w-4 text-green-500" />
-              </div>
-              <p className="text-lg font-bold text-gray-900">
-                {isLoadingData ? '...' : formatCurrency(todayIncome)}
+          <div className="y2k-card y2k-card-income p-4">
+            <div className="flex items-start justify-between mb-2">
+              <p className="text-xs y2k-text-label text-gray-700">Pendapatan Hari Ini</p>
+              <TrendingUp className="h-5 w-5 text-green-600 drop-shadow-lg" />
+            </div>
+            <p className="text-lg y2k-text-amount">
+              {isLoadingData ? '...' : formatCurrency(todayIncome)}
+            </p>
+            {todayIncomeChange !== 0 && (
+              <p className={`text-xs mt-1 font-semibold ${todayIncomeChange >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                {todayIncomeChange >= 0 ? '↑' : '↓'} {Math.abs(todayIncomeChange)}% dari kemarin
               </p>
-              {todayIncomeChange !== 0 && (
-                <p className={`text-xs mt-1 ${todayIncomeChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {todayIncomeChange >= 0 ? '↑' : '↓'} {Math.abs(todayIncomeChange)}% dari kemarin
-                </p>
-              )}
-            </CardContent>
-          </Card>
+            )}
+          </div>
 
-          <Card className="shadow-md border-0">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-2">
-                <p className="text-xs text-gray-600">Pengeluaran Hari Ini</p>
-                <TrendingDown className="h-4 w-4 text-orange-500" />
-              </div>
-              <p className="text-lg font-bold text-gray-900">
-                {isLoadingData ? '...' : formatCurrency(todayExpenses)}
-              </p>
-            </CardContent>
-          </Card>
+          <div className="y2k-card y2k-card-expense p-4">
+            <div className="flex items-start justify-between mb-2">
+              <p className="text-xs y2k-text-label text-gray-700">Pengeluaran Hari Ini</p>
+              <TrendingDown className="h-5 w-5 text-orange-600 drop-shadow-lg" />
+            </div>
+            <p className="text-lg y2k-text-amount">
+              {isLoadingData ? '...' : formatCurrency(todayExpenses)}
+            </p>
+          </div>
         </div>
 
         {/* Quick Actions Grid */}
@@ -231,14 +225,12 @@ export const HomePage: React.FC = () => {
               key={action.id}
               onClick={action.onClick}
               disabled={action.disabled}
-              className={`flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow active:scale-95 ${
-                action.disabled ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className="y2k-action-btn flex flex-col items-center justify-center p-4"
             >
-              <div className={`w-12 h-12 ${action.bgColor} rounded-xl flex items-center justify-center mb-2`}>
-                <action.icon className={`h-6 w-6 ${action.color}`} />
+              <div className="y2k-action-icon w-12 h-12 flex items-center justify-center mb-2">
+                <action.icon className="h-6 w-6 text-pink-600" />
               </div>
-              <p className="text-xs text-gray-700 text-center font-medium leading-tight">
+              <p className="text-xs text-gray-800 text-center font-bold leading-tight y2k-text-label">
                 {action.title}
               </p>
             </button>
