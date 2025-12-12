@@ -164,7 +164,7 @@ export const HomePage: React.FC = () => {
   ].filter(item => !item.hidden);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-purple-50 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-purple-50 pb-20 sm:pb-24">
       {/* Coachmark */}
       <Coachmark open={shouldShowCoachmark} onClose={hideCoachmark} />
       
@@ -248,15 +248,15 @@ export const HomePage: React.FC = () => {
 
       {/* Bottom Navigation Bar - Y2K Style */}
       <div className="fixed bottom-0 left-0 right-0 y2k-bottom-nav">
-        <div className="flex justify-center gap-3 max-w-md mx-auto px-3 py-3">
+        <div className="flex justify-center gap-2 max-w-md mx-auto px-2 py-3">
           {bottomNavItems.map((item) => (
             <button
               key={item.id}
               onClick={item.onClick}
-              className={`y2k-nav-button ${item.active ? 'active' : 'inactive'} flex flex-col items-center justify-center flex-1 max-w-[100px]`}
+              className={`y2k-nav-button ${item.active ? 'active' : 'inactive'} flex flex-col items-center justify-center flex-1 min-w-[75px] max-w-[110px]`}
             >
               <item.icon className="y2k-nav-icon h-7 w-7 mb-1.5 text-white" />
-              <span className="y2k-nav-text text-[10px] text-white">{item.title}</span>
+              <span className="y2k-nav-text text-[10px] text-white leading-tight">{item.title}</span>
             </button>
           ))}
         </div>
