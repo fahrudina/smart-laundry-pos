@@ -174,8 +174,8 @@ export const HomePage: React.FC = () => {
       </div>
 
       {/* Scrollable content area with padding for fixed header and footer */}
-      <div className="pt-24 pb-24 px-4 space-y-2 overflow-y-auto" style={{ minHeight: 'calc(100vh - 80px)', marginTop: '80px' }}>
-        <div className="-mt-10 space-y-2 pb-4">
+      <div className="pt-20 pb-24 px-4 overflow-y-auto" style={{ minHeight: '100vh' }}>
+        <div className="space-y-2 pb-4">
         {/* Store Info Card */}
         <div className="y2k-card p-4">
           <div className="flex items-start gap-4">
