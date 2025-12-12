@@ -164,16 +164,18 @@ export const HomePage: React.FC = () => {
   ].filter(item => !item.hidden);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 pb-20 sm:pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100">
       {/* Coachmark */}
       <Coachmark open={shouldShowCoachmark} onClose={hideCoachmark} />
       
-      {/* Header with Y2K style */}
-      <div className="y2k-header text-white px-4 pt-8 pb-12 rounded-b-3xl">
+      {/* Header with Y2K style - Fixed at top */}
+      <div className="fixed top-0 left-0 right-0 z-40 y2k-header text-white px-4 pt-8 pb-12 rounded-b-3xl">
         <h1 className="y2k-header-text text-2xl text-center">Beranda</h1>
       </div>
 
-      <div className="px-4 -mt-6 space-y-4 pb-6">
+      {/* Scrollable content area with padding for fixed header and footer */}
+      <div className="pt-24 pb-24 px-4 space-y-4 overflow-y-auto" style={{ minHeight: 'calc(100vh - 80px)', marginTop: '80px' }}>
+        <div className="-mt-10 space-y-4 pb-6">
         {/* Store Info Card */}
         <div className="y2k-card p-4">
           <div className="flex items-start gap-4">
@@ -236,10 +238,11 @@ export const HomePage: React.FC = () => {
             </button>
           ))}
         </div>
+        </div>
       </div>
 
-      {/* Bottom Navigation Bar - Y2K Style */}
-      <div className="fixed bottom-0 left-0 right-0 y2k-bottom-nav">
+      {/* Bottom Navigation Bar - Y2K Style - Fixed at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 y2k-bottom-nav">
         <div className="flex justify-center gap-2 max-w-md mx-auto px-2 py-3">
           {bottomNavItems.map((item) => (
             <button
