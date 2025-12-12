@@ -174,8 +174,8 @@ export const HomePage: React.FC = () => {
       </div>
 
       {/* Scrollable content area with padding for fixed header and footer */}
-      <div className="pt-24 pb-24 px-4 space-y-4 overflow-y-auto" style={{ minHeight: 'calc(100vh - 80px)', marginTop: '80px' }}>
-        <div className="-mt-10 space-y-4 pb-6">
+      <div className="pt-24 pb-24 px-4 space-y-2 overflow-y-auto" style={{ minHeight: 'calc(100vh - 80px)', marginTop: '80px' }}>
+        <div className="-mt-10 space-y-2 pb-4">
         {/* Store Info Card */}
         <div className="y2k-card p-4">
           <div className="flex items-start gap-4">
@@ -193,7 +193,7 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* Revenue Cards */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <div className="y2k-card y2k-card-income p-4">
             <div className="flex items-start justify-between mb-2">
               <p className="text-xs y2k-text-label text-gray-700">Pendapatan Hari Ini</p>
@@ -221,7 +221,7 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* Quick Actions Grid */}
-        <div className="grid grid-cols-3 gap-3 mt-6">
+        <div className="grid grid-cols-3 gap-2 mt-3">
           {quickActions.map((action) => (
             <button
               key={action.id}
