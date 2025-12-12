@@ -246,21 +246,17 @@ export const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
-        <div className={`flex justify-center gap-4 max-w-md mx-auto px-4`}>
+      {/* Bottom Navigation Bar - Y2K Style */}
+      <div className="fixed bottom-0 left-0 right-0 y2k-bottom-nav">
+        <div className="flex justify-center gap-3 max-w-md mx-auto px-3 py-3">
           {bottomNavItems.map((item) => (
             <button
               key={item.id}
               onClick={item.onClick}
-              className={`flex flex-col items-center justify-center py-3 px-4 transition-colors flex-1 max-w-[120px] ${
-                item.active 
-                  ? 'text-rose-500' 
-                  : 'text-gray-400 hover:text-gray-600'
-              }`}
+              className={`y2k-nav-button ${item.active ? 'active' : 'inactive'} flex flex-col items-center justify-center flex-1 max-w-[100px]`}
             >
-              <item.icon className="h-6 w-6 mb-1" />
-              <span className="text-xs font-medium">{item.title}</span>
+              <item.icon className="y2k-nav-icon h-7 w-7 mb-1.5 text-white" />
+              <span className="y2k-nav-text text-[10px] text-white">{item.title}</span>
             </button>
           ))}
         </div>

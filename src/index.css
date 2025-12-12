@@ -373,6 +373,116 @@ All colors MUST be HSL.
     border: 1px solid #ddd;
   }
 
+  /* Y2K/Early 2000s Bottom Navigation Styles */
+  .y2k-bottom-nav {
+    background: linear-gradient(180deg, 
+      rgba(220, 220, 240, 0.95) 0%, 
+      rgba(200, 200, 230, 0.98) 50%, 
+      rgba(180, 180, 220, 1) 100%);
+    backdrop-filter: blur(10px);
+    box-shadow: 
+      0 -4px 20px rgba(138, 43, 226, 0.3),
+      0 -2px 10px rgba(255, 20, 147, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    border-top: 2px solid rgba(255, 255, 255, 0.6);
+  }
+
+  .y2k-nav-button {
+    position: relative;
+    background: linear-gradient(145deg, 
+      rgba(255, 105, 180, 0.9) 0%,
+      rgba(255, 20, 147, 0.95) 50%,
+      rgba(199, 21, 133, 1) 100%);
+    border-radius: 20px;
+    padding: 12px 16px;
+    box-shadow: 
+      0 4px 15px rgba(255, 20, 147, 0.4),
+      0 2px 8px rgba(138, 43, 226, 0.3),
+      inset 0 1px 2px rgba(255, 255, 255, 0.6),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+  }
+
+  .y2k-nav-button::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 10%;
+    right: 10%;
+    height: 40%;
+    background: linear-gradient(180deg, 
+      rgba(255, 255, 255, 0.6) 0%, 
+      rgba(255, 255, 255, 0) 100%);
+    border-radius: 20px 20px 50% 50%;
+    pointer-events: none;
+  }
+
+  .y2k-nav-button:active {
+    transform: scale(0.95) translateY(2px);
+    box-shadow: 
+      0 2px 8px rgba(255, 20, 147, 0.5),
+      inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .y2k-nav-button.active {
+    background: linear-gradient(145deg, 
+      rgba(50, 205, 50, 0.95) 0%,
+      rgba(0, 255, 127, 0.98) 50%,
+      rgba(0, 250, 154, 1) 100%);
+    box-shadow: 
+      0 0 25px rgba(50, 205, 50, 0.6),
+      0 4px 20px rgba(0, 255, 127, 0.5),
+      inset 0 1px 2px rgba(255, 255, 255, 0.7),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+    animation: y2k-glow 2s ease-in-out infinite;
+  }
+
+  .y2k-nav-button.inactive {
+    background: linear-gradient(145deg, 
+      rgba(100, 149, 237, 0.85) 0%,
+      rgba(65, 105, 225, 0.9) 50%,
+      rgba(30, 144, 255, 0.95) 100%);
+  }
+
+  .y2k-nav-icon {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))
+            drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .y2k-nav-button:hover .y2k-nav-icon {
+    transform: scale(1.1) rotate(-5deg);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4))
+            drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
+  }
+
+  .y2k-nav-text {
+    text-shadow: 
+      0 1px 2px rgba(0, 0, 0, 0.5),
+      0 0 8px rgba(255, 255, 255, 0.6),
+      0 -1px 1px rgba(255, 255, 255, 0.3);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  @keyframes y2k-glow {
+    0%, 100% {
+      box-shadow: 
+        0 0 25px rgba(50, 205, 50, 0.6),
+        0 4px 20px rgba(0, 255, 127, 0.5),
+        inset 0 1px 2px rgba(255, 255, 255, 0.7),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+    }
+    50% {
+      box-shadow: 
+        0 0 35px rgba(50, 205, 50, 0.8),
+        0 4px 25px rgba(0, 255, 127, 0.7),
+        inset 0 1px 3px rgba(255, 255, 255, 0.8),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.3);
+    }
+  }
+
   /* Thermal printer specific styles */
   .thermal-receipt {
     font-family: 'Courier New', monospace;
