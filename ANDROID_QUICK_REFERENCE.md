@@ -15,6 +15,18 @@ java -version          # Should be JDK 17
 echo $ANDROID_HOME     # Should point to Android SDK
 ```
 
+## ⚠️ WhatsApp Integration for Android
+
+**IMPORTANT**: Before building Android APK, configure WhatsApp API URL!
+
+Create `.env.production` file:
+```bash
+VITE_WHATSAPP_API_URL=https://your-app-name.vercel.app/api/whatsapp-send
+VITE_WHATSAPP_ENABLED=true
+```
+
+Without this, WhatsApp notifications will fail on Android! See [ANDROID_WHATSAPP_CONFIGURATION.md](./research/ANDROID_WHATSAPP_CONFIGURATION.md) for details.
+
 ## Common Commands
 
 ### Build & Sync
