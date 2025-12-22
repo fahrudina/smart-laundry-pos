@@ -1,0 +1,716 @@
+# MCP Toolbox Configuration for Smart Laundry POS
+# This file defines the database source and AI tools for the laundry business
+# Updated to match actual Supabase database schema
+
+sources:
+  # Supabase PostgreSQL database connection
+  laundry-db:
+    kind: postgres
+    host: ${SUPABASE_HOST}
+    port: 5432
+    database: postgres
+    user: ${SUPABASE_USER}
+    password: ${SUPABASE_PASSWORD}
+    queryParams:
+      sslmode: require
+
+tools:
+  # ============================================
+  # Customer Tools
+  # ============================================
+  
+  search-customer:
+    kind: postgres-sql
+    source: laundry-db
+    description: Search for customers by name or phone number. Use this when a user asks to find a customer.
+    parameters:
+      - name: query
+        type: string
+        description: Search term (name or phone number)
+    statement: |
+      SELECT id, name, phone, email, address, created_at
+      FROM customers
+      WHERE name ILIKE '%' || $1 || '%'
+         OR phone ILIKE '%' || $1 || '%'
+      LIMIT 10;
+
+  get-customer-by-phone:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get customer details by their phone number.
+    parameters:
+      - name: phone
+        type: string
+        description: Customer phone number
+    statement: |
+      SELECT id, name, phone, email, address, created_at
+      FROM customers
+      WHERE phone = $1
+      LIMIT 1;
+
+  get-customer-order-history:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get order history for a specific customer by their phone number.
+    parameters:
+      - name: phone
+        type: string
+        description: Customer phone number
+      - name: limit
+        type: integer
+        description: Maximum number of orders to return (default 10)
+    statement: |
+      SELECT id, execution_status, payment_status, 
+             total_amount, created_at, customer_name, customer_phone
+      FROM orders
+      WHERE customer_phone = $1
+      ORDER BY created_at DESC
+      LIMIT COALESCE($2, 10);
+
+  get-customer-points:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get loyalty points balance for a customer by phone number. Returns current points, accumulated points (lifetime earned), and point transaction history context.
+    parameters:
+      - name: phone
+        type: string
+        description: Customer phone number
+    statement: |
+      SELECT 
+        c.id, 
+        c.name, 
+        c.phone, 
+        COALESCE(p.current_points, 0) as points,
+        COALESCE(p.accumulated_points, 0) as lifetime_points,
+        p.point_id,
+        p.store_id
+      FROM customers c
+      LEFT JOIN points p ON c.phone = p.customer_phone
+      WHERE c.phone = $1
+      LIMIT 1;
+
+  get-customer-points-history:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get loyalty points transaction history for a customer by phone number. Shows earning and redemption activities.
+    parameters:
+      - name: phone
+        type: string
+        description: Customer phone number
+      - name: limit
+        type: integer
+        description: Maximum number of transactions to return (default 10)
+    statement: |
+      SELECT 
+        pt.transaction_id,
+        pt.points_changed,
+        pt.transaction_type,
+        pt.transaction_date,
+        pt.notes,
+        pt.order_id
+      FROM point_transactions pt
+      JOIN points p ON pt.point_id = p.point_id
+      WHERE p.customer_phone = $1
+      ORDER BY pt.transaction_date DESC
+      LIMIT COALESCE($2, 10);
+
+  get-points-summary-by-store:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get summary of loyalty points issued by a store. Useful for analytics on customer engagement.
+    parameters:
+      - name: store_id
+        type: string
+        description: Store ID (UUID)
+    statement: |
+      SELECT 
+        COUNT(DISTINCT p.customer_phone) as total_customers_with_points,
+        SUM(p.current_points) as total_available_points,
+        SUM(p.accumulated_points) as total_lifetime_points_issued,
+        AVG(p.current_points) as avg_points_per_customer
+      FROM points p
+      WHERE p.store_id = $1::uuid;
+
+  get-churned-customers:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get list of customers who only made one order and never returned. Use this to identify churned customers.
+    parameters:
+      - name: days_since_first_order
+        type: integer
+        description: Minimum days since first order to be considered churned (default 30)
+    statement: |
+      WITH customer_order_stats AS (
+        SELECT 
+          customer_phone,
+          customer_name,
+          COUNT(*) as order_count,
+          MIN(created_at) as first_order_date,
+          MAX(created_at) as last_order_date
+        FROM orders
+        GROUP BY customer_phone, customer_name
+      )
+      SELECT 
+        customer_phone as phone, 
+        customer_name as name,
+        order_count,
+        first_order_date,
+        last_order_date,
+        EXTRACT(DAY FROM NOW() - first_order_date)::int as days_since_first_order
+      FROM customer_order_stats
+      WHERE order_count = 1
+        AND EXTRACT(DAY FROM NOW() - first_order_date) >= COALESCE($1, 30)
+      ORDER BY first_order_date DESC;
+
+  get-inactive-customers:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get customers who have not placed orders in a specified number of days.
+    parameters:
+      - name: inactive_days
+        type: integer
+        description: Number of days without orders to be considered inactive (default 30)
+    statement: |
+      WITH customer_last_order AS (
+        SELECT 
+          customer_phone,
+          customer_name,
+          MAX(created_at) as last_order_date,
+          COUNT(*) as total_orders
+        FROM orders
+        GROUP BY customer_phone, customer_name
+      )
+      SELECT 
+        customer_phone as phone,
+        customer_name as name,
+        total_orders,
+        last_order_date,
+        EXTRACT(DAY FROM NOW() - last_order_date)::int as days_since_last_order
+      FROM customer_last_order
+      WHERE last_order_date IS NOT NULL
+        AND EXTRACT(DAY FROM NOW() - last_order_date) >= COALESCE($1, 30)
+      ORDER BY last_order_date ASC;
+
+  # ============================================
+  # Order Tools
+  # ============================================
+
+  check-order-status:
+    kind: postgres-sql
+    source: laundry-db
+    description: Check order status by customer phone number. Returns the most recent orders.
+    parameters:
+      - name: phone
+        type: string
+        description: Customer phone number
+      - name: limit
+        type: integer
+        description: Maximum number of orders to return (default 3)
+    statement: |
+      SELECT 
+        id,
+        execution_status,
+        payment_status,
+        total_amount,
+        created_at,
+        estimated_completion,
+        customer_name,
+        customer_phone
+      FROM orders
+      WHERE customer_phone = $1
+      ORDER BY created_at DESC
+      LIMIT COALESCE($2, 3);
+
+  get-order-by-id:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get detailed order information by order ID.
+    parameters:
+      - name: order_id
+        type: string
+        description: Order ID (UUID)
+    statement: |
+      SELECT 
+        id,
+        execution_status,
+        payment_status,
+        total_amount,
+        subtotal,
+        tax_amount,
+        created_at,
+        estimated_completion,
+        customer_name,
+        customer_phone
+      FROM orders
+      WHERE id = $1::uuid;
+
+  get-order-items:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get items for a specific order.
+    parameters:
+      - name: order_id
+        type: string
+        description: Order ID (UUID)
+    statement: |
+      SELECT 
+        id,
+        service_name,
+        service_price,
+        quantity,
+        line_total
+      FROM order_items
+      WHERE order_id = $1::uuid;
+
+  get-todays-orders:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get all orders created today with summary statistics.
+    parameters:
+      - name: store_id
+        type: string
+        description: Store ID to filter (optional, use empty string for all stores)
+    statement: |
+      SELECT 
+        id,
+        execution_status,
+        payment_status,
+        total_amount,
+        created_at,
+        customer_name,
+        customer_phone
+      FROM orders
+      WHERE DATE(created_at AT TIME ZONE 'Asia/Jakarta') = CURRENT_DATE
+        AND (NULLIF(TRIM($1), '') IS NULL OR store_id = $1::uuid)
+      ORDER BY created_at DESC;
+
+  get-orders-ready-for-pickup:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get orders that are completed and ready for customer pickup.
+    parameters:
+      - name: store_id
+        type: string
+        description: Store ID to filter (optional)
+    statement: |
+      SELECT 
+        id,
+        execution_status,
+        payment_status,
+        total_amount,
+        created_at,
+        customer_name,
+        customer_phone
+      FROM orders
+      WHERE execution_status = 'completed'
+        AND (NULLIF(TRIM($1), '') IS NULL OR store_id = $1::uuid)
+      ORDER BY created_at ASC;
+
+  get-pending-payments:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get orders with pending payments.
+    parameters:
+      - name: store_id
+        type: string
+        description: Store ID to filter (optional)
+    statement: |
+      SELECT 
+        id,
+        execution_status,
+        payment_status,
+        total_amount,
+        created_at,
+        customer_name,
+        customer_phone
+      FROM orders
+      WHERE payment_status = 'pending'
+        AND (NULLIF(TRIM($1), '') IS NULL OR store_id = $1::uuid)
+      ORDER BY created_at ASC;
+
+  update-order-status:
+    kind: postgres-sql
+    source: laundry-db
+    description: Update the execution status of an order.
+    parameters:
+      - name: order_id
+        type: string
+        description: Order ID (UUID)
+      - name: new_status
+        type: string
+        description: New status (pending, in_progress, completed, cancelled)
+    statement: |
+      UPDATE orders
+      SET 
+        execution_status = $2,
+        updated_at = NOW()
+      WHERE id = $1::uuid
+      RETURNING id, execution_status, payment_status, total_amount;
+
+  # ============================================
+  # Analytics Tools
+  # ============================================
+
+  get-daily-revenue:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get revenue summary for a specific date and store. Use this to check daily sales performance.
+    parameters:
+      - name: date
+        type: string
+        description: Date in YYYY-MM-DD format (default today)
+      - name: store_id
+        type: string
+        description: Store ID to filter (optional, empty for all stores)
+    statement: |
+      SELECT 
+        DATE(created_at AT TIME ZONE 'Asia/Jakarta') as date,
+        COUNT(*) as total_orders,
+        SUM(CASE WHEN payment_status = 'paid' THEN total_amount ELSE 0 END) as paid_revenue,
+        SUM(CASE WHEN payment_status = 'pending' THEN total_amount ELSE 0 END) as unpaid_revenue,
+        SUM(total_amount) as total_revenue
+      FROM orders
+      WHERE DATE(created_at AT TIME ZONE 'Asia/Jakarta') = 
+        CASE WHEN NULLIF(TRIM($1), '') IS NULL THEN CURRENT_DATE ELSE $1::date END
+        AND (NULLIF(TRIM($2), '') IS NULL OR store_id = $2::uuid)
+      GROUP BY DATE(created_at AT TIME ZONE 'Asia/Jakarta');
+
+  get-weekly-revenue:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get revenue summary for the current week and store.
+    parameters:
+      - name: store_id
+        type: string
+        description: Store ID to filter (optional, empty for all stores)
+    statement: |
+      SELECT 
+        DATE_TRUNC('week', created_at AT TIME ZONE 'Asia/Jakarta')::date as week_start,
+        COUNT(*) as total_orders,
+        SUM(CASE WHEN payment_status = 'paid' THEN total_amount ELSE 0 END) as paid_revenue,
+        SUM(total_amount) as total_revenue,
+        AVG(total_amount) as average_order_value
+      FROM orders
+      WHERE created_at >= DATE_TRUNC('week', NOW() AT TIME ZONE 'Asia/Jakarta')
+        AND (NULLIF(TRIM($1), '') IS NULL OR store_id = $1::uuid)
+      GROUP BY DATE_TRUNC('week', created_at AT TIME ZONE 'Asia/Jakarta');
+
+  get-monthly-revenue:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get revenue summary for the current month and store.
+    parameters:
+      - name: store_id
+        type: string
+        description: Store ID to filter (optional, empty for all stores)
+    statement: |
+      SELECT 
+        DATE_TRUNC('month', created_at AT TIME ZONE 'Asia/Jakarta')::date as month_start,
+        COUNT(*) as total_orders,
+        SUM(CASE WHEN payment_status = 'paid' THEN total_amount ELSE 0 END) as paid_revenue,
+        SUM(total_amount) as total_revenue,
+        AVG(total_amount) as average_order_value
+      FROM orders
+      WHERE created_at >= DATE_TRUNC('month', NOW() AT TIME ZONE 'Asia/Jakarta')
+        AND (NULLIF(TRIM($1), '') IS NULL OR store_id = $1::uuid)
+      GROUP BY DATE_TRUNC('month', created_at AT TIME ZONE 'Asia/Jakarta');
+
+  compare-revenue-periods:
+    kind: postgres-sql
+    source: laundry-db
+    description: Compare revenue between two periods (this week vs last week, this month vs last month) for a store.
+    parameters:
+      - name: period
+        type: string
+        description: Period to compare (week or month)
+      - name: store_id
+        type: string
+        description: Store ID to filter (optional, empty for all stores)
+    statement: |
+      WITH current_period AS (
+        SELECT 
+          SUM(total_amount) as revenue,
+          COUNT(*) as orders
+        FROM orders
+        WHERE 
+          (NULLIF(TRIM($2), '') IS NULL OR store_id = $2::uuid)
+          AND CASE 
+            WHEN $1 = 'week' THEN created_at >= DATE_TRUNC('week', NOW())
+            WHEN $1 = 'month' THEN created_at >= DATE_TRUNC('month', NOW())
+            ELSE created_at >= DATE_TRUNC('week', NOW())
+          END
+      ),
+      previous_period AS (
+        SELECT 
+          SUM(total_amount) as revenue,
+          COUNT(*) as orders
+        FROM orders
+        WHERE 
+          (NULLIF(TRIM($2), '') IS NULL OR store_id = $2::uuid)
+          AND CASE 
+            WHEN $1 = 'week' THEN 
+              created_at >= DATE_TRUNC('week', NOW()) - INTERVAL '1 week'
+              AND created_at < DATE_TRUNC('week', NOW())
+            WHEN $1 = 'month' THEN 
+              created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '1 month'
+              AND created_at < DATE_TRUNC('month', NOW())
+            ELSE 
+              created_at >= DATE_TRUNC('week', NOW()) - INTERVAL '1 week'
+              AND created_at < DATE_TRUNC('week', NOW())
+          END
+      )
+      SELECT 
+        'current' as period,
+        c.revenue as current_revenue,
+        c.orders as current_orders,
+        p.revenue as previous_revenue,
+        p.orders as previous_orders,
+        CASE 
+          WHEN p.revenue > 0 THEN 
+            ROUND(((c.revenue - p.revenue) / p.revenue * 100)::numeric, 2)
+          ELSE 0 
+        END as revenue_change_percent
+      FROM current_period c, previous_period p;
+
+  get-popular-services:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get the most popular services by order count and revenue for a store.
+    parameters:
+      - name: days
+        type: integer
+        description: Number of days to analyze (default 30)
+      - name: limit
+        type: integer
+        description: Maximum number of services to return (default 10)
+      - name: store_id
+        type: string
+        description: Store ID to filter (optional, empty for all stores)
+    statement: |
+      SELECT 
+        oi.service_name,
+        oi.service_price,
+        COUNT(*) as order_count,
+        SUM(oi.quantity) as total_quantity,
+        SUM(oi.line_total) as total_revenue
+      FROM order_items oi
+      JOIN orders o ON oi.order_id = o.id
+      WHERE o.created_at >= NOW() - (COALESCE($1, 30) || ' days')::interval
+        AND (NULLIF(TRIM($3), '') IS NULL OR o.store_id = $3::uuid)
+      GROUP BY oi.service_name, oi.service_price
+      ORDER BY order_count DESC
+      LIMIT COALESCE($2, 10);
+
+  get-peak-hours:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get busiest hours of the day based on order creation times for a store.
+    parameters:
+      - name: days
+        type: integer
+        description: Number of days to analyze (default 30)
+      - name: store_id
+        type: string
+        description: Store ID to filter (optional, empty for all stores)
+    statement: |
+      SELECT 
+        EXTRACT(HOUR FROM created_at AT TIME ZONE 'Asia/Jakarta')::int as hour,
+        COUNT(*) as order_count,
+        SUM(total_amount) as revenue
+      FROM orders
+      WHERE created_at >= NOW() - (COALESCE($1, 30) || ' days')::interval
+        AND (NULLIF(TRIM($2), '') IS NULL OR store_id = $2::uuid)
+      GROUP BY EXTRACT(HOUR FROM created_at AT TIME ZONE 'Asia/Jakarta')
+      ORDER BY order_count DESC;
+
+  get-order-status-summary:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get summary of orders by execution and payment status for today for a store.
+    parameters:
+      - name: store_id
+        type: string
+        description: Store ID to filter (optional, empty for all stores)
+    statement: |
+      SELECT 
+        execution_status,
+        payment_status,
+        COUNT(*) as count,
+        SUM(total_amount) as total_amount
+      FROM orders
+      WHERE DATE(created_at AT TIME ZONE 'Asia/Jakarta') = CURRENT_DATE
+        AND (NULLIF(TRIM($1), '') IS NULL OR store_id = $1::uuid)
+      GROUP BY execution_status, payment_status
+      ORDER BY count DESC;
+
+  # ============================================
+  # Store Tools
+  # ============================================
+
+  list-stores:
+    kind: postgres-sql
+    source: laundry-db
+    description: List all available stores. Use this to get store information and IDs.
+    statement: |
+      SELECT 
+        id,
+        name,
+        address,
+        phone,
+        created_at
+      FROM stores
+      ORDER BY name;
+
+  get-store-by-id:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get store details by ID.
+    parameters:
+      - name: store_id
+        type: string
+        description: Store ID (UUID)
+    statement: |
+      SELECT 
+        id,
+        name,
+        address,
+        phone,
+        created_at
+      FROM stores
+      WHERE id = $1::uuid;
+
+  # ============================================
+  # Service Tools
+  # ============================================
+
+  get-all-services:
+    kind: postgres-sql
+    source: laundry-db
+    description: Get all available laundry services with pricing.
+    parameters:
+      - name: store_id
+        type: string
+        description: Store ID to filter (optional)
+    statement: |
+      SELECT 
+        id,
+        name,
+        description,
+        category,
+        unit_price,
+        kilo_price,
+        supports_unit,
+        supports_kilo,
+        duration_value,
+        duration_unit,
+        is_active
+      FROM services
+      WHERE is_active = true
+        AND (NULLIF(TRIM($1), '') IS NULL OR store_id = $1::uuid)
+      ORDER BY name;
+
+  get-service-by-name:
+    kind: postgres-sql
+    source: laundry-db
+    description: Search for a service by name.
+    parameters:
+      - name: name
+        type: string
+        description: Service name to search
+    statement: |
+      SELECT 
+        id,
+        name,
+        description,
+        category,
+        unit_price,
+        kilo_price,
+        supports_unit,
+        supports_kilo,
+        duration_value,
+        duration_unit,
+        is_active
+      FROM services
+      WHERE name ILIKE '%' || $1 || '%'
+        AND is_active = true;
+
+# ============================================
+# Toolsets - Groups of tools for different agents
+# ============================================
+
+toolsets:
+  # Customer service agent tools
+  customer-service:
+    - search-customer
+    - get-customer-by-phone
+    - get-customer-points
+    - get-customer-points-history
+    - check-order-status
+    - get-order-by-id
+    - get-order-items
+    - get-all-services
+    - get-service-by-name
+    - list-stores
+
+  # Analytics agent tools
+  analytics:
+    - get-daily-revenue
+    - get-weekly-revenue
+    - get-monthly-revenue
+    - compare-revenue-periods
+    - get-popular-services
+    - get-peak-hours
+    - get-order-status-summary
+    - get-churned-customers
+    - get-inactive-customers
+    - get-customer-points
+    - get-points-summary-by-store
+    - list-stores
+
+  # Order management tools
+  order-management:
+    - check-order-status
+    - get-order-by-id
+    - get-order-items
+    - get-todays-orders
+    - get-orders-ready-for-pickup
+    - get-pending-payments
+    - update-order-status
+
+  # WhatsApp agent tools (subset for quick responses)
+  whatsapp:
+    - check-order-status
+    - get-customer-by-phone
+    - get-customer-points
+    - get-all-services
+    - get-orders-ready-for-pickup
+    - list-stores
+
+  # Full toolset for advanced agents
+  all-tools:
+    - search-customer
+    - get-customer-by-phone
+    - get-customer-order-history
+    - get-customer-points
+    - get-customer-points-history
+    - get-points-summary-by-store
+    - get-churned-customers
+    - get-inactive-customers
+    - check-order-status
+    - get-order-by-id
+    - get-order-items
+    - get-todays-orders
+    - get-orders-ready-for-pickup
+    - get-pending-payments
+    - update-order-status
+    - get-daily-revenue
+    - get-weekly-revenue
+    - get-monthly-revenue
+    - compare-revenue-periods
+    - get-popular-services
+    - get-peak-hours
+    - get-order-status-summary
+    - get-all-services
+    - get-service-by-name
+    - list-stores
+    - get-store-by-id

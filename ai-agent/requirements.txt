@@ -1,0 +1,30 @@
+# Smart Laundry POS AI Agent Dependencies
+
+# Google GenAI Toolbox SDK
+toolbox-core>=0.1.0
+
+# Google AI (for Gemini LLM integration)
+google-generativeai>=0.8.0
+
+# Database (fallback for direct Supabase access)
+supabase>=2.0.0
+
+# Configuration
+python-dotenv>=1.0.0
+
+# API Framework
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# HTTP Client
+httpx>=0.27.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+respx>=0.21.0
+
+# Type checking
+mypy>=1.8.0
