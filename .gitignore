@@ -31,4 +31,6 @@ public/favicon-generator.html
 .env.local
 
 
-research/
+ai-agent/toolbox
+.env.android.production
+.env.production
