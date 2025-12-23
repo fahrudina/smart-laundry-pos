@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { whatsAppService } from '@/integrations/whatsapp';
-import { whatsAppConfig, whatsAppFeatures, validateWhatsAppConfig } from '@/lib/whatsapp-config';
+import { whatsAppConfig, whatsAppFeatures, validateWhatsAppConfig, defaultSender } from '@/lib/whatsapp-config';
 import { useToast } from '@/hooks/use-toast';
 import type { NotificationResult, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData, PaymentConfirmationData } from '@/integrations/whatsapp/types';
 
@@ -93,7 +93,7 @@ export const useWhatsApp = () => {
       // Determine sender phone number based on store configuration
       const fromNumber = orderData.storeInfo?.wa_use_store_number && orderData.storeInfo?.phone
         ? orderData.storeInfo.phone
-        : undefined;
+        : defaultSender;
 
       const result = await whatsAppService.notifyOrderCreated(phoneNumber, orderData, fromNumber);
       
@@ -182,7 +182,7 @@ export const useWhatsApp = () => {
       // Determine sender phone number based on store configuration
       const fromNumber = orderData.storeInfo?.wa_use_store_number && orderData.storeInfo?.phone
         ? orderData.storeInfo.phone
-        : undefined;
+        : defaultSender;
 
       const result = await whatsAppService.notifyOrderReadyForPickup(phoneNumber, orderData, fromNumber);
       
