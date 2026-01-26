@@ -19,6 +19,21 @@ export interface WhatsAppResponse {
   error?: string;
 }
 
+export interface QRRegistrationResponse {
+  success: boolean;
+  session_id: string;
+  qr_code: string; // Base64-encoded PNG image
+  message: string;
+}
+
+export interface RegistrationStatusResponse {
+  success: boolean;
+  status: 'pending' | 'connected' | 'failed' | 'not_found';
+  sender_id?: string;
+  qr_code?: string; // Updated QR code if refreshed
+  message: string;
+}
+
 export interface MessageTemplate {
   orderCreated: (data: OrderCreatedData) => string;
   orderCompleted: (data: OrderCompletedData) => string;

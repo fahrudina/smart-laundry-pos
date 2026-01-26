@@ -1,4 +1,4 @@
-import { WhatsAppConfig, WhatsAppMessage, WhatsAppResponse } from './types';
+import { WhatsAppConfig, WhatsAppMessage, WhatsAppResponse, QRRegistrationResponse, RegistrationStatusResponse } from './types';
 
 /**
  * WhatsApp API Client
@@ -211,5 +211,105 @@ export class WhatsAppClient {
     
     // If doesn't start with country code, add default country code
     return `${defaultCountryCode}${cleaned}`;
+  }
+
+  /**
+   * Initiate QR code registration for a new WhatsApp sender
+   * @returns Promise with session ID and QR code
+   */
+  async initiateQRRegistration(): Promise<QRRegistrationResponse> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+
+      // Determine endpoint - use Vercel function or direct API
+      const isUsingVercelFunction = this.config.baseUrl.startsWith('/api/');
+      const endpoint = isUsingVercelFunction 
+        ? '/api/whatsapp-register-sender'
+        : `${this.config.baseUrl}/api/register-sender-qr`;
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Only add authorization if not using Vercel function (it handles auth)
+      if (!isUsingVercelFunction) {
+        headers['Authorization'] = `Basic ${btoa(`${this.config.username}:${this.config.password}`)}`;
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({}), // Empty body as per whatspoints API spec
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const result: QRRegistrationResponse = await response.json();
+      return result;
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error('QR registration request timed out');
+        }
+        throw error;
+      }
+      throw new Error('Failed to initiate QR registration');
+    }
+  }
+
+  /**
+   * Check the status of a QR code registration
+   * @param sessionId The session ID from QR registration
+   * @returns Promise with registration status
+   */
+  async checkRegistrationStatus(sessionId: string): Promise<RegistrationStatusResponse> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+
+      // Determine endpoint - use Vercel function or direct API
+      const isUsingVercelFunction = this.config.baseUrl.startsWith('/api/');
+      const endpoint = isUsingVercelFunction 
+        ? `/api/whatsapp-register-sender?sessionId=${sessionId}`
+        : `${this.config.baseUrl}/api/register-sender-status/${sessionId}`;
+
+      const headers: Record<string, string> = {};
+
+      // Only add authorization if not using Vercel function (it handles auth)
+      if (!isUsingVercelFunction) {
+        headers['Authorization'] = `Basic ${btoa(`${this.config.username}:${this.config.password}`)}`;
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const result: RegistrationStatusResponse = await response.json();
+      return result;
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error('Registration status check timed out');
+        }
+        throw error;
+      }
+      throw new Error('Failed to check registration status');
+    }
   }
 }

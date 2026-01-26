@@ -1,6 +1,6 @@
 import { WhatsAppClient } from './client';
 import { messageTemplates, MessageBuilder } from './templates';
-import { WhatsAppConfig, NotificationResult, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData, PaymentConfirmationData } from './types';
+import { WhatsAppConfig, NotificationResult, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData, PaymentConfirmationData, QRRegistrationResponse, RegistrationStatusResponse } from './types';
 
 /**
  * WhatsApp Notification Service
@@ -299,6 +299,50 @@ export class WhatsAppNotificationService {
     if (this.client) {
       this.isEnabled = true;
     }
+  }
+
+  /**
+   * Initiate QR code registration for WhatsApp sender
+   * @returns Promise with session ID and QR code data
+   */
+  async getQRCode(): Promise<{ sessionId: string; qrCodeBase64: string }> {
+    if (!this.isConfigured()) {
+      throw new Error('WhatsApp service not configured');
+    }
+
+    const response = await this.client.initiateQRRegistration();
+    
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to generate QR code');
+    }
+
+    return {
+      sessionId: response.session_id,
+      qrCodeBase64: response.qr_code,
+    };
+  }
+
+  /**
+   * Check the status of a WhatsApp sender registration
+   * @param sessionId The session ID from QR registration
+   * @returns Promise with registration status and sender ID
+   */
+  async checkRegistrationStatus(sessionId: string): Promise<{
+    status: 'pending' | 'connected' | 'failed' | 'not_found';
+    senderId?: string;
+    qrCode?: string;
+  }> {
+    if (!this.isConfigured()) {
+      throw new Error('WhatsApp service not configured');
+    }
+
+    const response = await this.client.checkRegistrationStatus(sessionId);
+    
+    return {
+      status: response.status,
+      senderId: response.sender_id,
+      qrCode: response.qr_code,
+    };
   }
 }
 
