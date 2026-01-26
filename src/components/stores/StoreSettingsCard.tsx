@@ -20,16 +20,16 @@ interface StoreSettings {
 
 export const StoreSettingsCard: React.FC = () => {
   const { currentStore, isOwner } = useStore();
+  const [settings, setSettings] = useState<StoreSettings>({
+    enable_qr: false,
+    enable_points: false,
     whatsapp_sender_registered: false,
     whatsapp_sender_phone: null,
     wa_use_store_number: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showQRDialog, setShowQRDialo
-  });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [showQRDialog, setShowQRDialog] = useState(false);
 
   useEffect(() => {
     if (currentStore?.store_id) {
@@ -37,7 +37,14 @@ export const StoreSettingsCard: React.FC = () => {
     }
   }, [currentStore?.store_id]);
 
-  const fetchStoreSettings = async () => , whatsapp_sender_registered, whatsapp_sender_phone, wa_use_store_number')
+  const fetchStoreSettings = async () => {
+    if (!currentStore?.store_id) return;
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('stores')
+        .select('enable_qr, enable_points, whatsapp_sender_registered, whatsapp_sender_phone, wa_use_store_number')
         .eq('id', currentStore.store_id)
         .single();
 
@@ -57,14 +64,7 @@ export const StoreSettingsCard: React.FC = () => {
           enable_points: data.enable_points || false,
           whatsapp_sender_registered: data.whatsapp_sender_registered || false,
           whatsapp_sender_phone: data.whatsapp_sender_phone || null,
-          wa_use_store_number: data.wa_use_store_number
-        return;
-      }
-
-      if (data) {
-        setSettings({
-          enable_qr: data.enable_qr || false,
-          enable_points: data.enable_points || false,
+          wa_use_store_number: data.wa_use_store_number || false,
         });
       }
     } catch (error) {
@@ -79,8 +79,7 @@ export const StoreSettingsCard: React.FC = () => {
     }
   };
 
-  const sawa_use_store_number: settings.wa_use_store_number,
-          veSettings = async () => {
+  const saveSettings = async () => {
     if (!currentStore?.store_id || !isOwner) return;
 
     try {
@@ -90,6 +89,7 @@ export const StoreSettingsCard: React.FC = () => {
         .update({
           enable_qr: settings.enable_qr,
           enable_points: settings.enable_points,
+          wa_use_store_number: settings.wa_use_store_number,
           updated_at: new Date().toISOString(),
         })
         .eq('id', currentStore.store_id);
@@ -124,7 +124,15 @@ export const StoreSettingsCard: React.FC = () => {
     setSettings(prev => ({
       ...prev,
       enable_qr: checked,
-    
+    }));
+  };
+
+  const handlePointsToggle = (checked: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      enable_points: checked,
+    }));
+  };
 
   const handleWhatsAppStoreNumberToggle = (checked: boolean) => {
     setSettings(prev => ({
@@ -134,16 +142,7 @@ export const StoreSettingsCard: React.FC = () => {
   };
 
   const handleRegistrationSuccess = () => {
-    // Refresh settings to get updated registration status
     fetchStoreSettings();
-  };}));
-  };
-
-  const handlePointsToggle = (checked: boolean) => {
-    setSettings(prev => ({
-      ...prev,
-      enable_points: checked,
-    }));
   };
 
   if (!currentStore) {
@@ -206,7 +205,27 @@ export const StoreSettingsCard: React.FC = () => {
                   disabled={saving}
                   className="self-start sm:self-center"
                 />
-              </WhatsApp Sender Registration */}
+              </div>
+
+              {settings.enable_qr && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <QrCode className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-blue-900">
+                        Konfigurasi QR Code
+                      </p>
+                      <p className="text-sm text-blue-700">
+                        Pastikan untuk mengunggah gambar QR code pembayaran Anda sebagai <code>/qrcode.png</code> di folder public.
+                        QR code akan ditampilkan pada semua struk digital saat diaktifkan.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* WhatsApp Sender Registration */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
                 <MessageSquare className="h-5 w-5 text-green-600" />
@@ -279,13 +298,6 @@ export const StoreSettingsCard: React.FC = () => {
                         Tentang Notifikasi WhatsApp
                       </p>
                       <p className="text-sm text-blue-700">
-
-        {/* WhatsApp QR Registration Dialog */}
-        <WhatsAppQRRegistrationDialog
-          open={showQRDialog}
-          onOpenChange={setShowQRDialog}
-          onSuccess={handleRegistrationSuccess}
-        />
                         Daftarkan nomor WhatsApp toko Anda untuk mengirim notifikasi pesanan otomatis kepada pelanggan.
                         Scan QR code dengan WhatsApp untuk menghubungkan nomor Anda.
                       </p>
@@ -293,26 +305,6 @@ export const StoreSettingsCard: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* div>
-
-              {settings.enable_qr && (
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <QrCode className="h-5 w-5 text-blue-600 mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-blue-900">
-                        Konfigurasi QR Code
-                      </p>
-                      <p className="text-sm text-blue-700">
-                        Pastikan untuk mengunggah gambar QR code pembayaran Anda sebagai <code>/qrcode.png</code> di folder public.
-                        QR code akan ditampilkan pada semua struk digital saat diaktifkan.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Points Rewards Settings */}
@@ -384,6 +376,13 @@ export const StoreSettingsCard: React.FC = () => {
             </div>
           </>
         )}
+
+        {/* WhatsApp QR Registration Dialog */}
+        <WhatsAppQRRegistrationDialog
+          open={showQRDialog}
+          onOpenChange={setShowQRDialog}
+          onSuccess={handleRegistrationSuccess}
+        />
       </CardContent>
     </Card>
   );
