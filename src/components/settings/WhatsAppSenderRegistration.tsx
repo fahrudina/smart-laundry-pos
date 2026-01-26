@@ -53,7 +53,7 @@ export const WhatsAppSenderRegistration: React.FC<WhatsAppSenderRegistrationProp
   // If feature is not enabled
   if (!waUseStoreNumber) {
     return (
-      <Card>
+      <Card data-sender-registration>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Phone className="h-5 w-5" />
@@ -78,7 +78,7 @@ export const WhatsAppSenderRegistration: React.FC<WhatsAppSenderRegistrationProp
   // If no phone number is set
   if (!storePhone || storePhone === 'Nomor telepon belum diset') {
     return (
-      <Card>
+      <Card data-sender-registration>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Phone className="h-5 w-5" />
@@ -105,7 +105,7 @@ export const WhatsAppSenderRegistration: React.FC<WhatsAppSenderRegistrationProp
   const currentSenderId = senderStatus?.senderId ?? waSenderId;
 
   return (
-    <Card>
+    <Card data-sender-registration>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
