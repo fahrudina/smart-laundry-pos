@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.smartlaundry.pos.app-mergeReleaseResources-25:/values-v29/values-v29.xml",
+            "map": [
+                {
+                    "source": "/Users/macbookpro/.gradle/caches/8.11.1/transforms/ef234481c09f01fb9f0508a5da2b1126/transformed/core-splashscreen-1.0.1/res/values-v29/values-v29.xml",
+                    "from": {
+                        "startLines": "2,7",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,374",
+                        "endLines": "6,8",
+                        "endColumns": "12,12",
+                        "endOffsets": "369,464"
+                    }
+                }
+            ]
+        }
+    ]
+}

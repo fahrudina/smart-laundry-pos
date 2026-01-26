@@ -31,4 +31,6 @@ public/favicon-generator.html
 .env.local
 
 
-research/
+research/ai-agent/toolbox
+android/capacitor-cordova-android-plugins/build/
+android/local.properties

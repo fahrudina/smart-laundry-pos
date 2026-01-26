@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/layout-v21/notification_action_tombstone.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/layout-v21/notification_action_tombstone.xml"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/layout-v21/notification_template_icon_group.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/layout-v21/notification_template_icon_group.xml"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/layout-v21/notification_template_custom_big.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/layout-v21/notification_template_custom_big.xml"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/layout-v21/notification_action.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/layout-v21/notification_action.xml"
+    }
+]

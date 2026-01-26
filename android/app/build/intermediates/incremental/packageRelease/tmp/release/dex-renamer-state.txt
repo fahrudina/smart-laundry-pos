@@ -1,0 +1,7 @@
+#Sat Dec 06 17:56:22 WIB 2025
+base.0=/Users/macbookpro/play/smart-laundry-pos/android/app/build/intermediates/dex/release/mergeDexRelease/classes.dex
+base.1=/Users/macbookpro/play/smart-laundry-pos/android/app/build/intermediates/global_synthetics_dex/release/mergeReleaseGlobalSynthetics/classes.dex
+path.0=classes.dex
+path.1=classes.dex
+renamed.0=classes.dex
+renamed.1=classes2.dex

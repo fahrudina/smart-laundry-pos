@@ -1,0 +1,26 @@
+[
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/drawable-ldpi-v4/ic_call_answer_low.png",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/drawable-ldpi-v4/ic_call_answer_low.png"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/drawable-ldpi-v4/ic_call_answer.png",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/drawable-ldpi-v4/ic_call_answer.png"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/drawable-ldpi-v4/ic_call_answer_video.png",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/drawable-ldpi-v4/ic_call_answer_video.png"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/drawable-ldpi-v4/ic_call_answer_video_low.png",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/drawable-ldpi-v4/ic_call_answer_video_low.png"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/drawable-ldpi-v4/ic_call_decline.png",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/drawable-ldpi-v4/ic_call_decline.png"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/drawable-ldpi-v4/ic_call_decline_low.png",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/drawable-ldpi-v4/ic_call_decline_low.png"
+    }
+]

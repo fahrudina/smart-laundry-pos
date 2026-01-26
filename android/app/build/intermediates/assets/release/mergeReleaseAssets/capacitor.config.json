@@ -1,0 +1,14 @@
+{
+	"appId": "com.smartlaundry.pos",
+	"appName": "Smart Laundry POS",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https",
+		"allowNavigation": [
+			"*"
+		]
+	},
+	"android": {
+		"allowMixedContent": true
+	}
+}

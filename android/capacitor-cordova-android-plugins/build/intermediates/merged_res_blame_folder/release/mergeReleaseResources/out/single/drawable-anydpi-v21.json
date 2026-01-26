@@ -1,0 +1,26 @@
+[
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/drawable-anydpi-v21/ic_call_decline_low.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/drawable-anydpi-v21/ic_call_decline_low.xml"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/drawable-anydpi-v21/ic_call_answer_video_low.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/drawable-anydpi-v21/ic_call_answer_video_low.xml"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/drawable-anydpi-v21/ic_call_answer_low.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/drawable-anydpi-v21/ic_call_answer_low.xml"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/drawable-anydpi-v21/ic_call_decline.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/drawable-anydpi-v21/ic_call_decline.xml"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/drawable-anydpi-v21/ic_call_answer.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/drawable-anydpi-v21/ic_call_answer.xml"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/drawable-anydpi-v21/ic_call_answer_video.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-core-1.13.0-2:/drawable-anydpi-v21/ic_call_answer_video.xml"
+    }
+]

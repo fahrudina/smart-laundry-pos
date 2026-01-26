@@ -1,0 +1,26 @@
+[
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/animator/fragment_fade_exit.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-fragment-1.5.4-13:/animator/fragment_fade_exit.xml"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/animator/fragment_open_enter.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-fragment-1.5.4-13:/animator/fragment_open_enter.xml"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/animator/fragment_close_exit.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-fragment-1.5.4-13:/animator/fragment_close_exit.xml"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/animator/fragment_fade_enter.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-fragment-1.5.4-13:/animator/fragment_fade_enter.xml"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/animator/fragment_open_exit.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-fragment-1.5.4-13:/animator/fragment_open_exit.xml"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/animator/fragment_close_enter.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-fragment-1.5.4-13:/animator/fragment_close_enter.xml"
+    }
+]

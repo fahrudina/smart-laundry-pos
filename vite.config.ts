@@ -62,10 +62,6 @@ export default defineConfig(({ mode }) => {
             return 'ui-radix';
           }
 
-          // PDF generation libraries (large)
-          if (id.includes('node_modules/jspdf') || id.includes('node_modules/html2canvas')) {
-            return 'pdf-libs';
-          }
 
           // Supabase
           if (id.includes('node_modules/@supabase')) {

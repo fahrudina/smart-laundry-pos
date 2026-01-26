@@ -18,7 +18,7 @@ import { VirtualizedOrderList } from '@/components/orders/VirtualizedOrderList';
 import { PaymentSummaryCards } from '@/components/orders/PaymentSummaryCards';
 import { PayLaterPaymentDialog } from '@/components/orders/PayLaterPaymentDialog';
 import { formatDate, isDateOverdue } from '@/lib/utils';
-import { openReceiptForView, openReceiptForPrint, generateReceiptPDFFromUrl, sanitizeFilename } from '@/lib/printUtils';
+import { openReceiptForView, openReceiptForPrint, sanitizeFilename } from '@/lib/printUtils';
 import { usePageTitle, updatePageTitleWithCount } from '@/hooks/usePageTitle';
 import { useStore } from '@/contexts/StoreContext';
 import { toast } from 'sonner';
@@ -433,19 +433,6 @@ export const OrderHistory = () => {
     setShowThermalPrintDialog(true);
   }, [filteredOrders]);
 
-  const handleExportReceiptPDF = useCallback(async (orderId: string, customerName: string) => {
-    try {
-      toast.loading('Generating PDF...', { id: `pdf-${orderId}` });
-      await generateReceiptPDFFromUrl(orderId, {
-        filename: `receipt-${sanitizeFilename(customerName)}-${orderId.slice(-6)}.pdf`
-      });
-      toast.success('PDF exported successfully!', { id: `pdf-${orderId}` });
-    } catch (error) {
-      console.error('Error exporting PDF:', error);
-      toast.error('Failed to export PDF. Please try again.', { id: `pdf-${orderId}` });
-    }
-  }, []);
-
   const handleLoadMore = useCallback(() => {
     if (hasMore && !loading) {
       loadMore();
@@ -752,7 +739,6 @@ export const OrderHistory = () => {
                       onViewReceipt={handleViewReceipt}
                       onPrintReceipt={handlePrintReceipt}
                       onPrintThermal={handleThermalPrint}
-                      onExportReceiptPDF={handleExportReceiptPDF}
                       onResendNotification={handleResendNotification}
                       processingOrderId={processingOrderId}
                       processingAction={processingAction}

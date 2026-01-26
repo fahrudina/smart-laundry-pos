@@ -16,7 +16,6 @@ interface VirtualizedOrderListProps {
   onViewReceipt?: (orderId: string) => void;
   onPrintReceipt?: (orderId: string) => void;
   onPrintThermal?: (orderId: string) => void;
-  onExportReceiptPDF?: (orderId: string, customerName: string) => void;
   onResendNotification?: (orderId: string) => void;
   processingOrderId?: string | null;
   processingAction?: string | null;
@@ -31,7 +30,6 @@ interface ItemData {
   onViewReceipt?: (orderId: string) => void;
   onPrintReceipt?: (orderId: string) => void;
   onPrintThermal?: (orderId: string) => void;
-  onExportReceiptPDF?: (orderId: string, customerName: string) => void;
   onResendNotification?: (orderId: string) => void;
   processingOrderId?: string | null;
   processingAction?: string | null;
@@ -401,7 +399,6 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
     onViewReceipt,
     onPrintReceipt,
     onPrintThermal,
-    onExportReceiptPDF,
     onResendNotification,
     processingOrderId,
     processingAction,

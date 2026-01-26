@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/layout-watch-v20/abc_alert_dialog_button_bar_material.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-appcompat-1.7.0-15:/layout-watch-v20/abc_alert_dialog_button_bar_material.xml"
+    },
+    {
+        "merged": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-release-22:/layout-watch-v20/abc_alert_dialog_title_material.xml",
+        "source": "capacitor.cordova.android.plugins.capacitor-cordova-android-plugins-appcompat-1.7.0-15:/layout-watch-v20/abc_alert_dialog_title_material.xml"
+    }
+]

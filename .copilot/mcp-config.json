@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "mobile-mcp": {
+      "type": "local",
+      "command": "npx",
+      "tools": [
+        "*"
+      ],
+      "args": [
+        "@mobilenext/mobile-mcp@latest"
+      ]
+    }
+  }
+}
