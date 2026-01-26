@@ -46,12 +46,56 @@ export default defineConfig(({ mode }) => {
     minify: 'terser',
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-popover'],
-          supabase: ['@supabase/supabase-js'],
-          query: ['@tanstack/react-query'],
-          utils: ['date-fns', 'clsx', 'tailwind-merge']
+        manualChunks: (id) => {
+          // Vendor dependencies - React ecosystem
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'react-vendor';
+          }
+          
+          // React Router
+          if (id.includes('node_modules/react-router')) {
+            return 'router';
+          }
+
+          // UI components - Radix UI
+          if (id.includes('node_modules/@radix-ui')) {
+            return 'ui-radix';
+          }
+
+          // PDF generation libraries (large)
+          if (id.includes('node_modules/jspdf') || id.includes('node_modules/html2canvas')) {
+            return 'pdf-libs';
+          }
+
+          // Supabase
+          if (id.includes('node_modules/@supabase')) {
+            return 'supabase';
+          }
+
+          // React Query
+          if (id.includes('node_modules/@tanstack/react-query')) {
+            return 'react-query';
+          }
+
+          // Date utilities
+          if (id.includes('node_modules/date-fns')) {
+            return 'date-utils';
+          }
+
+          // Lucide icons
+          if (id.includes('node_modules/lucide-react')) {
+            return 'icons';
+          }
+
+          // DOMPurify
+          if (id.includes('node_modules/dompurify') || id.includes('node_modules/isomorphic-dompurify')) {
+            return 'purify';
+          }
+
+          // Other large vendor libraries
+          if (id.includes('node_modules')) {
+            return 'vendor-misc';
+          }
         }
       }
     },
