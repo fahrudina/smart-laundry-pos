@@ -34,3 +34,6 @@ public/favicon-generator.html
 research/ai-agent/toolbox
 android/capacitor-cordova-android-plugins/build/
 android/local.properties
+android/
+ai-agent/toolbox
+ai-agent.bak/
