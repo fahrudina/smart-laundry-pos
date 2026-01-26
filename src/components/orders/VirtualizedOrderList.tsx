@@ -3,7 +3,7 @@ import { FixedSizeList as List } from 'react-window';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, Printer, Download, Receipt, Bluetooth, MessageSquare, Loader2 } from 'lucide-react';
+import { Eye, Printer, Receipt, Bluetooth, MessageSquare, Loader2 } from 'lucide-react';
 import { Order } from '@/hooks/useOrdersOptimized';
 
 interface VirtualizedOrderListProps {
@@ -16,7 +16,8 @@ interface VirtualizedOrderListProps {
   onViewReceipt?: (orderId: string) => void;
   onPrintReceipt?: (orderId: string) => void;
   onPrintThermal?: (orderId: string) => void;
-  onExportReceiptPDF?: (orderId: string, customerName: string) => void;
+  // PDF export removed - dependencies not needed
+  // onExportReceiptPDF?: (orderId: string, customerName: string) => void;
   onResendNotification?: (orderId: string) => void;
   processingOrderId?: string | null;
   processingAction?: string | null;
@@ -31,7 +32,8 @@ interface ItemData {
   onViewReceipt?: (orderId: string) => void;
   onPrintReceipt?: (orderId: string) => void;
   onPrintThermal?: (orderId: string) => void;
-  onExportReceiptPDF?: (orderId: string, customerName: string) => void;
+  // PDF export removed
+  // onExportReceiptPDF?: (orderId: string, customerName: string) => void;
   onResendNotification?: (orderId: string) => void;
   processingOrderId?: string | null;
   processingAction?: string | null;
@@ -374,7 +376,8 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
   onViewReceipt,
   onPrintReceipt,
   onPrintThermal,
-  onExportReceiptPDF,
+  // PDF export removed - dependencies not needed
+  // onExportReceiptPDF,
   onResendNotification,
   processingOrderId,
   processingAction
@@ -401,7 +404,8 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
     onViewReceipt,
     onPrintReceipt,
     onPrintThermal,
-    onExportReceiptPDF,
+    // PDF export removed
+    // onExportReceiptPDF,
     onResendNotification,
     processingOrderId,
     processingAction,

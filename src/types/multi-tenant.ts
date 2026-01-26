@@ -10,6 +10,11 @@ export interface Store {
   is_active: boolean;
   enable_qr: boolean;
   enable_points: boolean;
+  wa_use_store_number?: boolean;
+  wa_sender_registered?: boolean;
+  wa_sender_id?: string;
+  wa_sender_registered_at?: string;
+  wa_sender_last_verified?: string;
   created_at: string;
   updated_at: string;
 }
@@ -37,6 +42,11 @@ export interface StoreWithOwnershipInfo {
   is_active: boolean;
   enable_qr: boolean;
   enable_points: boolean;
+  wa_use_store_number?: boolean;
+  wa_sender_registered?: boolean;
+  wa_sender_id?: string;
+  wa_sender_registered_at?: string;
+  wa_sender_last_verified?: string;
 }
 
 export interface StoreContextType {
