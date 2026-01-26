@@ -6,19 +6,27 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
-import { QrCode, Settings, Save, Star } from 'lucide-react';
+import { QrCode, Settings, Save, Star, MessageSquare, CheckCircle2, XCircle } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { WhatsAppQRRegistrationDialog } from '@/components/whatsapp/WhatsAppQRRegistrationDialog';
 
 interface StoreSettings {
   enable_qr: boolean;
   enable_points: boolean;
+  whatsapp_sender_registered: boolean;
+  whatsapp_sender_phone: string | null;
+  wa_use_store_number: boolean;
 }
 
 export const StoreSettingsCard: React.FC = () => {
   const { currentStore, isOwner } = useStore();
-  const [settings, setSettings] = useState<StoreSettings>({
-    enable_qr: false,
-    enable_points: false,
+    whatsapp_sender_registered: false,
+    whatsapp_sender_phone: null,
+    wa_use_store_number: false,
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showQRDialog, setShowQRDialo
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -29,14 +37,7 @@ export const StoreSettingsCard: React.FC = () => {
     }
   }, [currentStore?.store_id]);
 
-  const fetchStoreSettings = async () => {
-    if (!currentStore?.store_id) return;
-
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('stores')
-        .select('enable_qr, enable_points')
+  const fetchStoreSettings = async () => , whatsapp_sender_registered, whatsapp_sender_phone, wa_use_store_number')
         .eq('id', currentStore.store_id)
         .single();
 
@@ -47,6 +48,16 @@ export const StoreSettingsCard: React.FC = () => {
           description: "Gagal memuat pengaturan toko",
           variant: "destructive",
         });
+        return;
+      }
+
+      if (data) {
+        setSettings({
+          enable_qr: data.enable_qr || false,
+          enable_points: data.enable_points || false,
+          whatsapp_sender_registered: data.whatsapp_sender_registered || false,
+          whatsapp_sender_phone: data.whatsapp_sender_phone || null,
+          wa_use_store_number: data.wa_use_store_number
         return;
       }
 
@@ -68,7 +79,8 @@ export const StoreSettingsCard: React.FC = () => {
     }
   };
 
-  const saveSettings = async () => {
+  const sawa_use_store_number: settings.wa_use_store_number,
+          veSettings = async () => {
     if (!currentStore?.store_id || !isOwner) return;
 
     try {
@@ -112,7 +124,19 @@ export const StoreSettingsCard: React.FC = () => {
     setSettings(prev => ({
       ...prev,
       enable_qr: checked,
+    
+
+  const handleWhatsAppStoreNumberToggle = (checked: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      wa_use_store_number: checked,
     }));
+  };
+
+  const handleRegistrationSuccess = () => {
+    // Refresh settings to get updated registration status
+    fetchStoreSettings();
+  };}));
   };
 
   const handlePointsToggle = (checked: boolean) => {
@@ -182,7 +206,96 @@ export const StoreSettingsCard: React.FC = () => {
                   disabled={saving}
                   className="self-start sm:self-center"
                 />
+              </WhatsApp Sender Registration */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <MessageSquare className="h-5 w-5 text-green-600" />
+                <Label className="text-base font-medium">
+                  Konfigurasi WhatsApp
+                </Label>
               </div>
+
+              <div className="p-4 border rounded-lg space-y-3">
+                {/* Registration Status */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1 flex-1">
+                    <Label className="font-normal">Status Pendaftaran</Label>
+                    <div className="flex items-center gap-2">
+                      {settings.whatsapp_sender_registered ? (
+                        <>
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          <span className="text-sm text-green-700">
+                            Terdaftar: {settings.whatsapp_sender_phone}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm text-muted-foreground">
+                            Belum terdaftar
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => setShowQRDialog(true)}
+                    variant={settings.whatsapp_sender_registered ? "outline" : "default"}
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    {settings.whatsapp_sender_registered ? "Ubah Nomor WhatsApp" : "Daftarkan WhatsApp"}
+                  </Button>
+                </div>
+
+                {/* Use Store Number Toggle */}
+                {settings.whatsapp_sender_registered && (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="space-y-1 flex-1">
+                      <Label htmlFor="wa-use-store-number" className="font-normal">
+                        Gunakan Nomor Toko
+                      </Label>
+                      <p className="text-sm text-green-700">
+                        Kirim notifikasi WhatsApp dari nomor toko yang terdaftar
+                      </p>
+                    </div>
+                    <Switch
+                      id="wa-use-store-number"
+                      checked={settings.wa_use_store_number}
+                      onCheckedChange={handleWhatsAppStoreNumberToggle}
+                      disabled={saving || !settings.whatsapp_sender_registered}
+                      className="self-start sm:self-center"
+                    />
+                  </div>
+                )}
+
+                {/* Info Card */}
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <MessageSquare className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-blue-900">
+                        Tentang Notifikasi WhatsApp
+                      </p>
+                      <p className="text-sm text-blue-700">
+
+        {/* WhatsApp QR Registration Dialog */}
+        <WhatsAppQRRegistrationDialog
+          open={showQRDialog}
+          onOpenChange={setShowQRDialog}
+          onSuccess={handleRegistrationSuccess}
+        />
+                        Daftarkan nomor WhatsApp toko Anda untuk mengirim notifikasi pesanan otomatis kepada pelanggan.
+                        Scan QR code dengan WhatsApp untuk menghubungkan nomor Anda.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* div>
 
               {settings.enable_qr && (
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
