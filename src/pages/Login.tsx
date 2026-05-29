@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Loader2, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { PageLoading } from '@/components/ui/loading-spinner';
@@ -17,7 +18,6 @@ interface LoginForm {
 }
 
 interface SignUpForm extends LoginForm {
-  confirmPassword: string;
   fullName: string;
   phone: string;
   storeName: string;
@@ -33,7 +33,7 @@ export const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showStoreDetails, setShowStoreDetails] = useState(false);
 
   usePageTitle('Login');
 
@@ -58,21 +58,13 @@ export const Login: React.FC = () => {
   };
 
   const handleSignUp = async (data: SignUpForm) => {
-    if (data.password !== data.confirmPassword) {
-      signUpForm.setError('confirmPassword', {
-        type: 'manual',
-        message: 'Kata sandi tidak cocok',
-      });
-      return;
-    }
-
     try {
       setIsLoading(true);
       const role = 'laundry_owner';
       const storeData = {
         name: data.storeName,
-        address: data.storeAddress,
-        phone: data.storePhone
+        address: data.storeAddress || undefined,
+        phone: data.storePhone || undefined
       };
       await signUp(data.email, data.password, data.fullName, data.phone, role, storeData);
     } catch (error) {
@@ -254,37 +246,6 @@ export const Login: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-confirm-password">Konfirmasi Kata Sandi</Label>
-                  <div className="relative">
-                    <Input
-                      id="signup-confirm-password"
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Konfirmasi kata sandi Anda"
-                      className="pr-10"
-                      {...signUpForm.register('confirmPassword', {
-                        required: 'Silakan konfirmasi kata sandi Anda'
-                      })}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-500" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-500" />
-                      )}
-                    </Button>
-                  </div>
-                  {signUpForm.formState.errors.confirmPassword && (
-                    <p className="text-sm text-red-500">{signUpForm.formState.errors.confirmPassword.message}</p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
                   <Label htmlFor="signup-store-name">Nama Toko</Label>
                   <Input
                     id="signup-store-name"
@@ -299,35 +260,43 @@ export const Login: React.FC = () => {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="signup-store-address">Alamat Toko</Label>
-                  <Input
-                    id="signup-store-address"
-                    type="text"
-                    placeholder="Masukkan alamat toko Anda"
-                    {...signUpForm.register('storeAddress', {
-                      required: 'Alamat toko wajib diisi'
-                    })}
-                  />
-                  {signUpForm.formState.errors.storeAddress && (
-                    <p className="text-sm text-red-500">{signUpForm.formState.errors.storeAddress.message}</p>
-                  )}
-                </div>
+                <Collapsible open={showStoreDetails} onOpenChange={setShowStoreDetails}>
+                  <CollapsibleTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between rounded-md py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+                    >
+                      <span>Detail toko (opsional)</span>
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform duration-200 ${showStoreDetails ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4 pt-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-store-address">Alamat Toko</Label>
+                      <Input
+                        id="signup-store-address"
+                        type="text"
+                        placeholder="Masukkan alamat toko Anda (opsional)"
+                        {...signUpForm.register('storeAddress')}
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="signup-store-phone">Nomor Telepon Toko</Label>
-                  <Input
-                    id="signup-store-phone"
-                    type="tel"
-                    placeholder="Masukkan nomor telepon toko Anda"
-                    {...signUpForm.register('storePhone', {
-                      required: 'Nomor telepon toko wajib diisi'
-                    })}
-                  />
-                  {signUpForm.formState.errors.storePhone && (
-                    <p className="text-sm text-red-500">{signUpForm.formState.errors.storePhone.message}</p>
-                  )}
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-store-phone">Nomor Telepon Toko</Label>
+                      <Input
+                        id="signup-store-phone"
+                        type="tel"
+                        placeholder="Masukkan nomor telepon toko Anda (opsional)"
+                        {...signUpForm.register('storePhone')}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Bisa dilengkapi nanti di Pengaturan Toko.
+                    </p>
+                  </CollapsibleContent>
+                </Collapsible>
 
                 <Button
                   type="submit"
@@ -335,7 +304,7 @@ export const Login: React.FC = () => {
                   disabled={isLoading}
                 >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Daftar
+                  Daftar Gratis
                 </Button>
               </form>
             </TabsContent>
