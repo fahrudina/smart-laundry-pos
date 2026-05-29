@@ -99,21 +99,9 @@ export const LandingPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      {/* SEO Meta Tags */}
-      <title>Smart Laundry POS - Sistem Kasir Modern untuk Laundry Indonesia</title>
-      <meta name="description" content="Sistem Point of Sale (POS) modern untuk bisnis laundry di Indonesia. Kelola pesanan, pelanggan, dan pembayaran dengan mudah. Aplikasi mobile, cloud-based, dan bisa diinstall seperti aplikasi native." />
-      <meta name="keywords" content="sistem kasir laundry, POS laundry Indonesia, aplikasi laundry, manajemen laundry, kasir digital laundry, software laundry" />
-      <meta name="author" content="Smart Laundry POS" />
-      <meta property="og:title" content="Smart Laundry POS - Sistem Kasir Modern untuk Laundry Indonesia" />
-      <meta property="og:description" content="Kelola bisnis laundry Anda dengan sistem POS modern. Mobile-friendly, cloud-based, dan mudah digunakan." />
-      <meta property="og:type" content="website" />
-      <meta property="og:url" content="https://smart-laundry-pos.vercel.app" />
-      <meta property="og:image" content="/favicon-512.png" />
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Smart Laundry POS - Sistem Kasir Modern untuk Laundry" />
-      <meta name="twitter:description" content="Sistem POS terbaik untuk bisnis laundry di Indonesia" />
-      
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 pb-24 sm:pb-0">
+      {/* SEO/OG meta tags live in index.html (React 18 does not hoist tags rendered here) */}
+
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -175,7 +163,7 @@ export const LandingPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button 
                 size="lg" 
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/login?tab=signup')}
                 className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 sm:px-10 py-5 sm:py-6 text-lg sm:text-xl font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105"
               >
                 <span className="truncate">👉 Coba Smart Laundry POS Sekarang!</span>
@@ -484,7 +472,7 @@ export const LandingPage: React.FC = () => {
           </div>
           <Button 
             size="lg" 
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/login?tab=signup')}
             className="w-full sm:w-auto bg-white text-blue-600 hover:bg-gray-100 px-8 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-300"
           >
             Mulai Transformasi Sekarang
@@ -584,7 +572,7 @@ export const LandingPage: React.FC = () => {
 
           <Button 
             size="lg" 
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/login?tab=signup')}
             className="w-full sm:w-auto bg-white text-blue-600 hover:bg-gray-100 px-8 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-300 hover:shadow-yellow-400/50"
           >
             <span className="truncate">👉 Coba Smart Laundry POS Sekarang!</span>
@@ -668,8 +656,19 @@ export const LandingPage: React.FC = () => {
         </div>
       </footer>
 
+      {/* Sticky mobile CTA — keeps signup one tap away while scrolling (mobile only) */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-gray-200 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+        <Button
+          onClick={() => navigate('/login?tab=signup')}
+          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-5 text-base font-bold shadow-lg pr-20"
+        >
+          <span className="truncate">👉 Coba Gratis Sekarang</span>
+          <ArrowRight className="ml-2 h-5 w-5 flex-shrink-0" />
+        </Button>
+      </div>
+
       {/* WhatsApp Floating Button */}
-      <WhatsAppFloatingButton 
+      <WhatsAppFloatingButton
         phoneNumber="6281280272326"
         message="Halo, saya tertarik dengan Smart Laundry POS dan ingin bertanya lebih lanjut!"
         position="bottom-right"
