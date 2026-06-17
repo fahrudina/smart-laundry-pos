@@ -16,11 +16,21 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
+  isAndroid,
+  isNativePlatform,
+  requestBluetoothPermissions,
+  listPairedPrinters,
+  connectNativePrinter,
+  disconnectNativePrinter,
+  isNativePrinterConnected,
+  printReceipt,
+  fetchReceiptDataForThermal,
+} from '@/lib/printUtilsPlatform';
+import { 
   isBluetoothSupported,
   isThermerAppAvailable,
   printToThermalPrinter,
   printToThermerApp,
-  fetchReceiptDataForThermal
 } from '@/lib/printUtils';
 import { useThermalPrinter } from '@/contexts/ThermalPrinterContext';
 
@@ -36,8 +46,12 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
   onPrintError
 }) => {
   const [isPrinting, setIsPrinting] = useState(false);
+  const [pairedDevices, setPairedDevices] = useState<Array<{ name: string; address: string }>>([]);
+  const [selectedDevice, setSelectedDevice] = useState<string>('');
+  const [isNativeConnected, setIsNativeConnected] = useState(false);
+  const [nativeDeviceName, setNativeDeviceName] = useState<string>('');
   
-  // Use thermal printer context for global connection management
+  // Use thermal printer context for browser/Web Bluetooth connection management
   const { 
     printerConnection, 
     connectionStatus, 
@@ -48,6 +62,62 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
     clearError 
   } = useThermalPrinter();
 
+  // Check if we're on Android
+  const isAndroidPlatform = isAndroid();
+
+  // Load paired devices on Android
+  React.useEffect(() => {
+    if (isAndroidPlatform) {
+      loadPairedDevices();
+      checkNativeConnection();
+    }
+  }, [isAndroidPlatform]);
+
+  const loadPairedDevices = async () => {
+    try {
+      const devices = await listPairedPrinters();
+      setPairedDevices(devices);
+      if (devices.length > 0 && !selectedDevice) {
+        setSelectedDevice(devices[0].address);
+      }
+    } catch (error) {
+      console.error('Failed to load paired devices:', error);
+    }
+  };
+
+  const checkNativeConnection = async () => {
+    try {
+      const connected = await isNativePrinterConnected();
+      setIsNativeConnected(connected);
+    } catch (error) {
+      console.error('Failed to check connection:', error);
+    }
+  };
+
+  const handleConnectNative = async () => {
+    if (!selectedDevice) {
+      toast.error('Pilih printer terlebih dahulu');
+      return;
+    }
+
+    try {
+      // Request permissions first
+      const granted = await requestBluetoothPermissions();
+      if (!granted) {
+        toast.error('Izin Bluetooth diperlukan');
+        return;
+      }
+
+      const connection = await connectNativePrinter(selectedDevice);
+      setIsNativeConnected(true);
+      setNativeDeviceName(connection.deviceName);
+      toast.success(`Terhubung ke ${connection.deviceName}`);
+    } catch (error) {
+      console.error('Connection failed:', error);
+      toast.error(`Gagal terhubung: ${error.message}`);
+    }
+  };
+
   const handleConnect = useCallback(async () => {
     clearError();
     await connectPrinter();
@@ -57,24 +127,38 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
     disconnectPrinter();
   }, [disconnectPrinter]);
 
+
   const handlePrintBluetooth = useCallback(async () => {
-    if (!printerConnection || !orderId) {
+    if (!orderId) {
       return;
     }
 
     setIsPrinting(true);
-    clearError();
+    if (!isAndroidPlatform) {
+      clearError();
+    }
 
     try {
-      // Fetch receipt data
-      const receiptData = await fetchReceiptDataForThermal(orderId);
-      
-      // Print to thermal printer
-      await printToThermalPrinter(receiptData, printerConnection, {
-        paperWidth: 32,
-        cutPaper: true,
-        feedLines: 3
-      });
+      if (isAndroidPlatform) {
+        // Android: Use native printing
+        if (!isNativeConnected) {
+          toast.error('Hubungkan printer terlebih dahulu');
+          return;
+        }
+        await printReceipt(orderId, { deviceName: nativeDeviceName, deviceAddress: selectedDevice });
+      } else {
+        // Browser: Use Web Bluetooth
+        if (!printerConnection) {
+          toast.error('Hubungkan printer terlebih dahulu');
+          return;
+        }
+        const receiptData = await fetchReceiptDataForThermal(orderId);
+        await printToThermalPrinter(receiptData, printerConnection, {
+          paperWidth: 32,
+          cutPaper: true,
+          feedLines: 3
+        });
+      }
 
       toast.success('🖨️ Struk berhasil dicetak!');
       if (onPrintSuccess) {
@@ -90,7 +174,7 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
     } finally {
       setIsPrinting(false);
     }
-  }, [printerConnection, orderId, onPrintSuccess, onPrintError, clearError]);
+  }, [orderId, isAndroidPlatform, isNativeConnected, nativeDeviceName, selectedDevice, printerConnection, onPrintSuccess, onPrintError, clearError]);
 
   const handlePrintThermer = useCallback(async () => {
     if (!orderId) return;
@@ -121,7 +205,7 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
     }
   }, [orderId, onPrintSuccess, onPrintError, clearError]);
 
-  const bluetoothSupported = isBluetoothSupported();
+  const bluetoothSupported = isBluetoothSupported() || isAndroidPlatform;
   const thermerAvailable = isThermerAppAvailable();
 
   if (!bluetoothSupported && !thermerAvailable) {
@@ -134,6 +218,10 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
       </Alert>
     );
   }
+
+  const currentConnectionStatus = isAndroidPlatform ? 
+    (isNativeConnected ? 'connected' : 'disconnected') : 
+    connectionStatus;
 
   return (
     <Card className="w-full">
@@ -150,74 +238,154 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Bluetooth className="h-4 w-4" />
-                <span className="font-medium">Bluetooth Direct</span>
+                <span className="font-medium">
+                  {isAndroidPlatform ? 'Bluetooth Native (Android)' : 'Bluetooth Direct'}
+                </span>
               </div>
               <Badge 
-                variant={connectionStatus === 'connected' ? 'default' : 
-                        connectionStatus === 'error' ? 'destructive' : 'secondary'}
+                variant={currentConnectionStatus === 'connected' ? 'default' : 
+                        currentConnectionStatus === 'error' ? 'destructive' : 'secondary'}
                 className="flex items-center space-x-1"
               >
-                {connectionStatus === 'connected' && <CheckCircle className="h-3 w-3" />}
-                {connectionStatus === 'error' && <XCircle className="h-3 w-3" />}
+                {currentConnectionStatus === 'connected' && <CheckCircle className="h-3 w-3" />}
+                {currentConnectionStatus === 'error' && <XCircle className="h-3 w-3" />}
                 <span>
-                  {connectionStatus === 'connected' ? 'Terhubung' :
-                   connectionStatus === 'error' ? 'Error' : 'Terputus'}
+                  {currentConnectionStatus === 'connected' ? 'Terhubung' :
+                   currentConnectionStatus === 'error' ? 'Error' : 'Terputus'}
                 </span>
               </Badge>
             </div>
 
+            {/* Android: Show device selector */}
+            {isAndroidPlatform && !isNativeConnected && pairedDevices.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Pilih Printer:</label>
+                <select
+                  value={selectedDevice}
+                  onChange={(e) => setSelectedDevice(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                >
+                  {pairedDevices.map((device) => (
+                    <option key={device.address} value={device.address}>
+                      {device.name} ({device.address})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="flex space-x-2">
-              {connectionStatus === 'disconnected' && (
-                <Button
-                  onClick={handleConnect}
-                  disabled={isConnecting}
-                  className="flex items-center space-x-2"
-                  size="sm"
-                >
-                  {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bluetooth className="h-4 w-4" />}
-                  <span>{isConnecting ? 'Menghubungkan...' : 'Hubungkan Printer'}</span>
-                </Button>
-              )}
-
-              {connectionStatus === 'connected' && (
+              {isAndroidPlatform ? (
+                // Android controls
                 <>
-                  <Button
-                    onClick={handlePrintBluetooth}
-                    disabled={isPrinting || !orderId}
-                    className="flex items-center space-x-2"
-                    size="sm"
-                  >
-                    {isPrinting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
-                    <span>{isPrinting ? 'Mencetak...' : 'Cetak Struk'}</span>
-                  </Button>
+                  {!isNativeConnected && (
+                    <Button
+                      onClick={handleConnectNative}
+                      disabled={isConnecting || pairedDevices.length === 0}
+                      className="flex items-center space-x-2"
+                      size="sm"
+                    >
+                      {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bluetooth className="h-4 w-4" />}
+                      <span>{isConnecting ? 'Menghubungkan...' : 'Hubungkan Printer'}</span>
+                    </Button>
+                  )}
 
-                  <Button
-                    onClick={handleDisconnect}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center space-x-2"
-                  >
-                    <XCircle className="h-4 w-4" />
-                    <span>Putuskan</span>
-                  </Button>
+                  {isNativeConnected && (
+                    <>
+                      <Button
+                        onClick={handlePrintBluetooth}
+                        disabled={isPrinting || !orderId}
+                        className="flex items-center space-x-2"
+                        size="sm"
+                      >
+                        {isPrinting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+                        <span>{isPrinting ? 'Mencetak...' : 'Cetak Struk'}</span>
+                      </Button>
+
+                      <Button
+                        onClick={handleDisconnectNative}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center space-x-2"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        <span>Putuskan</span>
+                      </Button>
+                    </>
+                  )}
+
+                  {pairedDevices.length === 0 && (
+                    <Alert className="text-sm">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        Tidak ada printer yang dipasangkan. Silakan pasangkan printer di Pengaturan Bluetooth Android.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </>
-              )}
+              ) : (
+                // Browser controls
+                <>
+                  {connectionStatus === 'disconnected' && (
+                    <Button
+                      onClick={handleConnect}
+                      disabled={isConnecting}
+                      className="flex items-center space-x-2"
+                      size="sm"
+                    >
+                      {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bluetooth className="h-4 w-4" />}
+                      <span>{isConnecting ? 'Menghubungkan...' : 'Hubungkan Printer'}</span>
+                    </Button>
+                  )}
 
-              {connectionStatus === 'error' && (
-                <Button
-                  onClick={handleConnect}
-                  disabled={isConnecting}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center space-x-2"
-                >
-                  {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Settings className="h-4 w-4" />}
-                  <span>{isConnecting ? 'Mencoba Lagi...' : 'Coba Lagi'}</span>
-                </Button>
+                  {connectionStatus === 'connected' && (
+                    <>
+                      <Button
+                        onClick={handlePrintBluetooth}
+                        disabled={isPrinting || !orderId}
+                        className="flex items-center space-x-2"
+                        size="sm"
+                      >
+                        {isPrinting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+                        <span>{isPrinting ? 'Mencetak...' : 'Cetak Struk'}</span>
+                      </Button>
+
+                      <Button
+                        onClick={handleDisconnect}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center space-x-2"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        <span>Putuskan</span>
+                      </Button>
+                    </>
+                  )}
+
+                  {connectionStatus === 'error' && (
+                    <Button
+                      onClick={handleConnect}
+                      disabled={isConnecting}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center space-x-2"
+                    >
+                      {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Settings className="h-4 w-4" />}
+                      <span>{isConnecting ? 'Mencoba Lagi...' : 'Coba Lagi'}</span>
+                    </Button>
+                  )}
+                </>
               )}
             </div>
 
-            {printerConnection && (
+            {/* Show connected device name */}
+            {isAndroidPlatform && isNativeConnected && nativeDeviceName && (
+              <div className="text-sm text-muted-foreground">
+                <p>Terhubung ke: {nativeDeviceName}</p>
+              </div>
+            )}
+
+            {!isAndroidPlatform && printerConnection && (
               <div className="text-sm text-muted-foreground">
                 <p>Terhubung ke: {printerConnection.device.name || printerConnection.device.id}</p>
               </div>

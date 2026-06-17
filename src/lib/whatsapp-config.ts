@@ -8,10 +8,13 @@ import { WhatsAppConfig } from '../integrations/whatsapp/types';
  * Credentials are handled server-side in the Vercel serverless function.
  */
 export const whatsAppConfig: WhatsAppConfig = {
-  // Use proxy in development and Vercel serverless function in production
+  // Use different URLs based on environment:
+  // - Development with proxy: Local proxy endpoint
+  // - Production with VITE_WHATSAPP_API_URL: Full production URL (for Android/native apps)
+  // - Production without VITE_WHATSAPP_API_URL: Relative URL (for web browser)
   baseUrl: import.meta.env.DEV && import.meta.env.VITE_WHATSAPP_USE_PROXY === 'true' 
     ? 'http://localhost:8080/api/whatsapp'  // Vite proxy endpoint
-    : '/api/whatsapp-send',  // Vercel serverless function
+    : import.meta.env.VITE_WHATSAPP_API_URL || '/api/whatsapp-send',  // Full URL for Android, relative for web
   // NOTE: In production, credentials are NOT exposed to client
   // They are handled securely in the serverless function
   username: import.meta.env.DEV ? (import.meta.env.VITE_WHATSAPP_API_USERNAME || 'admin') : '',

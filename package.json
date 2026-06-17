@@ -8,7 +8,13 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:build:debug": "npm run android:sync && cd android && ./gradlew assembleDebug",
+    "android:build:release": "npm run android:sync && cd android && ./gradlew assembleRelease",
+    "android:install": "npm run android:build:debug && cd android && ./gradlew installDebug",
+    "android:run": "npm run android:sync && npx cap run android"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",
