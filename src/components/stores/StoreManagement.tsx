@@ -6,6 +6,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { CreateStoreDialog } from './CreateStoreDialog';
 import { StoreStaffManagement } from './StoreStaffManagement';
 import { StoreSettingsCard } from './StoreSettingsCard';
+import { WhatsAppSenderRegistration } from '@/components/settings/WhatsAppSenderRegistration';
 import { Building2, Users, TrendingUp, Package } from 'lucide-react';
 import { StoreWithOwnershipInfo } from '@/types/multi-tenant';
 
@@ -124,6 +125,17 @@ export const StoreManagement: React.FC = () => {
         <div className="space-y-4 sm:space-y-6">
           <StoreStaffManagement store={selectedStore} />
           <StoreSettingsCard />
+          
+          {/* WhatsApp Sender Registration - only show if wa_use_store_number is enabled */}
+          {selectedStore.wa_use_store_number && (
+            <WhatsAppSenderRegistration
+              storeId={selectedStore.store_id}
+              storePhone={selectedStore.store_phone || ''}
+              waUseStoreNumber={selectedStore.wa_use_store_number}
+              waSenderRegistered={selectedStore.wa_sender_registered}
+              waSenderId={selectedStore.wa_sender_id}
+            />
+          )}
         </div>
       )}
 

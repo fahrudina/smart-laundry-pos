@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users, Check, MessageSquare, TrendingUp, KeyRound, Wallet } from 'lucide-react';
+import { LogOut, History, Home, Settings, UserPlus, Building2, Wrench, Plus, Menu, Smartphone, Users, Check, MessageSquare, TrendingUp, KeyRound, Wallet, Phone } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,6 +84,19 @@ export const AppHeader: React.FC = () => {
     }
   };
 
+  const handleSenderRegistrationNavigation = () => {
+    if (location.pathname !== '/stores') {
+      navigate('/stores');
+      // Scroll to sender registration section after navigation
+      setTimeout(() => {
+        const senderSection = document.querySelector('[data-sender-registration]');
+        if (senderSection) {
+          senderSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+    }
+  };
+
   if (!user) return null;
 
   const userInitials = user.full_name 
@@ -141,6 +154,10 @@ export const AppHeader: React.FC = () => {
                       <DropdownMenuItem onClick={handleStoresNavigation}>
                         <Building2 className="h-4 w-4 mr-2" />
                         Manajemen Toko
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleSenderRegistrationNavigation}>
+                        <Phone className="h-4 w-4 mr-2" />
+                        WhatsApp Sender
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleWhatsAppBroadcastNavigation}>
                         <MessageSquare className="h-4 w-4 mr-2" />
@@ -269,6 +286,13 @@ export const AppHeader: React.FC = () => {
                   <DropdownMenuItem onClick={handleStoresNavigation}>
                     <Building2 className="h-4 w-4 mr-2" />
                     Manajemen Toko
+                    {location.pathname === '/stores' && (
+                      <Check className="h-4 w-4 ml-auto text-blue-600" />
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSenderRegistrationNavigation}>
+                    <Phone className="h-4 w-4 mr-2" />
+                    WhatsApp Sender
                     {location.pathname === '/stores' && (
                       <Check className="h-4 w-4 ml-auto text-blue-600" />
                     )}
