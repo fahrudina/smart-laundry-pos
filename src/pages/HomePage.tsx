@@ -5,11 +5,11 @@ import { useTodayExpenses } from '@/hooks/useRevenue';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Coachmark, useCoachmark } from '@/components/ui/coachmark';
-import { 
-  Building2, 
-  Plus, 
-  Users, 
+import { OnboardingDialog } from '@/components/onboarding/OnboardingDialog';
+import {
+  Building2,
+  Plus,
+  Users,
   Wrench,
   CreditCard,
   QrCode,
@@ -165,9 +165,9 @@ export const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Coachmark */}
-      <Coachmark open={shouldShowCoachmark} onClose={hideCoachmark} />
-      
+      {/* Onboarding Dialog */}
+      <OnboardingDialog />
+
       {/* Header with coral/salmon background */}
       <div className="bg-gradient-to-r from-rose-400 to-rose-500 text-white px-4 pt-8 pb-12 rounded-b-3xl shadow-lg">
         <h1 className="text-2xl font-bold text-center">Beranda</h1>
