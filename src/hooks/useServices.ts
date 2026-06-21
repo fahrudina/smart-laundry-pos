@@ -37,6 +37,45 @@ export interface ServiceFormData {
   is_active?: boolean;
 }
 
+// Default starter services seeded for a new store so the POS is usable
+// immediately. Keep in sync with the create_store() SQL function
+// (supabase/migrations/20260621000000_seed_default_services_on_store_create.sql).
+export const DEFAULT_SERVICES: ServiceFormData[] = [
+  {
+    name: 'Cuci Setrika Regular',
+    description: 'Cuci - Pengeringan - Setrika - Packing',
+    category: 'wash',
+    unit_price: 18000,
+    kilo_price: 6000,
+    supports_unit: true,
+    supports_kilo: true,
+    duration_value: 2,
+    duration_unit: 'days',
+  },
+  {
+    name: 'Express Wash',
+    description: 'Pencucian cepat dalam 24 jam',
+    category: 'wash',
+    unit_price: 25000,
+    kilo_price: 8000,
+    supports_unit: true,
+    supports_kilo: true,
+    duration_value: 1,
+    duration_unit: 'days',
+  },
+  {
+    name: 'Setrika Saja',
+    description: 'Layanan setrika dan pressing saja',
+    category: 'ironing',
+    unit_price: 5000,
+    kilo_price: 3000,
+    supports_unit: true,
+    supports_kilo: true,
+    duration_value: 4,
+    duration_unit: 'hours',
+  },
+];
+
 // Hook to fetch services for the current store
 export const useServices = (category?: string) => {
   const { currentStore } = useStore();
@@ -130,6 +169,52 @@ export const useCreateService = () => {
         title: "Error",
         description: "Failed to create service",
         variant: "destructive",
+      });
+    },
+  });
+};
+
+// Hook to seed the default starter services for the current store in one batch.
+// Used by empty-state CTAs (POS notice, Service Management) so a new owner can
+// get a working catalog with a single tap.
+export const useSeedDefaultServices = () => {
+  const queryClient = useQueryClient();
+  const { currentStore } = useStore();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      if (!currentStore?.store_id) {
+        throw new Error('No store selected');
+      }
+
+      const { error } = await supabase
+        .from('services')
+        .insert(
+          DEFAULT_SERVICES.map((service) => ({
+            ...service,
+            store_id: currentStore.store_id,
+            is_active: true,
+          }))
+        );
+
+      if (error) {
+        console.error('Error seeding default services:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      toast({
+        title: 'Berhasil',
+        description: 'Contoh layanan berhasil dibuat',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Gagal memuat contoh layanan',
+        variant: 'destructive',
       });
     },
   });
