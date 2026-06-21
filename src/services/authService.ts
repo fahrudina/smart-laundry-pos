@@ -186,6 +186,81 @@ class AuthService {
     }
   }
 
+  // Decode a JWT payload (base64url) without verifying the signature.
+  // Used to read the Google ID token claims client-side.
+  private decodeJwtPayload(token: string): Record<string, unknown> {
+    const payload = token.split('.')[1];
+    if (!payload) {
+      throw new Error('Invalid token');
+    }
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const json = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(json);
+  }
+
+  async signInWithGoogle(credential: string): Promise<User> {
+    try {
+      const claims = this.decodeJwtPayload(credential);
+      const email = claims.email as string | undefined;
+      const name = (claims.name as string | undefined) ?? null;
+      const sub = (claims.sub as string | undefined) ?? null;
+
+      if (!email) {
+        throw new Error('Google account did not return an email');
+      }
+
+      const { data, error } = await supabase.rpc('signin_with_google', {
+        google_email: email,
+        google_name: name,
+        google_sub: sub,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('Google sign-in failed');
+      }
+
+      const userData = data[0];
+
+      // Resolve store_id (staff have it on the user row; owners track via stores.owner_id).
+      const { data: userStoreData } = await supabase
+        .from('users')
+        .select('store_id')
+        .eq('id', userData.user_id)
+        .single();
+
+      const user: User = {
+        id: userData.user_id,
+        email: userData.email,
+        full_name: userData.full_name,
+        phone: userData.phone,
+        role: userData.role as 'staff' | 'laundry_owner',
+        store_id: userStoreData?.store_id,
+        is_active: userData.is_active,
+      };
+
+      const session: AuthSession = {
+        user,
+        token: this.generateToken(),
+        expires_at: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+      };
+
+      this.saveSession(session);
+      return user;
+    } catch (error) {
+      console.error('Google sign in error:', error);
+      throw error;
+    }
+  }
+
   signOut(): void {
     this.clearSession();
   }

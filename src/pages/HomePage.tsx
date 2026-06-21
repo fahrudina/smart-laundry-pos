@@ -2,14 +2,16 @@ import React from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useTodayExpenses } from '@/hooks/useRevenue';
+import { useActivation } from '@/hooks/useActivation';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Coachmark, useCoachmark } from '@/components/ui/coachmark';
-import { 
-  Building2, 
-  Plus, 
-  Users, 
+import {
+  Building2,
+  Plus,
+  Users,
   Wrench,
   CreditCard,
   QrCode,
@@ -20,7 +22,10 @@ import {
   Home as HomeIcon,
   ShoppingCart,
   BarChart3,
-  Settings
+  Settings,
+  CheckCircle2,
+  Circle,
+  ArrowRight
 } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
@@ -28,6 +33,7 @@ export const HomePage: React.FC = () => {
   const { currentStore, isOwner } = useStore();
   const { metrics, loading } = useDashboard();
   const { data: todayExpensesData, isLoading: loadingExpenses } = useTodayExpenses();
+  const { data: activation } = useActivation();
   const navigate = useNavigate();
   const { shouldShowCoachmark, hideCoachmark } = useCoachmark();
 
@@ -67,6 +73,39 @@ export const HomePage: React.FC = () => {
   const todayExpenses = todayExpensesData || 0;
   const todayIncomeChange = metrics?.todayRevenue?.changeFromYesterday || 0;
   const isLoadingData = loading || loadingExpenses;
+
+  // Show the getting-started checklist until the store creates its first order.
+  const showOnboarding = !!activation && !activation.isActivated;
+  const onboardingSteps = [
+    {
+      id: 'store',
+      title: 'Buat toko',
+      description: 'Toko Anda sudah siap digunakan.',
+      done: true,
+      onClick: () => navigate('/stores'),
+    },
+    {
+      id: 'services',
+      title: 'Siapkan layanan',
+      description: 'Tambahkan layanan laundry beserta harganya.',
+      done: !!activation?.hasServices,
+      onClick: () => navigate('/services'),
+    },
+    {
+      id: 'order',
+      title: 'Buat pesanan pertama',
+      description: 'Catat pesanan laundry pertama Anda.',
+      done: !!activation?.hasOrder,
+      onClick: () => navigate('/pos'),
+    },
+    {
+      id: 'customer',
+      title: 'Tambah pelanggan',
+      description: 'Simpan data pelanggan untuk pemesanan berikutnya.',
+      done: !!activation?.hasCustomer,
+      onClick: () => navigate('/customers'),
+    },
+  ];
 
   const quickActions = [
     {
@@ -192,37 +231,98 @@ export const HomePage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Revenue Cards */}
-        <div className="grid grid-cols-2 gap-3">
-          <Card className="shadow-md border-0">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-2">
-                <p className="text-xs text-gray-600">Pendapatan Hari Ini</p>
-                <TrendingUp className="h-4 w-4 text-green-500" />
+        {/* Getting-started checklist (new stores) OR revenue cards (activated stores) */}
+        {showOnboarding ? (
+          <Card className="shadow-lg border-0">
+            <CardContent className="p-5">
+              <div className="mb-1 flex items-center justify-between">
+                <h3 className="text-base font-bold text-gray-900">Mulai Cepat</h3>
+                <span className="text-xs font-medium text-rose-500">
+                  {activation!.completedSteps}/{activation!.totalSteps} selesai
+                </span>
               </div>
-              <p className="text-lg font-bold text-gray-900">
-                {isLoadingData ? '...' : formatCurrency(todayIncome)}
+              <p className="mb-3 text-sm text-gray-500">
+                Selesaikan langkah berikut untuk mulai menerima pesanan.
               </p>
-              {todayIncomeChange !== 0 && (
-                <p className={`text-xs mt-1 ${todayIncomeChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {todayIncomeChange >= 0 ? '↑' : '↓'} {Math.abs(todayIncomeChange)}% dari kemarin
-                </p>
-              )}
-            </CardContent>
-          </Card>
 
-          <Card className="shadow-md border-0">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-2">
-                <p className="text-xs text-gray-600">Pengeluaran Hari Ini</p>
-                <TrendingDown className="h-4 w-4 text-orange-500" />
+              {/* Progress bar */}
+              <div className="mb-4 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                <div
+                  className="h-full rounded-full bg-rose-500 transition-all"
+                  style={{ width: `${(activation!.completedSteps / activation!.totalSteps) * 100}%` }}
+                />
               </div>
-              <p className="text-lg font-bold text-gray-900">
-                {isLoadingData ? '...' : formatCurrency(todayExpenses)}
-              </p>
+
+              <div className="space-y-1">
+                {onboardingSteps.map((step) => (
+                  <button
+                    key={step.id}
+                    onClick={step.onClick}
+                    className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-gray-50 active:scale-[0.99]"
+                  >
+                    {step.done ? (
+                      <CheckCircle2 className="h-6 w-6 flex-shrink-0 text-green-500" />
+                    ) : (
+                      <Circle className="h-6 w-6 flex-shrink-0 text-gray-300" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={`text-sm font-medium ${
+                          step.done ? 'text-gray-400 line-through' : 'text-gray-900'
+                        }`}
+                      >
+                        {step.title}
+                      </p>
+                      {!step.done && (
+                        <p className="text-xs text-gray-500">{step.description}</p>
+                      )}
+                    </div>
+                    {!step.done && <ArrowRight className="h-4 w-4 flex-shrink-0 text-gray-300" />}
+                  </button>
+                ))}
+              </div>
+
+              <Button
+                onClick={() => navigate('/pos')}
+                className="mt-4 w-full bg-rose-500 hover:bg-rose-600"
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Buat Pesanan Pertama
+              </Button>
             </CardContent>
           </Card>
-        </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <Card className="shadow-md border-0">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <p className="text-xs text-gray-600">Pendapatan Hari Ini</p>
+                  <TrendingUp className="h-4 w-4 text-green-500" />
+                </div>
+                <p className="text-lg font-bold text-gray-900">
+                  {isLoadingData ? '...' : formatCurrency(todayIncome)}
+                </p>
+                {todayIncomeChange !== 0 && (
+                  <p className={`text-xs mt-1 ${todayIncomeChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {todayIncomeChange >= 0 ? '↑' : '↓'} {Math.abs(todayIncomeChange)}% dari kemarin
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-md border-0">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <p className="text-xs text-gray-600">Pengeluaran Hari Ini</p>
+                  <TrendingDown className="h-4 w-4 text-orange-500" />
+                </div>
+                <p className="text-lg font-bold text-gray-900">
+                  {isLoadingData ? '...' : formatCurrency(todayExpenses)}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Quick Actions Grid */}
         <div className="grid grid-cols-3 gap-3 mt-6">

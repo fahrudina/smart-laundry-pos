@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useCreateOrderWithNotifications as useCreateOrder, UnitItem } from '@/hooks/useOrdersWithNotifications';
 import { toast } from 'sonner';
-import { useServices } from '@/hooks/useServices';
+import { useServices, useSeedDefaultServices } from '@/hooks/useServices';
 import { EnhancedOrderItem } from './EnhancedServiceSelector';
 import { DynamicOrderItemData } from './DynamicOrderItem';
 import { EnhancedServiceSelectionPopup } from './EnhancedServiceSelectionPopup';
@@ -60,6 +60,7 @@ export const EnhancedLaundryPOS = () => {
 
   // Load services from our service management system
   const { data: servicesData, isLoading: servicesLoading, error: servicesError } = useServices();
+  const seedDefaultServices = useSeedDefaultServices();
 
   // Helper function to calculate finish date based on service duration
   const calculateFinishDate = (service: any, startDate: Date = dropOffDate) => {
@@ -686,19 +687,29 @@ export const EnhancedLaundryPOS = () => {
       {servicesData && servicesData.length === 0 && (
         <Card className="border-orange-200 bg-orange-50">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h3 className="font-medium text-orange-800">Belum ada layanan yang dikonfigurasi</h3>
                 <p className="text-sm text-orange-600">
-                  Anda perlu membuat layanan terlebih dahulu sebelum menerima pesanan.
+                  Tambahkan layanan untuk mulai menerima pesanan. Muat contoh layanan untuk langsung mulai.
                 </p>
               </div>
-              <Button 
-                onClick={() => navigate('/services')}
-                className="bg-orange-600 hover:bg-orange-700"
-              >
-                Kelola Layanan
-              </Button>
+              <div className="flex flex-shrink-0 gap-2">
+                <Button
+                  onClick={() => seedDefaultServices.mutate()}
+                  disabled={seedDefaultServices.isPending}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  {seedDefaultServices.isPending ? 'Memuat...' : 'Muat Contoh Layanan'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/services')}
+                  className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                >
+                  Kelola Layanan
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -32,3 +32,4 @@ public/favicon-generator.html
 
 
 research/
+.env*

@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: (credential: string) => Promise<void>;
   signOut: () => Promise<void>;
   signUp: (email: string, password: string, fullName?: string, phone?: string, role?: 'staff' | 'laundry_owner', storeData?: { name: string; address?: string; phone?: string; }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
@@ -44,6 +45,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast({
         title: "Success",
         description: "Signed in successfully!",
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signInWithGoogle = async (credential: string) => {
+    try {
+      setLoading(true);
+      const user = await authService.signInWithGoogle(credential);
+      setUser(user);
+
+      toast({
+        title: "Success",
+        description: "Signed in with Google!",
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
@@ -131,6 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     loading,
     signIn,
+    signInWithGoogle,
     signOut,
     signUp,
     changePassword,

@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useServices, useCreateService, useUpdateService, useDeleteService, ServiceFormData as ServiceFormType } from '@/hooks/useServices';
+import { useServices, useCreateService, useUpdateService, useDeleteService, useSeedDefaultServices, ServiceFormData as ServiceFormType } from '@/hooks/useServices';
 import { SectionLoading } from '@/components/ui/loading-spinner';
 
 interface ServiceFormData {
@@ -53,59 +53,12 @@ const ServiceManagement = () => {
   const createServiceMutation = useCreateService();
   const updateServiceMutation = useUpdateService();
   const deleteServiceMutation = useDeleteService();
+  const seedDefaultServices = useSeedDefaultServices();
 
-  const isProcessing = createServiceMutation.isPending || updateServiceMutation.isPending || deleteServiceMutation.isPending;
+  const isProcessing = createServiceMutation.isPending || updateServiceMutation.isPending || deleteServiceMutation.isPending || seedDefaultServices.isPending;
 
-  // Function to seed initial services
-  const seedInitialServices = async () => {
-    const initialServices = [
-      {
-        name: 'Cuci Setrika Regular',
-        description: 'Cuci - Pengeringan - Setrika - Packing',
-        category: 'wash' as const,
-        unit_price: 18000,
-        kilo_price: 6000,
-        supports_unit: true,
-        supports_kilo: true,
-        duration_value: 2,
-        duration_unit: 'days' as const,
-      },
-      {
-        name: 'Express Wash',
-        description: 'Pencucian cepat dalam 24 jam',
-        category: 'wash' as const,
-        unit_price: 25000,
-        kilo_price: 8000,
-        supports_unit: true,
-        supports_kilo: true,
-        duration_value: 1,
-        duration_unit: 'days' as const,
-      },
-      {
-        name: 'Setrika Saja',
-        description: 'Layanan setrika dan pressing saja',
-        category: 'ironing' as const,
-        unit_price: 5000,
-        kilo_price: 3000,
-        supports_unit: true,
-        supports_kilo: true,
-        duration_value: 4,
-        duration_unit: 'hours' as const,
-      },
-    ];
-
-    try {
-      for (const service of initialServices) {
-        await createServiceMutation.mutateAsync(service);
-      }
-      toast({
-        title: "Berhasil",
-        description: "Layanan awal berhasil dibuat",
-      });
-    } catch (error) {
-      console.error('Error seeding services:', error);
-    }
-  };
+  // Seed the shared default starter services (see DEFAULT_SERVICES in useServices).
+  const seedInitialServices = () => seedDefaultServices.mutate();
 
   const getCategoryColor = (category: string) => {
     switch (category) {

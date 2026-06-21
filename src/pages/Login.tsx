@@ -11,6 +11,7 @@ import { Loader2, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { PageLoading } from '@/components/ui/loading-spinner';
+import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 
 interface LoginForm {
   email: string;
@@ -309,6 +310,9 @@ export const Login: React.FC = () => {
               </form>
             </TabsContent>
           </Tabs>
+
+          {/* Google sign-in (shared by both tabs; hidden when not configured) */}
+          <GoogleLoginButton />
         </CardContent>
         <CardFooter className="text-center">
           <p className="text-sm text-gray-600">
