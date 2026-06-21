@@ -25,7 +25,7 @@ ALTER TABLE public.stores ADD COLUMN wa_use_store_number BOOLEAN NOT NULL DEFAUL
 2. **Phone Number Check**: The system verifies that the store has a valid phone number set
 3. **Automatic Sender Selection**: 
    - If `wa_use_store_number = true` AND store phone is set → Use store phone as sender
-   - If `wa_use_store_number = false` OR store phone is empty → Use default sender
+   - If `wa_use_store_number = false` OR store phone is empty → Use default sender from `VITE_WA_DEFAULT_SENDER` environment variable (default: `6282125458657`)
 
 ### Implementation Architecture
 
@@ -87,8 +87,15 @@ static getWhatsAppSender(storeInfo: StoreInfo): string | undefined {
       storeInfo.phone !== 'Nomor telepon belum diset') {
     return storeInfo.phone;
   }
-  return undefined;
+  return defaultSender; // From environment variable
 }
+```
+
+#### 6. WhatsApp Configuration (`src/lib/whatsapp-config.ts`)
+- Exports default sender phone number from environment variable:
+
+```typescript
+export const defaultSender = import.meta.env.VITE_WA_DEFAULT_SENDER || '6282125458657';
 ```
 
 #### 6. React Hook (`src/hooks/useWhatsApp.ts`)
@@ -98,10 +105,30 @@ Automatically determines sender phone based on store configuration:
 const fromNumber = orderData.storeInfo?.wa_use_store_number && 
                    orderData.storeInfo?.phone
   ? orderData.storeInfo.phone
-  : undefined;
+  : defaultSender; // Use default sender when store number is not used
 
 await whatsAppService.notifyOrderCreated(phoneNumber, orderData, fromNumber);
 ```
+
+## Environment Configuration
+
+### Default Sender Phone Number
+The default sender phone number is configured via the `VITE_WA_DEFAULT_SENDER` environment variable.
+
+**Location**: `.env` file (or `.env.example` / `.env.whatsapp.example` for templates)
+
+```bash
+# Default sender phone number (used when wa_use_store_number is false)
+# Format: Country code + phone number (without '+' sign)
+VITE_WA_DEFAULT_SENDER=6282125458657
+```
+
+**Default Value**: If not set, defaults to `6282125458657`
+
+**When Used**: 
+- When `wa_use_store_number = false` in the database
+- When store phone is not set or invalid
+- As a reliable fallback for all WhatsApp notifications
 
 ## Enabling the Feature
 
@@ -158,9 +185,10 @@ FROM public.stores;
 
 ### Fallback Behavior
 The system gracefully handles edge cases:
-- **No phone set**: Falls back to default sender
-- **Feature disabled**: Uses default sender
-- **Invalid phone**: Falls back to default sender
+- **No phone set**: Uses default sender from `VITE_WA_DEFAULT_SENDER`
+- **Feature disabled**: Uses default sender from `VITE_WA_DEFAULT_SENDER`
+- **Invalid phone**: Uses default sender from `VITE_WA_DEFAULT_SENDER`
+- **Environment variable not set**: Defaults to `6282125458657`
 
 ### Security
 - Credentials are handled server-side in production (Vercel serverless function)
@@ -196,6 +224,12 @@ Potential improvements for future versions:
 - **Check**: Verify `wa_use_store_number = true` in database
 - **Check**: Confirm store phone number is set and valid
 - **Check**: Review console logs for sender determination logic
+- **Note**: If `wa_use_store_number = false`, using default sender is expected behavior
+
+### Want to change the default sender
+- **Update**: Set `VITE_WA_DEFAULT_SENDER` in your `.env` file
+- **Format**: Use international format without '+' (e.g., `6282125458657`)
+- **Restart**: Rebuild the application for changes to take effect
 
 ### Messages failing to send
 - **Check**: Phone number format is correct (international format)
@@ -216,6 +250,7 @@ For issues or questions:
 
 ---
 
-**Last Updated**: November 15, 2024
+**Last Updated**: November 21, 2024
 **Migration Version**: 20251115000000, 20251115000001
 **Feature Status**: ✅ Production Ready
+**Default Sender**: Configurable via `VITE_WA_DEFAULT_SENDER` (default: `6282125458657`)

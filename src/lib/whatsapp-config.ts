@@ -37,6 +37,12 @@ export const whatsAppFeatures = {
 };
 
 /**
+ * Default sender phone number
+ * Used when wa_use_store_number is false or store phone is not set
+ */
+export const defaultSender = import.meta.env.VITE_WA_DEFAULT_SENDER || '6282125458657';
+
+/**
  * Validate WhatsApp configuration
  * In production, credentials are handled server-side, so we only validate baseUrl
  */
