@@ -170,6 +170,13 @@ export const HomePage: React.FC = () => {
     }
   ].filter(action => !action.hidden);
 
+  // Grid excludes "new-order" (promoted to a full-width hero button) and, for
+  // new stores, hides the disabled "coming soon" tiles so the grid only shows
+  // functional actions.
+  const gridActions = quickActions.filter(
+    (action) => action.id !== 'new-order' && !(showOnboarding && action.disabled)
+  );
+
   const bottomNavItems = [
     {
       id: 'home',
@@ -205,7 +212,7 @@ export const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Coachmark */}
-      <Coachmark open={shouldShowCoachmark} onClose={hideCoachmark} />
+      <Coachmark open={shouldShowCoachmark} onClose={hideCoachmark} onStart={() => navigate('/pos')} />
       
       {/* Header with coral/salmon background */}
       <div className="bg-gradient-to-r from-rose-400 to-rose-500 text-white px-4 pt-8 pb-12 rounded-b-3xl shadow-lg">
@@ -324,9 +331,20 @@ export const HomePage: React.FC = () => {
           </div>
         )}
 
+        {/* Primary action: full-width hero. New stores use the checklist CTA instead. */}
+        {!showOnboarding && (
+          <button
+            onClick={() => navigate('/pos')}
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-rose-500 px-4 py-4 font-semibold text-white shadow-md transition-shadow hover:shadow-lg active:scale-[0.99]"
+          >
+            <Plus className="h-5 w-5" />
+            Buat Pesanan Baru
+          </button>
+        )}
+
         {/* Quick Actions Grid */}
         <div className="grid grid-cols-3 gap-3 mt-6">
-          {quickActions.map((action) => (
+          {gridActions.map((action) => (
             <button
               key={action.id}
               onClick={action.onClick}
