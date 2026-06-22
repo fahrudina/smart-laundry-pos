@@ -16,7 +16,7 @@ const getReceiptBaseUrl = (): string => {
   }
   
   // Fallback for server-side rendering or build time
-  return 'https://smart-laundry-pos.vercel.app';
+  return 'https://pos.fahrudina.my.id';
 };
 
 /**
