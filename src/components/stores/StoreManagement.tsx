@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useStore } from '@/contexts/StoreContext';
 import { CreateStoreDialog } from './CreateStoreDialog';
+import { StoreDetailsCard } from './StoreDetailsCard';
 import { StoreStaffManagement } from './StoreStaffManagement';
 import { StoreSettingsCard } from './StoreSettingsCard';
 import { Building2, Users, TrendingUp, Package } from 'lucide-react';
@@ -122,6 +123,7 @@ export const StoreManagement: React.FC = () => {
 
       {selectedStore && (
         <div className="space-y-4 sm:space-y-6">
+          <StoreDetailsCard />
           <StoreStaffManagement store={selectedStore} />
           <StoreSettingsCard />
         </div>
