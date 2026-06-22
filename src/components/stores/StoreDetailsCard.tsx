@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { authService } from '@/services/authService';
 import { useStore } from '@/contexts/StoreContext';
 import { Store, Save } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -76,25 +76,11 @@ export const StoreDetailsCard: React.FC = () => {
 
     try {
       setSaving(true);
-      const { error } = await supabase
-        .from('stores')
-        .update({
-          name: form.name.trim(),
-          address: form.address.trim() || null,
-          phone: form.phone.trim() || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', currentStore.store_id);
-
-      if (error) {
-        console.error('Error updating store details:', error);
-        toast({
-          title: 'Error',
-          description: 'Gagal menyimpan detail toko',
-          variant: 'destructive',
-        });
-        return;
-      }
+      await authService.updateStore(currentStore.store_id, {
+        name: form.name.trim(),
+        address: form.address.trim() || null,
+        phone: form.phone.trim() || null,
+      });
 
       await refreshStores();
       toast({

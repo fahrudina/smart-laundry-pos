@@ -324,6 +324,29 @@ class AuthService {
     return data;
   }
 
+  async updateStore(
+    storeId: string,
+    storeData: { name: string; address?: string | null; phone?: string | null }
+  ): Promise<void> {
+    if (!this.isAuthenticated()) {
+      throw new Error('User not authenticated');
+    }
+
+    // Uses a SECURITY DEFINER RPC because RLS blocks direct stores updates under
+    // the app's custom auth (auth.uid() is null).
+    const { error } = await supabase.rpc('update_store', {
+      user_id: this.session!.user.id,
+      target_store_id: storeId,
+      store_name: storeData.name,
+      store_address: storeData.address ?? null,
+      store_phone: storeData.phone ?? null,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
+
   async assignStaffToStore(staffUserId: string, storeId: string): Promise<boolean> {
     if (!this.isAuthenticated()) {
       throw new Error('User not authenticated');
