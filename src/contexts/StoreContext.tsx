@@ -71,8 +71,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (persistedStoreId) {
         // Check if persisted store is still accessible
         targetStore = stores.find(s => s.store_id === persistedStoreId) || null;
-        if (targetStore) {
-        } else {
+        if (!targetStore) {
           persistStoreId(null);
         }
       }
@@ -83,9 +82,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // 3. First available store
       if (stores.length > 0) {
         setCurrentStore(currentStoreState => {
-          // Priority 1: Keep current store if it's still in the list
-          if (currentStoreState && stores.find(s => s.store_id === currentStoreState.store_id)) {
-            return currentStoreState;
+          // Priority 1: Keep current store if it's still in the list. Use the
+          // freshly fetched record (not the stale state) so edits to the store's
+          // name/address/phone are reflected everywhere after a refresh.
+          const refreshedCurrent = currentStoreState
+            ? stores.find(s => s.store_id === currentStoreState.store_id)
+            : undefined;
+          if (refreshedCurrent) {
+            return refreshedCurrent;
           }
           
           // Priority 2: Use persisted store if available
