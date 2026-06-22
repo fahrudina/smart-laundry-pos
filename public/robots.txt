@@ -13,13 +13,20 @@ Allow: /
 User-agent: *
 Allow: /
 Allow: /login
+Allow: /install
+Disallow: /home
 Disallow: /pos
 Disallow: /order-history
+Disallow: /customers
 Disallow: /services
 Disallow: /stores
+Disallow: /expenses
+Disallow: /revenue-report
+Disallow: /whatsapp-broadcast
+Disallow: /receipt/
 
 # Sitemap
-Sitemap: https://smart-laundry-pos.vercel.app/sitemap.xml
+Sitemap: https://pos.fahrudina.my.id/sitemap.xml
 
 # Contact Information
 # Email: fahrudinjaya@gmail.com

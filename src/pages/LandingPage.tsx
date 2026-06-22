@@ -111,7 +111,7 @@ export const LandingPage: React.FC = () => {
                 <span className="text-white font-bold text-base sm:text-lg">SL</span>
               </div>
               <div className="min-w-0">
-                <h1 className="text-base sm:text-xl font-bold text-gray-900 truncate">Smart Laundry POS</h1>
+                <span className="block text-base sm:text-xl font-bold text-gray-900 truncate">Smart Laundry POS</span>
                 <p className="text-xs text-gray-500 hidden sm:block">Sistem Kasir Laundry Profesional</p>
               </div>
             </div>
@@ -146,7 +146,7 @@ export const LandingPage: React.FC = () => {
               Aplikasi Web Progresif
             </Badge>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              ✨ Solusi 
+              Aplikasi Kasir Laundry Modern
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
                 {" "}Smart Laundry POS
               </span>
