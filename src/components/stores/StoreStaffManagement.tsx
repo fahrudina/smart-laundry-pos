@@ -193,7 +193,7 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
             <Users className="h-5 w-5 flex-shrink-0" />
             <span className="truncate">Manajemen Staf - {store.store_name}</span>
           </CardTitle>
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-shrink-0 sm:flex-wrap">
+          <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-shrink-0 sm:flex-wrap">
             <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="w-full sm:w-auto">
