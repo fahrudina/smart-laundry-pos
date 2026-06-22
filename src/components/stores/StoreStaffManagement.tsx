@@ -188,15 +188,15 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Manajemen Staf - {store.store_name}
-          </div>
-          <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="flex min-w-0 items-center gap-2 text-lg sm:text-2xl">
+            <Users className="h-5 w-5 flex-shrink-0" />
+            <span className="truncate">Manajemen Staf - {store.store_name}</span>
+          </CardTitle>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-shrink-0 sm:flex-wrap">
             <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   Tugaskan yang Ada
                 </Button>
               </DialogTrigger>
@@ -241,7 +241,7 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
 
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm">
+                <Button size="sm" className="w-full sm:w-auto">
                   <UserPlus className="h-4 w-4 mr-2" />
                   Tambah Staf Baru
                 </Button>
@@ -306,7 +306,7 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
               </DialogContent>
             </Dialog>
           </div>
-        </CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         {loading && staff.length === 0 ? (
