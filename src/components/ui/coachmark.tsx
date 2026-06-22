@@ -11,9 +11,8 @@ import { Button } from '@/components/ui/button';
 import { 
   Plus, 
   Users, 
-  ShoppingCart, 
-  BarChart3, 
-  Wrench,
+  ShoppingCart,
+  BarChart3,
   Home,
   ChevronLeft,
   ChevronRight,
@@ -31,12 +30,14 @@ interface CoachmarkStep {
 interface CoachmarkProps {
   open: boolean;
   onClose: () => void;
+  /** Called when the user finishes the tour via the final action CTA. */
+  onStart?: () => void;
 }
 
 const coachmarkSteps: CoachmarkStep[] = [
   {
     title: 'Selamat Datang di Smart Laundry POS! 🎉',
-    description: 'Kami akan memandu Anda melalui fitur-fitur utama aplikasi untuk membantu Anda memulai dengan mudah. Mari kita mulai!',
+    description: 'Kami akan memandu Anda melalui fitur-fitur utama. Di beranda ada checklist "Mulai Cepat" yang memandu Anda menyiapkan toko langkah demi langkah. Mari kita mulai!',
     icon: Home,
     iconColor: 'text-rose-500',
     iconBgColor: 'bg-rose-100'
@@ -70,17 +71,17 @@ const coachmarkSteps: CoachmarkStep[] = [
     iconBgColor: 'bg-orange-100'
   },
   {
-    title: 'Kelola Layanan (Khusus Pemilik)',
-    description: 'Sebagai pemilik toko, Anda dapat menambah dan mengedit layanan laundry, mengatur harga, dan mengelola kategori layanan dari menu "Layanan".',
-    icon: Wrench,
-    iconColor: 'text-indigo-500',
-    iconBgColor: 'bg-indigo-100'
+    title: 'Siap Memulai? 🚀',
+    description: 'Ikuti checklist "Mulai Cepat" di beranda untuk menyiapkan toko, atau langsung buat pesanan pertama Anda sekarang.',
+    icon: Plus,
+    iconColor: 'text-rose-500',
+    iconBgColor: 'bg-rose-100'
   }
 ];
 
 const COACHMARK_STORAGE_KEY = 'smart-laundry-coachmark-shown';
 
-export const Coachmark: React.FC<CoachmarkProps> = ({ open, onClose }) => {
+export const Coachmark: React.FC<CoachmarkProps> = ({ open, onClose, onStart }) => {
   const [currentStep, setCurrentStep] = useState(0);
 
   const isLastStep = currentStep === coachmarkSteps.length - 1;
@@ -105,6 +106,8 @@ export const Coachmark: React.FC<CoachmarkProps> = ({ open, onClose }) => {
     localStorage.setItem(COACHMARK_STORAGE_KEY, 'true');
     onClose();
     setCurrentStep(0);
+    // Drive the user straight into their first task instead of dead-ending.
+    onStart?.();
   };
 
   const handleSkip = () => {
@@ -178,7 +181,8 @@ export const Coachmark: React.FC<CoachmarkProps> = ({ open, onClose }) => {
               onClick={handleNext}
               className="flex-1 bg-rose-500 hover:bg-rose-600"
             >
-              {isLastStep ? 'Selesai' : 'Lanjut'}
+              {isLastStep && <Plus className="h-4 w-4 mr-1" />}
+              {isLastStep ? 'Buat Pesanan Pertama' : 'Lanjut'}
               {!isLastStep && <ChevronRight className="h-4 w-4 ml-1" />}
             </Button>
           </div>
