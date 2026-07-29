@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { whatsAppService } from '@/integrations/whatsapp';
 import { whatsAppConfig, whatsAppFeatures, validateWhatsAppConfig } from '@/lib/whatsapp-config';
 import { useToast } from '@/hooks/use-toast';
-import type { NotificationResult, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData, PaymentConfirmationData } from '@/integrations/whatsapp/types';
+import type { NotificationResult, OrderCreatedData, OrderReadyForPickupData, PaymentConfirmationData } from '@/integrations/whatsapp/types';
 
 /**
  * Custom hook for WhatsApp integration
@@ -119,44 +119,6 @@ export const useWhatsApp = () => {
       };
     }
   };
-
-  /**
-   * Send order completed notification
-   */
-  // const notifyOrderCompleted = async (
-  //   phoneNumber: string,
-  //   orderData: OrderCompletedData
-  // ): Promise<NotificationResult> => {
-  //   if (!whatsAppFeatures.notifyOnOrderCompleted) {
-  //     return { success: false, error: 'Feature disabled' };
-  //   }
-
-  //   if (whatsAppFeatures.developmentMode) {
-  //     return { success: true, messageId: 'dev-mode-id' };
-  //   }
-
-  //   if (!isConfigured) {
-  //     console.warn('WhatsApp not configured, skipping order completed notification');
-  //     return { success: false, error: 'Service not configured' };
-  //   }
-
-  //   try {
-  //     const result = await whatsAppService.notifyOrderCompleted(phoneNumber, orderData);
-      
-  //     if (result.success) {
-  //     } else {
-  //       console.error('Failed to send order completed notification:', result.error);
-  //     }
-      
-  //     return result;
-  //   } catch (error) {
-  //     console.error('Error sending order completed notification:', error);
-  //     return {
-  //       success: false,
-  //       error: error instanceof Error ? error.message : 'Unknown error'
-  //     };
-  //   }
-  // };
 
   /**
    * Send order ready for pickup notification
@@ -310,7 +272,6 @@ export const useWhatsApp = () => {
     isTestingConnection,
     testConnection,
     notifyOrderCreated,
-   // notifyOrderCompleted,
     notifyOrderReadyForPickup,
     notifyPaymentConfirmation,
     sendCustomMessage,
