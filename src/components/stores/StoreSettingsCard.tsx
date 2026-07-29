@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
+import { authService } from '@/services/authService';
 import { QrCode, Settings, Save, Star } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
@@ -73,24 +74,14 @@ export const StoreSettingsCard: React.FC = () => {
 
     try {
       setSaving(true);
-      const { error } = await supabase
-        .from('stores')
-        .update({
-          enable_qr: settings.enable_qr,
-          enable_points: settings.enable_points,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', currentStore.store_id);
-
-      if (error) {
-        console.error('Error saving store settings:', error);
-        toast({
-          title: "Error",
-          description: "Gagal menyimpan pengaturan toko",
-          variant: "destructive",
-        });
-        return;
-      }
+      // Uses a SECURITY DEFINER RPC because RLS blocks direct stores
+      // updates under the app's custom auth (auth.uid() is null) - a
+      // direct .update() here previously reported success while silently
+      // persisting nothing (same cause as update_store, fixed in 64cf15d).
+      await authService.setStoreFeatureFlags(currentStore.store_id, {
+        enableQr: settings.enable_qr,
+        enablePoints: settings.enable_points,
+      });
 
       toast({
         title: "Pengaturan Tersimpan",
