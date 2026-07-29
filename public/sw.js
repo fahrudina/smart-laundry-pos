@@ -40,6 +40,16 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - serve from cache when offline with better offline support
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Never cache API calls - they're never safe to serve stale (e.g. WhatsApp
+  // sender registration status polling would otherwise get stuck on the
+  // first cached response forever).
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   // Handle navigation requests with offline fallback
   if (event.request.mode === 'navigate') {
     event.respondWith(
