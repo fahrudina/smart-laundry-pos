@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -63,5 +64,10 @@ export default defineConfig(({ mode }) => {
   // PWA Configuration
   define: {
     __PWA_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
+  },
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
+    setupFiles: ['src/test/setup.ts'],
   },
 }});

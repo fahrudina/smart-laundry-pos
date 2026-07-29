@@ -1,6 +1,6 @@
 import { WhatsAppClient } from './client';
 import { messageTemplates, MessageBuilder } from './templates';
-import { WhatsAppConfig, NotificationResult, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData, PaymentConfirmationData } from './types';
+import { WhatsAppConfig, NotificationResult, OrderCreatedData, OrderReadyForPickupData, PaymentConfirmationData } from './types';
 
 /**
  * WhatsApp Notification Service
@@ -89,41 +89,6 @@ export class WhatsAppNotificationService {
       };
     }
   }
-
-  /**
-   * Send order completion notification
-   */
-  // async notifyOrderCompleted(
-  //   phoneNumber: string,
-  //   orderData: OrderCompletedData
-  // ): Promise<NotificationResult> {
-  //   if (!this.isConfigured()) {
-  //     console.warn('WhatsApp service not configured, skipping notification');
-  //     return { success: false, error: 'Service not configured' };
-  //   }
-
-  //   try {
-  //     const formattedPhone = WhatsAppClient.formatPhoneNumber(phoneNumber);
-  //     const message = messageTemplates.orderCompleted(orderData);
-
-  //     const response = await this.client.sendMessage({
-  //       to: formattedPhone,
-  //       message,
-  //     });
-
-  //     return {
-  //       success: response.success,
-  //       messageId: response.id,
-  //       error: response.error,
-  //     };
-  //   } catch (error) {
-  //     console.error('Failed to send order completed notification:', error);
-  //     return {
-  //       success: false,
-  //       error: error instanceof Error ? error.message : 'Unknown error',
-  //     };
-  //   }
-  // }
 
   /**
    * Send order ready for pickup notification

@@ -347,6 +347,58 @@ class AuthService {
     }
   }
 
+  async setStoreWaSender(storeId: string, senderId: string | null): Promise<void> {
+    if (!this.isAuthenticated()) {
+      throw new Error('User not authenticated');
+    }
+
+    const { error } = await supabase.rpc('set_store_wa_sender', {
+      user_id: this.session!.user.id,
+      target_store_id: storeId,
+      p_wa_sender_id: senderId,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async setStoreWaUseStoreNumber(storeId: string, enabled: boolean): Promise<void> {
+    if (!this.isAuthenticated()) {
+      throw new Error('User not authenticated');
+    }
+
+    const { error } = await supabase.rpc('set_store_wa_use_store_number', {
+      user_id: this.session!.user.id,
+      target_store_id: storeId,
+      p_enabled: enabled,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async setStoreFeatureFlags(
+    storeId: string,
+    flags: { enableQr: boolean; enablePoints: boolean }
+  ): Promise<void> {
+    if (!this.isAuthenticated()) {
+      throw new Error('User not authenticated');
+    }
+
+    const { error } = await supabase.rpc('set_store_feature_flags', {
+      user_id: this.session!.user.id,
+      target_store_id: storeId,
+      p_enable_qr: flags.enableQr,
+      p_enable_points: flags.enablePoints,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
+
   async assignStaffToStore(staffUserId: string, storeId: string): Promise<boolean> {
     if (!this.isAuthenticated()) {
       throw new Error('User not authenticated');

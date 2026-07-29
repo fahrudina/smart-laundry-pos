@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { whatsAppService } from '@/integrations/whatsapp';
 import { whatsAppConfig, whatsAppFeatures, validateWhatsAppConfig } from '@/lib/whatsapp-config';
 import { useToast } from '@/hooks/use-toast';
-import type { NotificationResult, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData, PaymentConfirmationData } from '@/integrations/whatsapp/types';
+import { WhatsAppDataHelper } from '@/integrations/whatsapp/data-helper';
+import type { NotificationResult, OrderCreatedData, OrderReadyForPickupData, PaymentConfirmationData } from '@/integrations/whatsapp/types';
 
 /**
  * Custom hook for WhatsApp integration
@@ -90,9 +91,9 @@ export const useWhatsApp = () => {
     }
 
     try {
-      // Determine sender phone number based on store configuration
-      const fromNumber = orderData.storeInfo?.wa_use_store_number && orderData.storeInfo?.phone
-        ? orderData.storeInfo.phone
+      // Determine sender based on store configuration
+      const fromNumber = orderData.storeInfo
+        ? WhatsAppDataHelper.getWhatsAppSender(orderData.storeInfo)
         : undefined;
 
       const result = await whatsAppService.notifyOrderCreated(phoneNumber, orderData, fromNumber);
@@ -121,44 +122,6 @@ export const useWhatsApp = () => {
   };
 
   /**
-   * Send order completed notification
-   */
-  // const notifyOrderCompleted = async (
-  //   phoneNumber: string,
-  //   orderData: OrderCompletedData
-  // ): Promise<NotificationResult> => {
-  //   if (!whatsAppFeatures.notifyOnOrderCompleted) {
-  //     return { success: false, error: 'Feature disabled' };
-  //   }
-
-  //   if (whatsAppFeatures.developmentMode) {
-  //     return { success: true, messageId: 'dev-mode-id' };
-  //   }
-
-  //   if (!isConfigured) {
-  //     console.warn('WhatsApp not configured, skipping order completed notification');
-  //     return { success: false, error: 'Service not configured' };
-  //   }
-
-  //   try {
-  //     const result = await whatsAppService.notifyOrderCompleted(phoneNumber, orderData);
-      
-  //     if (result.success) {
-  //     } else {
-  //       console.error('Failed to send order completed notification:', result.error);
-  //     }
-      
-  //     return result;
-  //   } catch (error) {
-  //     console.error('Error sending order completed notification:', error);
-  //     return {
-  //       success: false,
-  //       error: error instanceof Error ? error.message : 'Unknown error'
-  //     };
-  //   }
-  // };
-
-  /**
    * Send order ready for pickup notification
    */
   const notifyOrderReadyForPickup = async (
@@ -179,9 +142,9 @@ export const useWhatsApp = () => {
     }
 
     try {
-      // Determine sender phone number based on store configuration
-      const fromNumber = orderData.storeInfo?.wa_use_store_number && orderData.storeInfo?.phone
-        ? orderData.storeInfo.phone
+      // Determine sender based on store configuration
+      const fromNumber = orderData.storeInfo
+        ? WhatsAppDataHelper.getWhatsAppSender(orderData.storeInfo)
         : undefined;
 
       const result = await whatsAppService.notifyOrderReadyForPickup(phoneNumber, orderData, fromNumber);
@@ -225,9 +188,9 @@ export const useWhatsApp = () => {
     }
 
     try {
-      // Determine sender phone number based on store configuration
-      const fromNumber = orderData.storeInfo?.wa_use_store_number && orderData.storeInfo?.phone
-        ? orderData.storeInfo.phone
+      // Determine sender based on store configuration
+      const fromNumber = orderData.storeInfo
+        ? WhatsAppDataHelper.getWhatsAppSender(orderData.storeInfo)
         : undefined;
 
       const result = await whatsAppService.notifyPaymentConfirmation(phoneNumber, orderData, fromNumber);
@@ -310,7 +273,6 @@ export const useWhatsApp = () => {
     isTestingConnection,
     testConnection,
     notifyOrderCreated,
-   // notifyOrderCompleted,
     notifyOrderReadyForPickup,
     notifyPaymentConfirmation,
     sendCustomMessage,

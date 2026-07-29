@@ -33,6 +33,7 @@ export interface StoreInfo {
   enable_qr?: boolean;
   enable_points?: boolean;
   wa_use_store_number?: boolean;
+  wa_sender_id?: string | null;
 }
 
 export interface OrderItem {
@@ -92,5 +93,60 @@ export interface PaymentConfirmationData {
 export interface NotificationResult {
   success: boolean;
   messageId?: string;
+  error?: string;
+}
+
+// WhatsApp Sender Registration
+// DTOs for api/wa-sender-register.js, which proxies to the WhatsPoints
+// registration endpoints (POST /api/register-sender-qr,
+// POST /api/register-sender-code, GET /api/register-sender-status/:id,
+// GET /api/senders).
+
+export interface StartQRRegistrationResponse {
+  success: boolean;
+  session_id?: string;
+  qr_code?: string; // Base64-encoded PNG (no "data:" prefix)
+  message?: string;
+  error?: string;
+}
+
+export interface StartCodeRegistrationRequest {
+  phone_number: string;
+}
+
+export interface StartCodeRegistrationResponse {
+  success: boolean;
+  session_id?: string;
+  pairing_code?: string;
+  phone_number?: string;
+  message?: string;
+  error?: string;
+}
+
+/**
+ * WhatsPoints deletes a registration session the first time its terminal
+ * status (connected/failed) is read, so a session_id is only ever
+ * queryable once it reaches a terminal state - polling again afterwards
+ * returns 'not_found', indistinguishable from an expired session.
+ */
+export type SenderRegistrationStatus = 'pending' | 'connected' | 'failed' | 'not_found';
+
+export interface RegistrationStatusResponse {
+  success: boolean;
+  status: SenderRegistrationStatus;
+  sender_id?: string;
+  qr_code?: string;
+  message?: string;
+  error?: string;
+}
+
+export interface CheckSenderRequest {
+  phone_number: string;
+}
+
+export interface CheckSenderResponse {
+  success: boolean;
+  registered: boolean;
+  sender_id: string | null;
   error?: string;
 }

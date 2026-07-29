@@ -7,6 +7,7 @@ import { CreateStoreDialog } from './CreateStoreDialog';
 import { StoreDetailsCard } from './StoreDetailsCard';
 import { StoreStaffManagement } from './StoreStaffManagement';
 import { StoreSettingsCard } from './StoreSettingsCard';
+import { WhatsAppSenderCard } from './WhatsAppSenderCard';
 import { Building2, Users, TrendingUp, Package } from 'lucide-react';
 import { StoreWithOwnershipInfo } from '@/types/multi-tenant';
 
@@ -126,6 +127,7 @@ export const StoreManagement: React.FC = () => {
           <StoreDetailsCard />
           <StoreStaffManagement store={selectedStore} />
           <StoreSettingsCard />
+          <WhatsAppSenderCard />
         </div>
       )}
 
