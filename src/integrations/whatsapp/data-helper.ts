@@ -20,7 +20,7 @@ export class WhatsAppDataHelper {
 
       let query = supabase
         .from('stores')
-        .select('name, address, phone, enable_qr, enable_points, wa_use_store_number')
+        .select('name, address, phone, enable_qr, enable_points, wa_use_store_number, wa_sender_id')
         .eq('is_active', true);
 
       if (storeId) {
@@ -38,7 +38,7 @@ export class WhatsAppDataHelper {
         if (storeId && error.code === 'PGRST116') {
           const { data: fallbackData, error: fallbackError } = await supabase
             .from('stores')
-            .select('name, address, phone, enable_qr, enable_points, wa_use_store_number')
+            .select('name, address, phone, enable_qr, enable_points, wa_use_store_number, wa_sender_id')
             .eq('is_active', true)
             .limit(1)
             .single();
@@ -51,6 +51,7 @@ export class WhatsAppDataHelper {
               enable_qr: fallbackData.enable_qr,
               enable_points: fallbackData.enable_points,
               wa_use_store_number: fallbackData.wa_use_store_number,
+              wa_sender_id: fallbackData.wa_sender_id,
             };
           }
         }
@@ -70,6 +71,7 @@ export class WhatsAppDataHelper {
         enable_qr: data.enable_qr,
         enable_points: data.enable_points,
         wa_use_store_number: data.wa_use_store_number,
+        wa_sender_id: data.wa_sender_id,
       };
     } catch (error) {
       console.error('💥 Error fetching store info:', error);
@@ -102,6 +104,7 @@ export class WhatsAppDataHelper {
       enable_qr: storeData.enable_qr,
       enable_points: storeData.enable_points,
       wa_use_store_number: storeData.wa_use_store_number,
+      wa_sender_id: storeData.wa_sender_id,
     };
   }
 
@@ -177,15 +180,16 @@ export class WhatsAppDataHelper {
   }
 
   /**
-   * Get WhatsApp sender phone number based on store configuration
-   * Returns store phone if feature is enabled and phone is set, otherwise undefined
+   * Get the WhatsPoints sender ID to use as the "from" field, based on
+   * store configuration. wa_sender_id (not phone) is the source of truth:
+   * phone is only ever a display/contact field, and there's no guarantee
+   * it's actually a registered WhatsApp sender.
    */
   static getWhatsAppSender(storeInfo: StoreInfo): string | undefined {
-    // Check if feature is enabled and store phone exists
-    if (storeInfo.wa_use_store_number && storeInfo.phone && storeInfo.phone !== 'Nomor telepon belum diset') {
-      return storeInfo.phone;
+    if (storeInfo.wa_use_store_number && storeInfo.wa_sender_id) {
+      return storeInfo.wa_sender_id;
     }
-    // Return undefined to use default sender
+    // Return undefined to use the WhatsPoints default sender
     return undefined;
   }
 }

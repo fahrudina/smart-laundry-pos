@@ -33,6 +33,7 @@ export interface StoreInfo {
   enable_qr?: boolean;
   enable_points?: boolean;
   wa_use_store_number?: boolean;
+  wa_sender_id?: string | null;
 }
 
 export interface OrderItem {

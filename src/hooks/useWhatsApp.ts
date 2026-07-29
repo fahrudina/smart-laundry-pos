@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { whatsAppService } from '@/integrations/whatsapp';
 import { whatsAppConfig, whatsAppFeatures, validateWhatsAppConfig } from '@/lib/whatsapp-config';
 import { useToast } from '@/hooks/use-toast';
+import { WhatsAppDataHelper } from '@/integrations/whatsapp/data-helper';
 import type { NotificationResult, OrderCreatedData, OrderReadyForPickupData, PaymentConfirmationData } from '@/integrations/whatsapp/types';
 
 /**
@@ -90,9 +91,9 @@ export const useWhatsApp = () => {
     }
 
     try {
-      // Determine sender phone number based on store configuration
-      const fromNumber = orderData.storeInfo?.wa_use_store_number && orderData.storeInfo?.phone
-        ? orderData.storeInfo.phone
+      // Determine sender based on store configuration
+      const fromNumber = orderData.storeInfo
+        ? WhatsAppDataHelper.getWhatsAppSender(orderData.storeInfo)
         : undefined;
 
       const result = await whatsAppService.notifyOrderCreated(phoneNumber, orderData, fromNumber);
@@ -141,9 +142,9 @@ export const useWhatsApp = () => {
     }
 
     try {
-      // Determine sender phone number based on store configuration
-      const fromNumber = orderData.storeInfo?.wa_use_store_number && orderData.storeInfo?.phone
-        ? orderData.storeInfo.phone
+      // Determine sender based on store configuration
+      const fromNumber = orderData.storeInfo
+        ? WhatsAppDataHelper.getWhatsAppSender(orderData.storeInfo)
         : undefined;
 
       const result = await whatsAppService.notifyOrderReadyForPickup(phoneNumber, orderData, fromNumber);
@@ -187,9 +188,9 @@ export const useWhatsApp = () => {
     }
 
     try {
-      // Determine sender phone number based on store configuration
-      const fromNumber = orderData.storeInfo?.wa_use_store_number && orderData.storeInfo?.phone
-        ? orderData.storeInfo.phone
+      // Determine sender based on store configuration
+      const fromNumber = orderData.storeInfo
+        ? WhatsAppDataHelper.getWhatsAppSender(orderData.storeInfo)
         : undefined;
 
       const result = await whatsAppService.notifyPaymentConfirmation(phoneNumber, orderData, fromNumber);
