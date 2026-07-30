@@ -110,6 +110,24 @@ describe('runSenderPairing', () => {
     expect(persistSender).not.toHaveBeenCalled();
   });
 
+  it('stops polling once isCancelled reports true, without persisting', async () => {
+    const client = makeClient({
+      getRegistrationStatus: vi.fn().mockResolvedValue({ success: true, status: 'pending', qr_code: 'qr-base64' }),
+    });
+    const persistSender = vi.fn();
+
+    const result = await runSenderPairing(
+      '6281234567890',
+      'qr',
+      { client, persistSender, sleep: instantSleep, isCancelled: () => true },
+      () => {},
+    );
+
+    expect(result).toEqual({ phase: 'idle' });
+    expect(client.getRegistrationStatus).not.toHaveBeenCalled();
+    expect(persistSender).not.toHaveBeenCalled();
+  });
+
   it('gives up after the timeout if status never leaves pending', async () => {
     const client = makeClient({
       getRegistrationStatus: vi.fn().mockResolvedValue({ success: true, status: 'pending', qr_code: 'qr-base64' }),

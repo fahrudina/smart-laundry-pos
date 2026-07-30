@@ -38,6 +38,9 @@ export interface SenderFlowDeps {
   sleep?: (ms: number) => Promise<void>;
   pollIntervalMs?: number;
   timeoutMs?: number;
+  // Checked before each poll so a cancelled run (see useWhatsAppSenderRegistration's
+  // reset()) stops polling instead of running to completion in the background.
+  isCancelled?: () => boolean;
 }
 
 /**
@@ -113,6 +116,10 @@ export async function runSenderPairing(
 
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
+    if (deps.isCancelled?.()) {
+      return { phase: 'idle' };
+    }
+
     const status = await deps.client.getRegistrationStatus(sessionId);
 
     if (status.status === 'pending') {
@@ -172,6 +179,10 @@ export const useWhatsAppSenderRegistration = (storeId: string) => {
   const [state, setState] = useState<SenderFlowState>({ phase: 'idle' });
   const [verifying, setVerifying] = useState(false);
   const busyRef = useRef(false);
+  // Bumped on every reset() so an in-flight runFlow's state updates and
+  // persistSender writes become no-ops instead of clobbering whatever the
+  // user cancelled to (e.g. restarting pairing with a different number).
+  const runTokenRef = useRef(0);
 
   const persistSender = useCallback(
     (senderId: string | null) => authService.setStoreWaSender(storeId, senderId),
@@ -181,10 +192,25 @@ export const useWhatsAppSenderRegistration = (storeId: string) => {
   const runFlow = useCallback(async (phoneNumber: string, method: 'qr' | 'code') => {
     if (busyRef.current) return;
     busyRef.current = true;
+    const token = ++runTokenRef.current;
+    const isCancelled = () => token !== runTokenRef.current;
     try {
-      await runSenderPairing(phoneNumber, method, { client: WhatsAppSenderClient, persistSender }, setState);
+      await runSenderPairing(
+        phoneNumber,
+        method,
+        {
+          client: WhatsAppSenderClient,
+          persistSender: (senderId) => (isCancelled() ? Promise.resolve() : persistSender(senderId)),
+          isCancelled,
+        },
+        (nextState) => {
+          if (!isCancelled()) setState(nextState);
+        },
+      );
     } catch (error) {
-      setState({ phase: 'failed', error: error instanceof Error ? error.message : 'Unknown error' });
+      if (!isCancelled()) {
+        setState({ phase: 'failed', error: error instanceof Error ? error.message : 'Unknown error' });
+      }
     } finally {
       busyRef.current = false;
     }
@@ -202,7 +228,10 @@ export const useWhatsAppSenderRegistration = (storeId: string) => {
     }
   }, [persistSender]);
 
-  const reset = useCallback(() => setState({ phase: 'idle' }), []);
+  const reset = useCallback(() => {
+    runTokenRef.current += 1;
+    setState({ phase: 'idle' });
+  }, []);
 
   return {
     ...state,
