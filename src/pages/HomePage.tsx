@@ -5,9 +5,12 @@ import { useTodayExpenses } from '@/hooks/useRevenue';
 import { useActivation } from '@/hooks/useActivation';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Coachmark, useCoachmark } from '@/components/ui/coachmark';
+import { MobileHomeView } from '@/components/home/MobileHomeView';
 import {
   Building2,
   Plus,
@@ -21,16 +24,24 @@ import {
   TrendingDown,
   Home as HomeIcon,
   ShoppingCart,
-  BarChart3,
-  Settings,
+  History,
   CheckCircle2,
   Circle,
   ArrowRight
 } from 'lucide-react';
 
+const getGreeting = (hour: number) => {
+  if (hour < 10) return 'Selamat pagi';
+  if (hour < 15) return 'Selamat siang';
+  if (hour < 18) return 'Selamat sore';
+  return 'Selamat malam';
+};
+
 export const HomePage: React.FC = () => {
   usePageTitle('Beranda - Smart Laundry POS');
   const { currentStore, isOwner } = useStore();
+  const { user } = useAuth();
+  const isMobile = useIsMobile();
   const { metrics, loading } = useDashboard();
   const { data: todayExpensesData, isLoading: loadingExpenses } = useTodayExpenses();
   const { data: activation } = useActivation();
@@ -192,22 +203,53 @@ export const HomePage: React.FC = () => {
       active: false,
       onClick: () => navigate('/pos')
     },
-    {
-      id: 'reports',
-      title: 'Laporan',
-      icon: BarChart3,
-      active: false,
-      onClick: () => navigate('/order-history')
-    },
+    isOwner
+      ? {
+          id: 'reports',
+          title: 'Laporan',
+          icon: TrendingUp,
+          active: false,
+          onClick: () => navigate('/revenue-report')
+        }
+      : {
+          id: 'reports',
+          title: 'Riwayat',
+          icon: History,
+          active: false,
+          onClick: () => navigate('/order-history')
+        },
     {
       id: 'settings',
-      title: 'Pengaturan',
-      icon: Settings,
+      title: 'Toko',
+      icon: Building2,
       active: false,
       onClick: () => navigate('/stores'),
       hidden: !isOwner
     }
   ].filter(item => !item.hidden);
+
+  if (isMobile) {
+    return (
+      <MobileHomeView
+        greeting={getGreeting(new Date().getHours())}
+        greetingName={user?.full_name?.split(' ')[0] || currentStore.store_name}
+        storeName={currentStore.store_name}
+        storeAddress={currentStore.store_address}
+        isLoadingData={isLoadingData}
+        todayIncome={todayIncome}
+        todayIncomeChange={todayIncomeChange}
+        todayExpenses={todayExpenses}
+        formatCurrency={formatCurrency}
+        showOnboarding={showOnboarding}
+        onboardingSteps={onboardingSteps}
+        completedSteps={activation?.completedSteps ?? 0}
+        totalSteps={activation?.totalSteps ?? 1}
+        onCreateOrder={() => navigate('/pos')}
+        gridActions={gridActions}
+        bottomNavItems={bottomNavItems}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
