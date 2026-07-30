@@ -1,0 +1,300 @@
+/*
+  Design language for the public landing page only (scoped under .tk-page).
+  Signature idea: the page is built out of the laundry claim ticket — the
+  perforated duplicate stub every customer gets handed at the counter.
+  Perforation dividers, torn-edge stubs, ink-stamp marks and monospace
+  ticket numerals recur through every section instead of generic
+  gradient/glassmorphism panels. This intentionally does not touch the
+  app-wide --primary/--background tokens in src/index.css, which the
+  authenticated POS UI still relies on.
+*/
+
+.tk-page {
+  --tk-paper: #f5f0e4;
+  --tk-paper-soft: #efe6d2;
+  --tk-carbon: #e8b9bb;
+  --tk-carbon-deep: #c96a6f;
+  --tk-carbon-rgb: 201, 106, 111;
+  --tk-cross: #a8484d;
+  --tk-ink: #23324a;
+  --tk-ink-rgb: 35, 50, 74;
+  --tk-ink-soft: #4c5972;
+  --tk-graphite: #201c17;
+  --tk-graphite-soft: #5c5648;
+  --tk-line: #d8cbaa;
+  --tk-paid: #2e6b4c;
+  --tk-paid-rgb: 46, 107, 76;
+
+  --tk-font-mono: 'IBM Plex Mono', 'SFMono-Regular', ui-monospace, Menlo, monospace;
+  --tk-font-body: 'IBM Plex Sans', 'Inter', system-ui, sans-serif;
+
+  background: var(--tk-paper);
+  color: var(--tk-graphite);
+  font-family: var(--tk-font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.tk-page,
+.tk-page input,
+.tk-page textarea {
+  font-family: var(--tk-font-body);
+}
+
+.tk-mono {
+  font-family: var(--tk-font-mono);
+}
+
+/* ---------- eyebrow / label chip ---------- */
+
+.tk-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--tk-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tk-ink);
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--tk-ink);
+  border-radius: 2px;
+}
+
+.tk-eyebrow::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tk-carbon-deep);
+  flex-shrink: 0;
+}
+
+.tk-eyebrow--light {
+  color: var(--tk-paper);
+  border-color: rgba(245, 240, 228, 0.4);
+}
+
+/* ---------- perforation dividers ---------- */
+
+.tk-perforation {
+  height: 22px;
+  width: 100%;
+  background-color: var(--tk-line);
+  -webkit-mask-image: radial-gradient(circle 5px at 11px 11px, transparent 5px, black 5.5px);
+  mask-image: radial-gradient(circle 5px at 11px 11px, transparent 5px, black 5.5px);
+  -webkit-mask-size: 22px 22px;
+  mask-size: 22px 22px;
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+}
+
+.tk-perforation--ink {
+  background-color: var(--tk-ink);
+}
+
+/* ---------- ink stamp ---------- */
+
+.tk-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-family: var(--tk-font-mono);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 2px solid var(--tk-paid);
+  color: var(--tk-paid);
+  background: rgba(var(--tk-paid-rgb), 0.07);
+  border-radius: 5px;
+  padding: 0.3em 0.65em;
+  transform: rotate(-3deg);
+}
+
+/* ---------- ticket stub cards (features) ---------- */
+
+.tk-stub {
+  position: relative;
+  background: #fffdf8;
+  border: 1px solid var(--tk-line);
+  padding: 2rem 1.5rem 1.75rem;
+  clip-path: polygon(
+    0% 10px, 5% 0, 10% 10px, 15% 0, 20% 10px, 25% 0, 30% 10px, 35% 0,
+    40% 10px, 45% 0, 50% 10px, 55% 0, 60% 10px, 65% 0, 70% 10px, 75% 0,
+    80% 10px, 85% 0, 90% 10px, 95% 0, 100% 10px,
+    100% 100%, 0% 100%
+  );
+  filter: drop-shadow(0 10px 18px rgba(32, 28, 23, 0.1));
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.tk-stub:hover {
+  transform: translateY(-5px) rotate(-0.5deg);
+  filter: drop-shadow(0 16px 26px rgba(32, 28, 23, 0.16));
+}
+
+.tk-stub__num {
+  position: absolute;
+  top: 0.9rem;
+  right: 1.1rem;
+  font-family: var(--tk-font-mono);
+  font-size: 0.75rem;
+  color: var(--tk-graphite-soft);
+  letter-spacing: 0.04em;
+}
+
+/* ---------- hero ticket ---------- */
+
+.tk-hero-ticket {
+  position: relative;
+  background: #fffdf8;
+  border: 1px solid var(--tk-line);
+  box-shadow: 0 24px 50px -20px rgba(32, 28, 23, 0.35);
+  transform: rotate(-1.1deg);
+}
+
+.tk-hero-barcode {
+  height: 34px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--tk-graphite) 0 2px,
+    transparent 2px 5px,
+    var(--tk-graphite) 5px 6px,
+    transparent 6px 9px,
+    var(--tk-graphite) 9px 12px,
+    transparent 12px 19px,
+    var(--tk-graphite) 19px 21px,
+    transparent 21px 26px
+  );
+  opacity: 0.85;
+}
+
+@keyframes tk-print-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10%) rotate(-3deg);
+    clip-path: inset(0 0 100% 0);
+  }
+  55% {
+    opacity: 1;
+    clip-path: inset(0 0 0% 0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(-1.1deg);
+    clip-path: inset(0 0 0% 0);
+  }
+}
+
+.tk-hero-ticket {
+  animation: tk-print-in 0.9s cubic-bezier(0.2, 0.7, 0.15, 1) both;
+}
+
+/* ---------- ledger / comparison table ---------- */
+
+.tk-ledger {
+  background: #fffdf8;
+  border: 1px solid var(--tk-line);
+}
+
+.tk-ledger th,
+.tk-ledger td {
+  border-color: var(--tk-line);
+}
+
+.tk-ledger tbody tr:nth-child(even) {
+  background: var(--tk-paper-soft);
+}
+
+.tk-check {
+  font-family: var(--tk-font-mono);
+  font-weight: 700;
+  color: var(--tk-paid);
+}
+
+.tk-cross {
+  font-family: var(--tk-font-mono);
+  font-weight: 700;
+  color: var(--tk-cross);
+}
+
+.tk-partial {
+  font-family: var(--tk-font-mono);
+  font-weight: 600;
+  color: var(--tk-graphite-soft);
+}
+
+/* ---------- boarding-pass style install card ---------- */
+
+.tk-boarding {
+  position: relative;
+  background: var(--tk-ink);
+  color: var(--tk-paper);
+}
+
+.tk-boarding::before,
+.tk-boarding::after {
+  content: '';
+  position: absolute;
+  left: -14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--tk-paper);
+}
+
+.tk-boarding::before {
+  top: -14px;
+}
+
+.tk-boarding::after {
+  bottom: -14px;
+}
+
+/* ---------- ink band (emotional section + footer) ---------- */
+
+.tk-ink-band {
+  background: var(--tk-ink);
+  color: var(--tk-paper);
+}
+
+/* ---------- tear-off CTA ---------- */
+
+.tk-tear {
+  border-top: 3px dashed rgba(245, 240, 228, 0.35);
+  position: relative;
+}
+
+.tk-tear::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--tk-paper);
+}
+
+/* ---------- motion & accessibility ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .tk-hero-ticket {
+    animation: none;
+  }
+  .tk-stub,
+  .tk-stub:hover {
+    transition: none;
+  }
+}
+
+.tk-page :focus-visible {
+  outline: 2px solid var(--tk-ink);
+  outline-offset: 2px;
+}
+
+.tk-ink-band :focus-visible {
+  outline-color: var(--tk-paper);
+}
