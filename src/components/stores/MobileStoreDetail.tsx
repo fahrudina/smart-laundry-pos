@@ -30,7 +30,7 @@ export const MobileStoreDetail: React.FC<MobileStoreDetailProps> = ({ store, onB
         <Button variant="ghost" size="icon" onClick={onBack} aria-label="Kembali">
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-lg font-semibold truncate">{store.store_name}</h1>
+        <h1 className="text-lg font-semibold truncate">{liveStore.store_name}</h1>
       </div>
 
       <Tabs defaultValue="detail" className="w-full">
@@ -51,7 +51,13 @@ export const MobileStoreDetail: React.FC<MobileStoreDetailProps> = ({ store, onB
             <MessageCircle className="h-4 w-4" />
             <span className="text-xs">WhatsApp</span>
             {waSenderMissing && (
-              <span className="absolute top-1 right-3 h-2 w-2 rounded-full bg-destructive" />
+              <>
+                <span
+                  aria-hidden="true"
+                  className="absolute top-1 right-3 h-2 w-2 rounded-full bg-destructive"
+                />
+                <span className="sr-only">Nomor pengirim WhatsApp belum terdaftar</span>
+              </>
             )}
           </TabsTrigger>
         </TabsList>
@@ -60,7 +66,7 @@ export const MobileStoreDetail: React.FC<MobileStoreDetailProps> = ({ store, onB
           <StoreDetailsCard />
         </TabsContent>
         <TabsContent value="staff" forceMount className="data-[state=inactive]:hidden">
-          <StoreStaffManagement store={store} />
+          <StoreStaffManagement store={liveStore} />
         </TabsContent>
         <TabsContent value="settings" forceMount className="data-[state=inactive]:hidden">
           <StoreSettingsCard />
