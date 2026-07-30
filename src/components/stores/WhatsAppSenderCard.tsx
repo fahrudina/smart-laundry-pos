@@ -36,6 +36,7 @@ export const WhatsAppSenderCard: React.FC = () => {
   const [phoneInput, setPhoneInput] = useState(currentStore?.store_phone ?? '');
   const [method, setMethod] = useState<'code' | 'qr'>('code');
   const [togglingUseStoreNumber, setTogglingUseStoreNumber] = useState(false);
+  const [editingSender, setEditingSender] = useState(false);
   const autoVerifiedRef = useRef(false);
 
   const waUseStoreNumber = !!currentStore?.wa_use_store_number;
@@ -60,6 +61,7 @@ export const WhatsAppSenderCard: React.FC = () => {
 
   useEffect(() => {
     if (phase === 'connected' || phase === 'linked') {
+      setEditingSender(false);
       refreshStores();
       toast({
         title: 'Nomor Pengirim Terdaftar',
@@ -71,6 +73,17 @@ export const WhatsAppSenderCard: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
+
+  const handleStartChangeNumber = () => {
+    setPhoneInput(waSenderId ?? currentStore?.store_phone ?? '');
+    setMethod('code');
+    setEditingSender(true);
+  };
+
+  const handleCancelChangeNumber = () => {
+    reset();
+    setEditingSender(false);
+  };
 
   const handleToggleUseStoreNumber = async (checked: boolean) => {
     if (!storeId) return;
@@ -166,7 +179,7 @@ export const WhatsAppSenderCard: React.FC = () => {
           />
         </div>
 
-        {waUseStoreNumber && waSenderId && (
+        {waUseStoreNumber && waSenderId && !editingSender && (
           <div className="space-y-3 p-4 border rounded-lg">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
@@ -174,10 +187,15 @@ export const WhatsAppSenderCard: React.FC = () => {
                 <span className="font-medium">Terdaftar</span>
                 <Badge variant="outline">{waSenderId}</Badge>
               </div>
-              <Button variant="outline" size="sm" onClick={handleVerifyNow} disabled={verifying}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${verifying ? 'animate-spin' : ''}`} />
-                Verifikasi Sekarang
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleVerifyNow} disabled={verifying}>
+                  <RefreshCw className={`h-4 w-4 mr-2 ${verifying ? 'animate-spin' : ''}`} />
+                  Verifikasi Sekarang
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleStartChangeNumber}>
+                  Ganti Nomor
+                </Button>
+              </div>
             </div>
             <p className="text-xs text-muted-foreground">
               {waLastVerified
@@ -198,7 +216,7 @@ export const WhatsAppSenderCard: React.FC = () => {
           </Alert>
         )}
 
-        {waUseStoreNumber && (!waSenderId || phase !== 'idle') && phase !== 'connected' && phase !== 'linked' && (
+        {waUseStoreNumber && (!waSenderId || phase !== 'idle' || editingSender) && phase !== 'connected' && phase !== 'linked' && (
           <div className="space-y-4 p-4 border rounded-lg">
             <div className="space-y-2">
               <Label htmlFor="wa-sender-phone">Nomor WhatsApp</Label>
@@ -233,9 +251,16 @@ export const WhatsAppSenderCard: React.FC = () => {
             )}
 
             {phase === 'idle' && (
-              <Button onClick={handleRegister} className="w-full sm:w-auto">
-                Daftarkan Nomor Ini
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleRegister} className="w-full sm:w-auto">
+                  Daftarkan Nomor Ini
+                </Button>
+                {editingSender && waSenderId && (
+                  <Button variant="ghost" onClick={handleCancelChangeNumber}>
+                    Batal
+                  </Button>
+                )}
+              </div>
             )}
 
             {phase === 'checking' && (
@@ -252,7 +277,7 @@ export const WhatsAppSenderCard: React.FC = () => {
                   Perangkat &gt; Tautkan dengan nomor telepon, lalu masukkan kode berikut:
                 </p>
                 <p className="text-2xl font-mono font-bold tracking-widest">{pairingCode}</p>
-                <Button variant="ghost" size="sm" onClick={reset}>
+                <Button variant="ghost" size="sm" onClick={handleCancelChangeNumber}>
                   Batalkan
                 </Button>
               </div>
@@ -269,7 +294,7 @@ export const WhatsAppSenderCard: React.FC = () => {
                   alt="QR Code pendaftaran WhatsApp"
                   className="mx-auto w-48 h-48"
                 />
-                <Button variant="ghost" size="sm" onClick={reset}>
+                <Button variant="ghost" size="sm" onClick={handleCancelChangeNumber}>
                   Batalkan
                 </Button>
               </div>
