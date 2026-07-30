@@ -75,6 +75,8 @@ export const WhatsAppSenderCard: React.FC = () => {
   }, [phase]);
 
   const handleStartChangeNumber = () => {
+    if (verifying) return;
+    reset();
     setPhoneInput(waSenderId ?? currentStore?.store_phone ?? '');
     setMethod('code');
     setEditingSender(true);
@@ -192,7 +194,7 @@ export const WhatsAppSenderCard: React.FC = () => {
                   <RefreshCw className={`h-4 w-4 mr-2 ${verifying ? 'animate-spin' : ''}`} />
                   Verifikasi Sekarang
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleStartChangeNumber}>
+                <Button variant="outline" size="sm" onClick={handleStartChangeNumber} disabled={verifying}>
                   Ganti Nomor
                 </Button>
               </div>
