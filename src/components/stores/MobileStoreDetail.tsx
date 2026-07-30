@@ -1,13 +1,13 @@
 import React from 'react';
+import { ChevronLeft, Store as StoreIcon, Users, Settings, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronLeft, Store as StoreIcon, Users, Settings, MessageCircle } from 'lucide-react';
+import { useStore } from '@/contexts/StoreContext';
+import { StoreWithOwnershipInfo } from '@/types/multi-tenant';
 import { StoreDetailsCard } from './StoreDetailsCard';
 import { StoreStaffManagement } from './StoreStaffManagement';
 import { StoreSettingsCard } from './StoreSettingsCard';
 import { WhatsAppSenderCard } from './WhatsAppSenderCard';
-import { useStore } from '@/contexts/StoreContext';
-import { StoreWithOwnershipInfo } from '@/types/multi-tenant';
 
 interface MobileStoreDetailProps {
   store: StoreWithOwnershipInfo;

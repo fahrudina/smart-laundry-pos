@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Building2, Users, TrendingUp, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useStore } from '@/contexts/StoreContext';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { CreateStoreDialog } from './CreateStoreDialog';
 import { StoreDetailsCard } from './StoreDetailsCard';
 import { StoreStaffManagement } from './StoreStaffManagement';
@@ -11,7 +10,8 @@ import { StoreSettingsCard } from './StoreSettingsCard';
 import { WhatsAppSenderCard } from './WhatsAppSenderCard';
 import { MobileStoreList } from './MobileStoreList';
 import { MobileStoreDetail } from './MobileStoreDetail';
-import { Building2, Users, TrendingUp, Package } from 'lucide-react';
+import { useStore } from '@/contexts/StoreContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { StoreWithOwnershipInfo } from '@/types/multi-tenant';
 
 export const StoreManagement: React.FC = () => {
@@ -37,10 +37,24 @@ export const StoreManagement: React.FC = () => {
     refreshStores();
   };
 
+  // switchStore() no-ops silently if called again within its own 500ms
+  // cooldown (see StoreContext), so a rapid second tap on a different store
+  // could otherwise move selectedStore/mobileView ahead of currentStore -
+  // leaving the cards that read currentStore directly (StoreDetailsCard,
+  // StoreSettingsCard, WhatsAppSenderCard) showing the previous store while
+  // the rest of the view shows the newly tapped one. Ignoring taps while a
+  // switch is settling keeps them in lockstep.
+  const switchingRef = useRef(false);
+
   const handleStoreSelect = (store: StoreWithOwnershipInfo) => {
+    if (switchingRef.current) return;
     setSelectedStore(store);
     if (store.store_id !== currentStore?.store_id) {
+      switchingRef.current = true;
       switchStore(store.store_id);
+      setTimeout(() => {
+        switchingRef.current = false;
+      }, 500);
     }
     if (isMobile) {
       setMobileView('detail');

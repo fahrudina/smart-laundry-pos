@@ -1,9 +1,9 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Building2, Check, ChevronRight } from 'lucide-react';
-import { CreateStoreDialog } from './CreateStoreDialog';
+import { Card, CardContent } from '@/components/ui/card';
 import { StoreWithOwnershipInfo } from '@/types/multi-tenant';
 import { cn } from '@/lib/utils';
+import { CreateStoreDialog } from './CreateStoreDialog';
 
 interface MobileStoreListProps {
   stores: StoreWithOwnershipInfo[];
