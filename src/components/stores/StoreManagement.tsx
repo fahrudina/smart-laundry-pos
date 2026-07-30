@@ -1,19 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Building2, Users, TrendingUp, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useStore } from '@/contexts/StoreContext';
 import { CreateStoreDialog } from './CreateStoreDialog';
 import { StoreDetailsCard } from './StoreDetailsCard';
 import { StoreStaffManagement } from './StoreStaffManagement';
 import { StoreSettingsCard } from './StoreSettingsCard';
 import { WhatsAppSenderCard } from './WhatsAppSenderCard';
-import { Building2, Users, TrendingUp, Package } from 'lucide-react';
+import { MobileStoreList } from './MobileStoreList';
+import { MobileStoreDetail } from './MobileStoreDetail';
+import { useStore } from '@/contexts/StoreContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { StoreWithOwnershipInfo } from '@/types/multi-tenant';
 
 export const StoreManagement: React.FC = () => {
   const { userStores, currentStore, isOwner, switchStore, refreshStores } = useStore();
+  const isMobile = useIsMobile();
   const [selectedStore, setSelectedStore] = useState<StoreWithOwnershipInfo | null>(null);
+  // Mobile-only list/detail drill-down. Lazy-initialized (not synced via an
+  // effect): StoreProvider blocks rendering behind a loading screen until
+  // the store list has resolved, so by the time this mounts, currentStore
+  // is already settled - no "arrives later" race to chase.
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>(() =>
+    currentStore ? 'detail' : 'list'
+  );
 
   // Initialize selectedStore with currentStore when component mounts or currentStore changes
   useEffect(() => {
@@ -26,12 +37,31 @@ export const StoreManagement: React.FC = () => {
     refreshStores();
   };
 
+  // switchStore() no-ops silently if called again within its own 500ms
+  // cooldown (see StoreContext), so a rapid second tap on a different store
+  // could otherwise move selectedStore/mobileView ahead of currentStore -
+  // leaving the cards that read currentStore directly (StoreDetailsCard,
+  // StoreSettingsCard, WhatsAppSenderCard) showing the previous store while
+  // the rest of the view shows the newly tapped one. Ignoring taps while a
+  // switch is settling keeps them in lockstep.
+  const switchingRef = useRef(false);
+
   const handleStoreSelect = (store: StoreWithOwnershipInfo) => {
+    if (switchingRef.current) return;
     setSelectedStore(store);
     if (store.store_id !== currentStore?.store_id) {
+      switchingRef.current = true;
       switchStore(store.store_id);
+      setTimeout(() => {
+        switchingRef.current = false;
+      }, 500);
+    }
+    if (isMobile) {
+      setMobileView('detail');
     }
   };
+
+  const handleBackToList = () => setMobileView('list');
 
   if (!isOwner) {
     return (
@@ -59,6 +89,26 @@ export const StoreManagement: React.FC = () => {
             )}
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    if (mobileView === 'detail' && selectedStore) {
+      return <MobileStoreDetail store={selectedStore} onBack={handleBackToList} />;
+    }
+    return (
+      <div className="p-4 space-y-4">
+        <div className="flex justify-between items-center gap-3">
+          <h1 className="text-xl font-bold">Manajemen Toko</h1>
+          <CreateStoreDialog onStoreCreated={handleStoreCreated} />
+        </div>
+        <MobileStoreList
+          stores={userStores}
+          currentStoreId={currentStore?.store_id}
+          onSelectStore={handleStoreSelect}
+          onStoreCreated={handleStoreCreated}
+        />
       </div>
     );
   }
