@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, ShoppingCart, CreditCard, X, Minus, Plus, Banknote, QrCode, Smartphone, Gift, Percent } from 'lucide-react';
+import { Clock, ShoppingCart, CreditCard, X, Minus, Plus, Banknote, QrCode, Smartphone, Gift, Percent, ChevronUp, ChevronDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -79,6 +79,9 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
   const [customDiscount, setCustomDiscount] = useState('');
   const [pointsToRedeem, setPointsToRedeem] = useState('');
   const [isPaymentStarted, setIsPaymentStarted] = useState(false);
+  // Collapsed by default so the cart/checkout panel doesn't sit on top of the
+  // service list - it only covers the page once the user asks to see it.
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const { currentStore } = useStore();
   const { data: customerPoints } = useCustomerPoints(customerPhone);
@@ -162,10 +165,33 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
   const subtotal = getTotalPrice();
   const totalAmount = subtotal - discountAmount;
   const completionTime = getOrderCompletionTime();
+  const itemCount = currentOrder.reduce((sum, item) => sum + item.quantity, 0) + dynamicItems.length;
 
   const formatCurrency = (amount: number) => {
     return amount.toLocaleString('id-ID');
   };
+
+  // Collapsed: a compact bar that summarizes the cart without covering the
+  // page underneath - tap it to see items, discount, and payment options.
+  if (!isExpanded) {
+    return (
+      <div className="fixed bottom-1 sm:bottom-4 left-1 sm:left-4 right-1 sm:right-4 z-50 max-w-lg mx-auto">
+        <button
+          type="button"
+          onClick={() => setIsExpanded(true)}
+          className="flex w-full items-center justify-between gap-2 rounded-xl border-2 border-blue-200 bg-white px-3 py-2.5 shadow-2xl animate-slide-up sm:px-4 sm:py-3"
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <ShoppingCart className="h-5 w-5 flex-shrink-0 text-blue-600" />
+            <span className="truncate text-sm font-semibold text-gray-800 sm:text-base">
+              {itemCount} item{itemCount !== 1 ? 's' : ''} · Rp{formatCurrency(totalAmount)}
+            </span>
+          </div>
+          <ChevronUp className="h-5 w-5 flex-shrink-0 text-blue-600" />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed bottom-1 sm:bottom-4 left-1 sm:left-4 right-1 sm:right-4 z-50 max-w-lg mx-auto">
@@ -176,10 +202,22 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
               <span className="font-semibold text-gray-800 text-sm sm:text-base">Current Order</span>
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs sm:text-sm">
+                {itemCount} items
+              </Badge>
             </div>
-            <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs sm:text-sm">
-              {currentOrder.reduce((sum, item) => sum + item.quantity, 0) + dynamicItems.length} items
-            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setIsExpanded(false);
+                onOpenServicePopup?.();
+              }}
+              className="h-7 w-7 p-0 text-gray-500 hover:bg-gray-100 flex-shrink-0"
+              title="Tutup untuk tambah layanan lain"
+            >
+              <ChevronDown className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Estimated Completion */}
@@ -200,18 +238,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
 
           {/* Order Items List */}
           <div className="mb-2 sm:mb-3">
-            <div className="flex items-center justify-between mb-1 sm:mb-2">
-              <h4 className="text-sm font-medium text-gray-800">Order Items</h4>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onOpenServicePopup}
-                className="h-6 w-6 p-0 border-green-300 text-green-600 hover:bg-green-50"
-                title="Add more items"
-              >
-                <Plus className="h-3 w-3" />
-              </Button>
-            </div>
+            <h4 className="text-sm font-medium text-gray-800 mb-1 sm:mb-2">Order Items</h4>
             <div className="space-y-1 sm:space-y-2 max-h-40 overflow-y-auto">
               {currentOrder.map((item, index) => (
                 <div key={`${item.service.id}-${item.serviceType}-${index}`} className="flex items-center justify-between p-1.5 sm:p-2 bg-gray-50 rounded-lg">
