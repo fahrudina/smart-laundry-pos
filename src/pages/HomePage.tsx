@@ -16,8 +16,6 @@ import {
   Plus,
   Users,
   Wrench,
-  CreditCard,
-  QrCode,
   Package,
   XCircle,
   ClipboardList,
@@ -159,26 +157,7 @@ export const HomePage: React.FC = () => {
       icon: Package,
       color: 'text-rose-400',
       bgColor: 'bg-rose-50',
-      onClick: () => navigate('/expenses'),
-      disabled: false
-    },
-    {
-      id: 'scan-qr',
-      title: 'Scan Kode QR',
-      icon: QrCode,
-      color: 'text-rose-400',
-      bgColor: 'bg-rose-50',
-      onClick: () => navigate('/order-history'), // Navigate to order history for now
-      disabled: true // Mark as coming soon
-    },
-    {
-      id: 'payment-methods',
-      title: 'Metode Pembayaran',
-      icon: CreditCard,
-      color: 'text-rose-400',
-      bgColor: 'bg-rose-50',
-      onClick: () => navigate('/order-history'), // Navigate to order history for now
-      disabled: true // Mark as coming soon
+      onClick: () => navigate('/expenses')
     },
     {
       id: 'cancelled-orders',
@@ -190,12 +169,8 @@ export const HomePage: React.FC = () => {
     }
   ].filter(action => !action.hidden);
 
-  // Grid excludes "new-order" (promoted to a full-width hero button) and, for
-  // new stores, hides the disabled "coming soon" tiles so the grid only shows
-  // functional actions.
-  const gridActions = quickActions.filter(
-    (action) => action.id !== 'new-order' && !(showOnboarding && action.disabled)
-  );
+  // Grid excludes "new-order" - it's promoted to a full-width hero button instead.
+  const gridActions = quickActions.filter((action) => action.id !== 'new-order');
 
   const bottomNavItems = [
     {
@@ -399,10 +374,7 @@ export const HomePage: React.FC = () => {
             <button
               key={action.id}
               onClick={action.onClick}
-              disabled={action.disabled}
-              className={`flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow active:scale-95 ${
-                action.disabled ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow active:scale-95"
             >
               <div className={`w-12 h-12 ${action.bgColor} rounded-xl flex items-center justify-center mb-2`}>
                 <action.icon className={`h-6 w-6 ${action.color}`} />
