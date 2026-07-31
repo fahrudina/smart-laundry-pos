@@ -177,7 +177,7 @@ export const HomePage: React.FC = () => {
       icon: XCircle,
       color: 'text-rose-400',
       bgColor: 'bg-rose-50',
-      onClick: () => navigate('/order-history')
+      onClick: () => navigate('/order-history?status=cancelled')
     }
   ].filter(action => !action.hidden);
 

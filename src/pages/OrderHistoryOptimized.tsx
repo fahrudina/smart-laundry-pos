@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useOrders, OrderFilters, Order } from '@/hooks/useOrdersOptimized';
 import { useUpdateOrderStatusWithNotifications } from '@/hooks/useOrdersWithNotifications';
 import { useResendOrderNotification } from '@/hooks/useResendOrderNotification';
@@ -43,7 +43,12 @@ export const OrderHistory = () => {
   const navigate = useNavigate();
   usePageTitle('Riwayat Pesanan');
   const { isOwner } = useStore();
-  
+  const [searchParams] = useSearchParams();
+  // Deep-link support (e.g. Home page's "Pesanan Batal" tile): ?status=cancelled
+  // preselects the execution-status filter and widens the date range so
+  // matching orders aren't hidden behind the default "today" window.
+  const initialExecutionStatus = searchParams.get('status') || 'all';
+
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -56,20 +61,22 @@ export const OrderHistory = () => {
   const [payLaterPaymentOrder, setPayLaterPaymentOrder] = useState<Order | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
-    executionStatus: 'all',
+    executionStatus: initialExecutionStatus,
     paymentStatus: 'all',
     paymentMethod: 'all',
-    dateRange: 'today', // Default to today for better performance on initial load
+    // Default to today for better performance on initial load, unless a
+    // status was deep-linked in, in which case show all matching orders.
+    dateRange: initialExecutionStatus !== 'all' ? 'all' : 'today',
     isOverdue: false,
   });
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
-  
+
   // Pending filters (before Apply button is clicked)
   const [pendingFilters, setPendingFilters] = useState<FilterState>({
-    executionStatus: 'all',
+    executionStatus: initialExecutionStatus,
     paymentStatus: 'all',
     paymentMethod: 'all',
-    dateRange: 'today', // Default to today for better performance on initial load
+    dateRange: initialExecutionStatus !== 'all' ? 'all' : 'today',
     isOverdue: false,
   });
   const [pendingCustomDateRange, setPendingCustomDateRange] = useState<DateRange | undefined>();
