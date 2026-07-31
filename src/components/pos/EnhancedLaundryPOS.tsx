@@ -10,6 +10,7 @@ import { useCreateOrderWithNotifications as useCreateOrder, UnitItem } from '@/h
 import { toast } from 'sonner';
 import { useServices, useSeedDefaultServices } from '@/hooks/useServices';
 import { EnhancedOrderItem, DynamicOrderItemData } from './orderTypes';
+import { getJakartaNow, buildOrderItems, validateOrderReadiness, ORDER_ERROR_TOAST_STYLE } from './orderPayload';
 import { EnhancedServiceSelectionPopup } from './EnhancedServiceSelectionPopup';
 import { FloatingOrderSummary } from './FloatingOrderSummary';
 import { CashPaymentDialog } from './CashPaymentDialog';
@@ -42,15 +43,7 @@ export const EnhancedLaundryPOS = () => {
   } | null>(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [pointsRedeemed, setPointsRedeemed] = useState(0);
-  const [dropOffDate, setDropOffDate] = useState(() => {
-    // Set to current date/time in Asia/Jakarta timezone
-    const now = new Date();
-    // Create a new date that represents the current time in Jakarta
-    const jakartaOffset = 7 * 60; // Jakarta is UTC+7
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const jakartaTime = new Date(utc + (jakartaOffset * 60000));
-    return jakartaTime;
-  });
+  const [dropOffDate, setDropOffDate] = useState(getJakartaNow);
   
   const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading: customersLoading } = useCustomers();
@@ -193,12 +186,7 @@ export const EnhancedLaundryPOS = () => {
     setCustomerName('');
     setSearchResults([]);
     setShowResults(false);
-    // Reset to current Jakarta time
-    const now = new Date();
-    const jakartaOffset = 7 * 60; // Jakarta is UTC+7
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const jakartaTime = new Date(utc + (jakartaOffset * 60000));
-    setDropOffDate(jakartaTime);
+    setDropOffDate(getJakartaNow());
   };
 
   // Handle phone input blur
@@ -314,33 +302,9 @@ export const EnhancedLaundryPOS = () => {
 
   // Process payment
   const processPayment = async (paymentMethod: string = 'cash') => {
-    if (currentOrder.length === 0 && dynamicItems.length === 0) {
-      toast.error("❌ Tidak ada item dalam pesanan", {
-        style: {
-          minWidth: '320px',
-          maxWidth: '500px',
-          width: '90vw',
-          padding: '16px',
-          fontSize: '16px',
-          borderRadius: '12px',
-          border: '2px solid #ef4444',
-        }
-      });
-      return;
-    }
-
-    if (!customerName || !customerPhone) {
-      toast.error("❌ Mohon lengkapi informasi pelanggan", {
-        style: {
-          minWidth: '320px',
-          maxWidth: '500px',
-          width: '90vw',
-          padding: '16px',
-          fontSize: '16px',
-          borderRadius: '12px',
-          border: '2px solid #ef4444',
-        }
-      });
+    const validationError = validateOrderReadiness({ currentOrder, dynamicItems, customerName, customerPhone });
+    if (validationError) {
+      toast.error(`❌ ${validationError}`, { style: ORDER_ERROR_TOAST_STYLE });
       return;
     }
 
@@ -358,35 +322,13 @@ export const EnhancedLaundryPOS = () => {
       const subtotal = getTotalPrice();
       const totalAmount = subtotal - discountAmount;
       const completionDate = getOrderCompletionTime();
-
-      // Combine regular order items and dynamic items
-      const regularItems = currentOrder.map(item => ({
-        service_name: item.service.name,
-        service_price: item.service.price,
-        quantity: item.quantity,
-        estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
-        service_type: item.serviceType,
-        weight_kg: item.weight,
-        unit_items: item.unitItems,
-        category: item.service.category,
-        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
-      }));
-
-      const dynamicOrderItems = dynamicItems.map(item => ({
-        service_name: item.itemName,
-        service_price: item.price,
-        quantity: item.quantity,
-        estimated_completion: calculateDynamicItemFinishDate(item, dropOffDate).toISOString(),
-        service_type: 'unit' as const,
-        weight_kg: undefined,
-        unit_items: undefined,
-        category: 'other_goods',
-        item_type: 'service' as const,
-      }));
-
-      // Check if all items are products (no services)
-      const allItems = [...regularItems, ...dynamicOrderItems];
-      const allItemsAreProducts = allItems.every(item => item.item_type === 'product');
+      const { items, allItemsAreProducts } = buildOrderItems({
+        currentOrder,
+        dynamicItems,
+        dropOffDate,
+        calculateFinishDate,
+        calculateDynamicItemFinishDate,
+      });
 
       // Determine payment status based on whether it's a down payment
       const paymentStatus = isDownPayment ? 'down_payment' : 'completed';
@@ -395,7 +337,7 @@ export const EnhancedLaundryPOS = () => {
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: allItems,
+        items,
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
@@ -428,40 +370,18 @@ export const EnhancedLaundryPOS = () => {
       const subtotal = getTotalPrice();
       const totalAmount = subtotal - discountAmount;
       const completionDate = getOrderCompletionTime();
-
-      // Combine regular order items and dynamic items
-      const regularItems = currentOrder.map(item => ({
-        service_name: item.service.name,
-        service_price: item.service.price,
-        quantity: item.quantity,
-        estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
-        service_type: item.serviceType,
-        weight_kg: item.weight,
-        unit_items: item.unitItems,
-        category: item.service.category,
-        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
-      }));
-
-      const dynamicOrderItems = dynamicItems.map(item => ({
-        service_name: item.itemName,
-        service_price: item.price,
-        quantity: item.quantity,
-        estimated_completion: calculateDynamicItemFinishDate(item, dropOffDate).toISOString(),
-        service_type: 'unit' as const,
-        weight_kg: undefined,
-        unit_items: undefined,
-        category: 'other_goods',
-        item_type: 'service' as const,
-      }));
-
-      // Check if all items are products (no services)
-      const allItems = [...regularItems, ...dynamicOrderItems];
-      const allItemsAreProducts = allItems.every(item => item.item_type === 'product');
+      const { items, allItemsAreProducts } = buildOrderItems({
+        currentOrder,
+        dynamicItems,
+        dropOffDate,
+        calculateFinishDate,
+        calculateDynamicItemFinishDate,
+      });
 
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: allItems,
+        items,
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
@@ -486,33 +406,9 @@ export const EnhancedLaundryPOS = () => {
 
   // Create draft order
   const createDraftOrder = async () => {
-    if (currentOrder.length === 0 && dynamicItems.length === 0) {
-      toast.error("❌ Tidak ada item dalam pesanan", {
-        style: {
-          minWidth: '320px',
-          maxWidth: '500px',
-          width: '90vw',
-          padding: '16px',
-          fontSize: '16px',
-          borderRadius: '12px',
-          border: '2px solid #ef4444',
-        }
-      });
-      return;
-    }
-
-    if (!customerName || !customerPhone) {
-      toast.error("❌ Mohon lengkapi informasi pelanggan", {
-        style: {
-          minWidth: '320px',
-          maxWidth: '500px',
-          width: '90vw',
-          padding: '16px',
-          fontSize: '16px',
-          borderRadius: '12px',
-          border: '2px solid #ef4444',
-        }
-      });
+    const validationError = validateOrderReadiness({ currentOrder, dynamicItems, customerName, customerPhone });
+    if (validationError) {
+      toast.error(`❌ ${validationError}`, { style: ORDER_ERROR_TOAST_STYLE });
       return;
     }
 
@@ -520,40 +416,18 @@ export const EnhancedLaundryPOS = () => {
       const subtotal = getTotalPrice();
       const totalAmount = subtotal - discountAmount;
       const completionDate = getOrderCompletionTime();
-
-      // Combine regular order items and dynamic items
-      const regularItems = currentOrder.map(item => ({
-        service_name: item.service.name,
-        service_price: item.service.price,
-        quantity: item.quantity,
-        estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
-        service_type: item.serviceType,
-        weight_kg: item.weight,
-        unit_items: item.unitItems,
-        category: item.service.category,
-        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
-      }));
-
-      const dynamicOrderItems = dynamicItems.map(item => ({
-        service_name: item.itemName,
-        service_price: item.price,
-        quantity: item.quantity,
-        estimated_completion: calculateDynamicItemFinishDate(item, dropOffDate).toISOString(),
-        service_type: 'unit' as const,
-        weight_kg: undefined,
-        unit_items: undefined,
-        category: 'other_goods',
-        item_type: 'service' as const,
-      }));
-
-      // Check if all items are products (no services)
-      const allItems = [...regularItems, ...dynamicOrderItems];
-      const allItemsAreProducts = allItems.every(item => item.item_type === 'product');
+      const { items, allItemsAreProducts } = buildOrderItems({
+        currentOrder,
+        dynamicItems,
+        dropOffDate,
+        calculateFinishDate,
+        calculateDynamicItemFinishDate,
+      });
 
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: allItems,
+        items,
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
@@ -635,13 +509,9 @@ export const EnhancedLaundryPOS = () => {
     
     // Reset last created order
     setLastCreatedOrder(null);
-    
+
     // Reset drop off date to current time
-    const now = new Date();
-    const jakartaOffset = 7 * 60;
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const jakartaTime = new Date(utc + (jakartaOffset * 60000));
-    setDropOffDate(jakartaTime);
+    setDropOffDate(getJakartaNow());
   };
 
   // Handle dialog close - clear customer info
