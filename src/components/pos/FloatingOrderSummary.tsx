@@ -192,21 +192,21 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
     return (
       <div className="fixed bottom-1 sm:bottom-4 left-1 sm:left-4 right-1 sm:right-4 z-50 max-w-lg mx-auto">
         <div className="relative">
-          <div className="absolute -top-2 left-1/2 h-1.5 w-10 -translate-x-1/2 rounded-full bg-primary/30" />
+          <div className="absolute -top-2 left-1/2 h-1.5 w-10 -translate-x-1/2 rounded-full bg-primary/60" />
           <button
             type="button"
             onClick={() => setIsExpanded(true)}
-            className={`flex w-full items-center justify-between gap-2 rounded-t-2xl rounded-b-xl border-2 border-t-2 border-dashed bg-card px-3 py-2.5 shadow-2xl transition-colors animate-slide-up sm:px-4 sm:py-3 ${
-              justAdded ? 'animate-button-success border-pos-success/50 bg-pos-success/10' : 'border-primary/25'
+            className={`flex w-full items-center justify-between gap-3 rounded-t-2xl rounded-b-xl bg-primary px-4 py-3.5 text-primary-foreground shadow-2xl transition-colors animate-slide-up sm:px-5 sm:py-4 ${
+              justAdded ? 'animate-button-success brightness-110' : ''
             }`}
           >
-            <div className="flex min-w-0 items-center gap-2">
-              <ShoppingCart className={`h-5 w-5 flex-shrink-0 ${justAdded ? 'text-pos-success' : 'text-primary'}`} />
-              <span className="truncate text-sm font-semibold text-foreground sm:text-base">
-                {itemCount} item · <span className="text-primary">Rp{formatCurrency(totalAmount)}</span>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <ShoppingCart className="h-6 w-6 flex-shrink-0 text-primary-foreground sm:h-7 sm:w-7" />
+              <span className="truncate text-base font-semibold text-primary-foreground sm:text-lg">
+                {itemCount} item · <span className="font-bold text-primary-foreground">Rp{formatCurrency(totalAmount)}</span>
               </span>
             </div>
-            <ChevronUp className="h-5 w-5 flex-shrink-0 text-primary" />
+            <ChevronUp className="h-6 w-6 flex-shrink-0 text-primary-foreground sm:h-7 sm:w-7" />
           </button>
         </div>
       </div>
