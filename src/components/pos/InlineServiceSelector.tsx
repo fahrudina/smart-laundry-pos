@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, X, Minus, Clock } from 'lucide-react';
+import { Plus, X, Minus, Clock, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +50,7 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
   // never a staging area for the real cart (services add straight to the order).
   const [dynamicItems, setDynamicItems] = useState<DynamicItem[]>([]);
   const [animatingButton, setAnimatingButton] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const { data: servicesData = [], isLoading } = useServices();
 
   // Convert ServiceData to Service format for compatibility
@@ -71,7 +72,9 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
     }));
   }, [servicesData]);
 
-  // Separate services and products
+  // Separate services and products, then narrow by the name search
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
   const serviceItems = React.useMemo(() =>
     services.filter(s => s.itemType === 'service' || !s.itemType),
     [services]
@@ -81,6 +84,18 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
     services.filter(s => s.itemType === 'product'),
     [services]
   );
+
+  const filteredServiceItems = React.useMemo(() =>
+    normalizedSearch ? serviceItems.filter(s => s.name.toLowerCase().includes(normalizedSearch)) : serviceItems,
+    [serviceItems, normalizedSearch]
+  );
+
+  const filteredProductItems = React.useMemo(() =>
+    normalizedSearch ? productItems.filter(s => s.name.toLowerCase().includes(normalizedSearch)) : productItems,
+    [productItems, normalizedSearch]
+  );
+
+  const hasSearchResults = filteredServiceItems.length > 0 || filteredProductItems.length > 0;
 
   // Helper function to calculate finish date
   const calculateFinishDate = (durationValue: number, durationUnit: 'hours' | 'days', startDate: Date = dropOffDate) => {
@@ -206,146 +221,162 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
         </TabsList>
 
         <TabsContent value="services" className="mt-4">
-          <div className="space-y-4">
-            {isLoading ? (
-              <div className="text-center py-4">Memuat layanan...</div>
-            ) : services.length > 0 ? (
-              <>
-                {/* Services Section */}
-                {serviceItems.length > 0 && (
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                      <span className="w-1 h-4 bg-blue-500 rounded"></span>
-                      Layanan Laundry
-                    </h3>
-                    {serviceItems.map((service) => (
-                      <Card key={service.id} className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold">{service.name}</h3>
-                              <Badge className={getCategoryColor(service.category)}>
-                                {getCategoryLabel(service.category)}
-                              </Badge>
-                            </div>
-                            {service.durationValue > 0 && (
-                              <>
-                                <p className="text-xs text-gray-500 flex items-center">
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  Durasi: {service.duration}
-                                </p>
-                                <p className="text-xs text-green-600 font-medium">
-                                  Siap: {formatDate(calculateFinishDate(service.durationValue, service.durationUnit))}
-                                </p>
-                              </>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            {service.supportsUnit && service.price && (
-                              <div className="text-blue-600 font-semibold">
-                                Rp{service.price.toLocaleString('id-ID')}
-                              </div>
-                            )}
-                            {service.supportsKilo && service.kiloPrice && (
-                              <div className="text-sm text-gray-600">
-                                Rp{service.kiloPrice.toLocaleString('id-ID')}/kg
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {disabled && (
-                          <p className="text-xs text-amber-600 mb-2">
-                            Lengkapi informasi pelanggan terlebih dahulu.
-                          </p>
-                        )}
-
-                        <div className="flex gap-2 mt-3">
-                          {service.supportsUnit && service.price && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addService(service, 'unit')}
-                              disabled={disabled}
-                              className={`flex-1 transition-all ${animatingButton === `${service.id}-unit` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
-                            >
-                              <Plus className="h-3 w-3 mr-1" />
-                              Tambah Satuan
-                            </Button>
-                          )}
-                          {service.supportsKilo && service.kiloPrice && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addService(service, 'kilo')}
-                              disabled={disabled}
-                              className={`flex-1 transition-all ${animatingButton === `${service.id}-kilo` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
-                            >
-                              <Plus className="h-3 w-3 mr-1" />
-                              Tambah Kilo
-                            </Button>
-                          )}
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-
-                {/* Products Section */}
-                {productItems.length > 0 && (
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                      <span className="w-1 h-4 bg-cyan-500 rounded"></span>
-                      Produk & Barang
-                    </h3>
-                    {productItems.map((product) => (
-                      <Card key={product.id} className="p-4 border-cyan-200 bg-cyan-50/30">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold">{product.name}</h3>
-                              <Badge className={getCategoryColor(product.category)}>
-                                {getCategoryLabel(product.category)}
-                              </Badge>
-                            </div>
-                            {product.description && (
-                              <p className="text-xs text-gray-600">{product.description}</p>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            {product.supportsUnit && product.price && (
-                              <div className="text-cyan-700 font-semibold">
-                                Rp{product.price.toLocaleString('id-ID')}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2 mt-3">
-                          {product.supportsUnit && product.price && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addService(product, 'unit')}
-                              disabled={disabled}
-                              className={`flex-1 transition-all border-cyan-300 hover:bg-cyan-100 ${animatingButton === `${product.id}-unit` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
-                            >
-                              <Plus className="h-3 w-3 mr-1" />
-                              Tambah Produk
-                            </Button>
-                          )}
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Tidak ada layanan tersedia.</p>
-                <p className="text-sm">Anda dapat membuat item kustom sebagai gantinya.</p>
+          <div className="space-y-3">
+            {services.length > 3 && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Cari layanan atau produk..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
               </div>
             )}
+
+            <div className="max-h-[50vh] space-y-4 overflow-y-auto pr-1 sm:max-h-[420px]">
+              {isLoading ? (
+                <div className="text-center py-4">Memuat layanan...</div>
+              ) : services.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Tidak ada layanan tersedia.</p>
+                  <p className="text-sm">Anda dapat membuat item kustom sebagai gantinya.</p>
+                </div>
+              ) : !hasSearchResults ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Tidak ada layanan yang cocok dengan pencarian.</p>
+                </div>
+              ) : (
+                <>
+                  {/* Services Section */}
+                  {filteredServiceItems.length > 0 && (
+                    <div className="space-y-2 sm:space-y-3">
+                      <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <span className="w-1 h-4 bg-blue-500 rounded"></span>
+                        Layanan Laundry
+                      </h3>
+                      {filteredServiceItems.map((service) => (
+                        <Card key={service.id} className="p-2.5 sm:p-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <h3 className="truncate text-sm font-semibold sm:text-base">{service.name}</h3>
+                                <Badge className={`${getCategoryColor(service.category)} px-1.5 py-0 text-[10px] sm:text-xs`}>
+                                  {getCategoryLabel(service.category)}
+                                </Badge>
+                              </div>
+                              {service.durationValue > 0 && (
+                                <p className="mt-0.5 flex flex-wrap items-center gap-1 text-[11px] text-gray-500 sm:text-xs">
+                                  <Clock className="h-3 w-3 flex-shrink-0" />
+                                  {service.duration}
+                                  <span className="text-green-600">
+                                    · Siap {formatDate(calculateFinishDate(service.durationValue, service.durationUnit))}
+                                  </span>
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex-shrink-0 text-right">
+                              {service.supportsUnit && service.price && (
+                                <div className="text-sm font-semibold text-blue-600 sm:text-base">
+                                  Rp{service.price.toLocaleString('id-ID')}
+                                </div>
+                              )}
+                              {service.supportsKilo && service.kiloPrice && (
+                                <div className="text-[11px] text-gray-600 sm:text-sm">
+                                  Rp{service.kiloPrice.toLocaleString('id-ID')}/kg
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {disabled && (
+                            <p className="mt-1.5 text-[11px] text-amber-600 sm:text-xs">
+                              Lengkapi informasi pelanggan terlebih dahulu.
+                            </p>
+                          )}
+
+                          <div className="mt-2 flex gap-1.5 sm:mt-3 sm:gap-2">
+                            {service.supportsUnit && service.price && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addService(service, 'unit')}
+                                disabled={disabled}
+                                className={`h-8 flex-1 text-xs transition-all sm:h-9 sm:text-sm ${animatingButton === `${service.id}-unit` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
+                              >
+                                <Plus className="h-3 w-3 mr-1" />
+                                Tambah Satuan
+                              </Button>
+                            )}
+                            {service.supportsKilo && service.kiloPrice && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addService(service, 'kilo')}
+                                disabled={disabled}
+                                className={`h-8 flex-1 text-xs transition-all sm:h-9 sm:text-sm ${animatingButton === `${service.id}-kilo` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
+                              >
+                                <Plus className="h-3 w-3 mr-1" />
+                                Tambah Kilo
+                              </Button>
+                            )}
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Products Section */}
+                  {filteredProductItems.length > 0 && (
+                    <div className="space-y-2 sm:space-y-3">
+                      <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <span className="w-1 h-4 bg-cyan-500 rounded"></span>
+                        Produk & Barang
+                      </h3>
+                      {filteredProductItems.map((product) => (
+                        <Card key={product.id} className="p-2.5 sm:p-4 border-cyan-200 bg-cyan-50/30">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <h3 className="truncate text-sm font-semibold sm:text-base">{product.name}</h3>
+                                <Badge className={`${getCategoryColor(product.category)} px-1.5 py-0 text-[10px] sm:text-xs`}>
+                                  {getCategoryLabel(product.category)}
+                                </Badge>
+                              </div>
+                              {product.description && (
+                                <p className="text-[11px] text-gray-600 sm:text-xs">{product.description}</p>
+                              )}
+                            </div>
+                            <div className="flex-shrink-0 text-right">
+                              {product.supportsUnit && product.price && (
+                                <div className="text-sm font-semibold text-cyan-700 sm:text-base">
+                                  Rp{product.price.toLocaleString('id-ID')}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="mt-2 flex gap-1.5 sm:mt-3 sm:gap-2">
+                            {product.supportsUnit && product.price && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addService(product, 'unit')}
+                                disabled={disabled}
+                                className={`h-8 flex-1 text-xs transition-all border-cyan-300 hover:bg-cyan-100 sm:h-9 sm:text-sm ${animatingButton === `${product.id}-unit` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
+                              >
+                                <Plus className="h-3 w-3 mr-1" />
+                                Tambah Produk
+                              </Button>
+                            )}
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </TabsContent>
 
