@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import {
   LogOut,
   History,
@@ -239,16 +240,18 @@ export const AppSidebar: React.FC = () => {
           <SidebarGroupLabel>Pengaturan</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => handleNavigation('/install')}
-                  isActive={location.pathname === '/install'}
-                  tooltip="Install Aplikasi"
-                >
-                  <Smartphone className="h-4 w-4" />
-                  <span>Install Aplikasi</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {!Capacitor.isNativePlatform() && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => handleNavigation('/install')}
+                    isActive={location.pathname === '/install'}
+                    tooltip="Install Aplikasi"
+                  >
+                    <Smartphone className="h-4 w-4" />
+                    <span>Install Aplikasi</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
               <SidebarMenuItem>
                 <ChangePasswordDialog
                   trigger={

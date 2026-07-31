@@ -211,13 +211,13 @@ const ServiceManagement = () => {
 
       {/* Error State */}
       {error && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-destructive/30 bg-destructive/5">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <AlertCircle className="h-5 w-5 text-red-600" />
+              <AlertCircle className="h-5 w-5 text-destructive" />
               <div>
-                <h3 className="font-medium text-red-800">Error memuat layanan</h3>
-                <p className="text-sm text-red-600">
+                <h3 className="font-medium text-destructive">Error memuat layanan</h3>
+                <p className="text-sm text-destructive/80">
                   Silakan coba refresh halaman atau hubungi dukungan jika masalah berlanjut.
                 </p>
               </div>
@@ -255,7 +255,7 @@ const ServiceManagement = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {services.map((service) => (
-          <Card key={service.id} className="hover:shadow-md transition-shadow">
+          <Card key={service.id} className="hover:shadow-medium transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{service.name}</CardTitle>
@@ -306,10 +306,10 @@ const ServiceManagement = () => {
                   Edit
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="destructive"
                   size="sm"
                   onClick={() => handleDelete(service.id)}
-                  className="flex-1 text-red-600 hover:text-red-700"
+                  className="flex-1"
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
                   Hapus

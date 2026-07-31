@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -12,9 +13,16 @@ interface BeforeInstallPromptEvent extends Event {
 export const usePWAInstall = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
+  // Already installed by definition inside the native app shell.
+  const [isInstalled, setIsInstalled] = useState(() => Capacitor.isNativePlatform());
 
   useEffect(() => {
+    // Already installed by definition inside the native app shell - the browser-only
+    // beforeinstallprompt/appinstalled flow below doesn't apply there.
+    if (Capacitor.isNativePlatform()) {
+      return;
+    }
+
     const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
@@ -56,6 +64,10 @@ export const usePWAInstall = () => {
   }, []);
 
   const installPWA = async () => {
+    if (Capacitor.isNativePlatform()) {
+      return;
+    }
+
     if (!deferredPrompt) {
       // For iOS Safari, show instructions
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);

@@ -19,14 +19,6 @@ export interface QuickAction {
   onClick: () => void;
 }
 
-export interface BottomNavItem {
-  id: string;
-  title: string;
-  icon: LucideIcon;
-  active: boolean;
-  onClick: () => void;
-}
-
 interface MobileHomeViewProps {
   greeting: string;
   greetingName: string;
@@ -43,7 +35,6 @@ interface MobileHomeViewProps {
   totalSteps: number;
   onCreateOrder: () => void;
   gridActions: QuickAction[];
-  bottomNavItems: BottomNavItem[];
 }
 
 export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
@@ -62,10 +53,9 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
   totalSteps,
   onCreateOrder,
   gridActions,
-  bottomNavItems,
 }) => {
   return (
-    <div className="pb-24">
+    <div>
       {/* Hero: edge-to-edge via negative margins canceling AppLayout's padding */}
       <div className="relative -mx-4 -mt-4 overflow-hidden rounded-b-[2rem] bg-gradient-primary px-5 pt-8 pb-10 text-primary-foreground shadow-medium sm:-mx-6 sm:-mt-6">
         <div
@@ -198,35 +188,6 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
               <p className="text-center text-xs font-medium leading-tight text-foreground">
                 {action.title}
               </p>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Bottom Navigation Bar */}
-      <div
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card shadow-medium"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="mx-auto flex max-w-md justify-center gap-4 px-4">
-          {bottomNavItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={item.onClick}
-              className={cn(
-                'flex max-w-[120px] flex-1 flex-col items-center justify-center gap-1 py-2.5 transition-colors',
-                item.active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <div
-                className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-full',
-                  item.active && 'bg-pos-highlight/50'
-                )}
-              >
-                <item.icon className="h-5 w-5" />
-              </div>
-              <span className="text-[11px] font-medium">{item.title}</span>
             </button>
           ))}
         </div>

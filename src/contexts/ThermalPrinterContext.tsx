@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { 
   connectThermalPrinter,
@@ -12,7 +12,7 @@ interface ThermalPrinterContextType {
   isConnecting: boolean;
   lastError: string | null;
   connect: () => Promise<void>;
-  disconnect: () => void;
+  disconnect: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -28,34 +28,6 @@ export const ThermalPrinterProvider: React.FC<ThermalPrinterProviderProps> = ({ 
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
   const [lastError, setLastError] = useState<string | null>(null);
 
-  // Monitor connection status
-  useEffect(() => {
-    if (printerConnection?.server?.connected) {
-      setConnectionStatus('connected');
-    } else if (printerConnection) {
-      // Connection object exists but server is disconnected
-      setConnectionStatus('disconnected');
-      setPrinterConnection(null);
-    }
-  }, [printerConnection]);
-
-  // Listen for Bluetooth device disconnection events
-  useEffect(() => {
-    if (printerConnection?.device) {
-      const handleDisconnect = () => {
-        setPrinterConnection(null);
-        setConnectionStatus('disconnected');
-        toast.info('🔌 Thermal printer disconnected');
-      };
-
-      printerConnection.device.addEventListener('gattserverdisconnected', handleDisconnect);
-
-      return () => {
-        printerConnection.device.removeEventListener('gattserverdisconnected', handleDisconnect);
-      };
-    }
-  }, [printerConnection]);
-
   const connect = useCallback(async () => {
     if (isConnecting || connectionStatus === 'connected') {
       return;
@@ -65,7 +37,11 @@ export const ThermalPrinterProvider: React.FC<ThermalPrinterProviderProps> = ({ 
     setLastError(null);
 
     try {
-      const connection = await connectThermalPrinter();
+      const connection = await connectThermalPrinter((disconnectedDeviceId) => {
+        setPrinterConnection((current) => (current?.deviceId === disconnectedDeviceId ? null : current));
+        setConnectionStatus((current) => (current === 'connected' ? 'disconnected' : current));
+        toast.info('🔌 Thermal printer disconnected');
+      });
       setPrinterConnection(connection);
       setConnectionStatus('connected');
       toast.success('✅ Connected to thermal printer!');
@@ -80,9 +56,9 @@ export const ThermalPrinterProvider: React.FC<ThermalPrinterProviderProps> = ({ 
     }
   }, [isConnecting, connectionStatus]);
 
-  const disconnect = useCallback(() => {
+  const disconnect = useCallback(async () => {
     if (printerConnection) {
-      disconnectThermalPrinter(printerConnection);
+      await disconnectThermalPrinter(printerConnection);
       setPrinterConnection(null);
       setConnectionStatus('disconnected');
       toast.success('🔌 Disconnected from thermal printer');
