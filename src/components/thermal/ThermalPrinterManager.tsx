@@ -219,7 +219,7 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
 
             {printerConnection && (
               <div className="text-sm text-muted-foreground">
-                <p>Terhubung ke: {printerConnection.device.name || printerConnection.device.id}</p>
+                <p>Terhubung ke: {printerConnection.deviceName || printerConnection.deviceId}</p>
               </div>
             )}
           </div>

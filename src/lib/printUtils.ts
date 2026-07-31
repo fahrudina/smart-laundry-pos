@@ -1,52 +1,6 @@
-// Type declarations for Web Bluetooth API
-declare global {
-  interface Navigator {
-    bluetooth?: {
-      requestDevice(options?: RequestDeviceOptions): Promise<BluetoothDevice>;
-    };
-  }
-  
-  interface BluetoothDevice {
-    id: string;
-    name?: string;
-    gatt?: BluetoothRemoteGATTServer;
-    addEventListener(type: string, listener: EventListener): void;
-    removeEventListener(type: string, listener: EventListener): void;
-  }
-  
-  interface BluetoothRemoteGATTServer {
-    connected: boolean;
-    connect(): Promise<BluetoothRemoteGATTServer>;
-    disconnect(): void;
-    getPrimaryService(service: BluetoothServiceUUID): Promise<BluetoothRemoteGATTService>;
-  }
-  
-  interface BluetoothRemoteGATTService {
-    getCharacteristic(characteristic: BluetoothServiceUUID): Promise<BluetoothRemoteGATTCharacteristic>;
-  }
-  
-  interface BluetoothRemoteGATTCharacteristic {
-    writeValue(value: BufferSource): Promise<void>;
-    writeValueWithResponse(value: BufferSource): Promise<void>;
-    writeValueWithoutResponse(value: BufferSource): Promise<void>;
-  }
-  
-  interface RequestDeviceOptions {
-    filters?: BluetoothLEScanFilter[];
-    acceptAllDevices?: boolean;
-    optionalServices?: BluetoothServiceUUID[];
-  }
-  
-  interface BluetoothLEScanFilter {
-    services?: BluetoothServiceUUID[];
-    name?: string;
-    namePrefix?: string;
-  }
-  
-  type BluetoothServiceUUID = string | number;
-}
-
 import { supabase } from '@/integrations/supabase/client';
+import { BleClient, BleService } from '@capacitor-community/bluetooth-le';
+import { Capacitor } from '@capacitor/core';
 
 // Constants
 const IFRAME_RENDER_WAIT_MS = 1000;
@@ -117,10 +71,11 @@ interface PrintOptions {
 }
 
 export interface ThermalPrinterConnection {
-  device: BluetoothDevice;
-  server: BluetoothRemoteGATTServer;
-  service: BluetoothRemoteGATTService;
-  characteristic: BluetoothRemoteGATTCharacteristic;
+  deviceId: string;
+  deviceName?: string;
+  serviceUuid: string;
+  characteristicUuid: string;
+  useWithoutResponse: boolean;
 }
 
 interface ThermalPrintOptions {
@@ -155,6 +110,13 @@ const combineBytes = (...arrays: Uint8Array[]): Uint8Array => {
     offset += arr.length;
   }
   return result;
+};
+
+/**
+ * Wrap a Uint8Array in a DataView, as required by @capacitor-community/bluetooth-le's write calls
+ */
+const uint8ArrayToDataView = (bytes: Uint8Array): DataView => {
+  return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 };
 
 /**
@@ -412,10 +374,48 @@ export const generateReceiptPDFFromUrl = async (
 };
 
 /**
- * Check if Web Bluetooth is supported
+ * Check if Bluetooth Low Energy is supported: native (Android/iOS via Capacitor) or Web Bluetooth in-browser
  */
 export const isBluetoothSupported = (): boolean => {
-  return 'bluetooth' in navigator;
+  return Capacitor.isNativePlatform() || 'bluetooth' in navigator;
+};
+
+/**
+ * Find a writable characteristic among a device's discovered services, preferring the
+ * known thermal-printer service UUIDs but falling back to any writable characteristic
+ * if none of those are present.
+ */
+const findWritableCharacteristic = async (
+  deviceId: string,
+  services: BleService[]
+): Promise<{ serviceUuid: string; characteristicUuid: string; useWithoutResponse: boolean } | null> => {
+  const knownServices = services.filter(service =>
+    THERMAL_PRINTER_SERVICES.includes(service.uuid.toLowerCase())
+  );
+  const candidateServices = knownServices.length > 0 ? knownServices : services;
+
+  for (const service of candidateServices) {
+    for (const characteristic of service.characteristics) {
+      const useWithoutResponse = !characteristic.properties.write && characteristic.properties.writeWithoutResponse;
+      if (!characteristic.properties.write && !useWithoutResponse) {
+        continue;
+      }
+
+      try {
+        const testData = uint8ArrayToDataView(new Uint8Array([ESC, 0x40])); // ESC @ (initialize printer)
+        if (useWithoutResponse) {
+          await BleClient.writeWithoutResponse(deviceId, service.uuid, characteristic.uuid, testData);
+        } else {
+          await BleClient.write(deviceId, service.uuid, characteristic.uuid, testData);
+        }
+        return { serviceUuid: service.uuid, characteristicUuid: characteristic.uuid, useWithoutResponse };
+      } catch {
+        // Not actually writable in practice, try the next candidate
+      }
+    }
+  }
+
+  return null;
 };
 
 /**
@@ -427,104 +427,44 @@ export const isThermerAppAvailable = (): boolean => {
 };
 
 /**
- * Connect to thermal printer via Bluetooth
+ * Connect to thermal printer via Bluetooth Low Energy.
+ * Works both inside the native Android/iOS app (via Capacitor's native BLE stack) and
+ * in a regular browser (the plugin falls back to the Web Bluetooth API on web).
+ *
+ * @param onDisconnect Optional callback fired with the device's ID when it disconnects unexpectedly
  */
-export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection | null> => {
+export const connectThermalPrinter = async (
+  onDisconnect?: (deviceId: string) => void
+): Promise<ThermalPrinterConnection | null> => {
   if (!isBluetoothSupported()) {
-    throw new Error('Bluetooth is not supported in this browser');
+    throw new Error('Bluetooth is not supported on this device');
   }
 
   try {
-    
-    // Request thermal printer device with specific filters for MP-80M and similar printers
-    const device = await navigator.bluetooth!.requestDevice({
-      filters: [
-        // Filter by device name patterns (common thermal printer names)
-        { namePrefix: 'RPP' },
-        { namePrefix: 'MP-' },
-        { namePrefix: 'PRINTER' },
-        { namePrefix: 'POS' },
-        { namePrefix: 'THERMAL' },
-        { name: 'RPP02N' }, // Your specific printer
-        // Filter by services
-        { services: ['000018f0-0000-1000-8000-00805f9b34fb'] },
-        { services: ['00001101-0000-1000-8000-00805f9b34fb'] },
-        { services: ['0000ff00-0000-1000-8000-00805f9b34fb'] },
-        { services: ['0000fee0-0000-1000-8000-00805f9b34fb'] },
-        { services: ['49535343-fe7d-4ae5-8fa9-9fafd205e455'] },
-        { services: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e'] }
-      ],
-      optionalServices: [...THERMAL_PRINTER_SERVICES, ...THERMAL_PRINTER_CHARACTERISTICS]
+    await BleClient.initialize({ androidNeverForLocation: true });
+
+    // Let the user pick from all nearby BLE devices - printer name/branding varies too much
+    // across vendors to reliably pre-filter, so we discover the write characteristic afterward instead.
+    const device = await BleClient.requestDevice({
+      optionalServices: THERMAL_PRINTER_SERVICES,
     });
 
+    await BleClient.connect(device.deviceId, onDisconnect);
 
-    if (!device.gatt) {
-      throw new Error('Device does not support GATT');
+    const services = await BleClient.getServices(device.deviceId);
+    const writable = await findWritableCharacteristic(device.deviceId, services);
+
+    if (!writable) {
+      await BleClient.disconnect(device.deviceId);
+      throw new Error(`No compatible thermal printer service/characteristic found for ${device.name || 'this device'}. Please ensure the printer is in pairing mode and try again.`);
     }
 
-    // Connect to the device
-    const server = await device.gatt.connect();
-    
-    
-    // Try to find a compatible service from our known list first
-    let service: BluetoothRemoteGATTService | null = null;
-    let characteristic: BluetoothRemoteGATTCharacteristic | null = null;
-    
-    for (const serviceUuid of THERMAL_PRINTER_SERVICES) {
-      try {
-        service = await server.getPrimaryService(serviceUuid);
-        
-        // Get all characteristics for this service
-        try {
-          const characteristics = await (service as any).getCharacteristics();
-        } catch (charListError) {
-        }
-        
-        // Try to find a compatible characteristic
-        for (const charUuid of THERMAL_PRINTER_CHARACTERISTICS) {
-          try {
-            characteristic = await service.getCharacteristic(charUuid);
-            
-            // Test if we can write to this characteristic
-            try {
-              // Try a small test write to check permissions
-              const testData = new Uint8Array([0x1B, 0x40]); // ESC @ (initialize printer)
-              await characteristic.writeValue(testData);
-              break;
-            } catch (writeError) {
-              try {
-                // Try writeValueWithoutResponse if available
-                if ('writeValueWithoutResponse' in characteristic) {
-                  const testData = new Uint8Array([0x1B, 0x40]);
-                  await (characteristic as any).writeValueWithoutResponse(testData);
-                  break;
-                } else {
-                }
-              } catch (writeWithoutResponseError) {
-                characteristic = null;
-              }
-            }
-          } catch (charError) {
-          }
-        }
-        
-        if (characteristic) break;
-      } catch (serviceError) {
-      }
-    }
-
-    // If no known service worked, log error with helpful information
-    if (!service || !characteristic) {
-      device.gatt.disconnect();
-      throw new Error(`No compatible thermal printer service/characteristic found for ${device.name || 'MP-80M'}. Please ensure the printer is in pairing mode and try again.`);
-    }
-
-    
     return {
-      device,
-      server,
-      service,
-      characteristic
+      deviceId: device.deviceId,
+      deviceName: device.name,
+      serviceUuid: writable.serviceUuid,
+      characteristicUuid: writable.characteristicUuid,
+      useWithoutResponse: writable.useWithoutResponse,
     };
   } catch (error) {
     console.error('Failed to connect to thermal printer:', error);
@@ -535,11 +475,9 @@ export const connectThermalPrinter = async (): Promise<ThermalPrinterConnection 
 /**
  * Disconnect from thermal printer
  */
-export const disconnectThermalPrinter = (connection: ThermalPrinterConnection): void => {
+export const disconnectThermalPrinter = async (connection: ThermalPrinterConnection): Promise<void> => {
   try {
-    if (connection.server.connected) {
-      connection.server.disconnect();
-    }
+    await BleClient.disconnect(connection.deviceId);
   } catch (error) {
     console.error('Error disconnecting from thermal printer:', error);
   }
@@ -918,15 +856,6 @@ export const printToThermalPrinter = async (
   }
 
   try {
-    // Validate connection state before printing
-    if (!connection.server?.connected) {
-      throw new Error('Bluetooth connection is not active. Please reconnect to the printer.');
-    }
-
-    if (!connection.characteristic) {
-      throw new Error('Printer characteristic is not available. Please reconnect to the printer.');
-    }
-
     const printData = formatReceiptForThermal(receiptData, {
       paperWidth: 32,
       cutPaper: true,
@@ -934,66 +863,40 @@ export const printToThermalPrinter = async (
       ...options
     });
 
-    
     // Split data into smaller chunks to be more conservative with Bluetooth
-    const CHUNK_SIZE = 128; // Reduced from 512 to be more conservative
-    const chunks = [];
-    
+    const CHUNK_SIZE = 128;
+    const chunks: Uint8Array[] = [];
+
     for (let i = 0; i < printData.byteLength; i += CHUNK_SIZE) {
-      const chunk = printData.slice(i, i + CHUNK_SIZE);
-      chunks.push(chunk);
+      chunks.push(printData.slice(i, i + CHUNK_SIZE));
     }
-    
-    
-    // Send chunks with longer delays to ensure printer can process
+
+    // Send chunks with delays to ensure the printer can process each one
     for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      
+      const chunk = uint8ArrayToDataView(chunks[i]);
+
       try {
-        // Check connection before each chunk
-        if (!connection.server?.connected) {
-          throw new Error('Connection lost during printing. Please reconnect and try again.');
+        if (connection.useWithoutResponse) {
+          await BleClient.writeWithoutResponse(connection.deviceId, connection.serviceUuid, connection.characteristicUuid, chunk);
+        } else {
+          await BleClient.write(connection.deviceId, connection.serviceUuid, connection.characteristicUuid, chunk);
         }
-        
-        // Try writeValue first, then writeValueWithoutResponse if it fails
-        try {
-          await connection.characteristic.writeValue(chunk);
-        } catch (writeError) {
-          if ('writeValueWithoutResponse' in connection.characteristic) {
-            await (connection.characteristic as any).writeValueWithoutResponse(chunk);
-          } else {
-            throw writeError;
-          }
-        }
-        
-        // Longer delay between chunks to prevent overwhelming the printer
+
         if (i < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 200)); // Increased from 100ms to 200ms
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
       } catch (chunkError) {
-        console.error(`❌ Error sending chunk ${i + 1}:`, chunkError);
-        
-        // If it's a GATT error, provide specific guidance
-        if (chunkError.message?.includes('GATT') || chunkError.message?.includes('not permitted')) {
-          throw new Error('Printer connection error. Please disconnect and reconnect to the thermal printer, then try again.');
-        }
-        
-        throw chunkError;
+        console.error(`Error sending chunk ${i + 1}:`, chunkError);
+        throw new Error('Printer connection error. Please disconnect and reconnect to the thermal printer, then try again.');
       }
     }
-    
+
     // Add a final delay to ensure all data is processed by the printer
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
   } catch (error) {
     console.error('Error printing to thermal printer:', error);
-    
-    // Provide more specific error messages for common issues
-    if (error.message?.includes('GATT') || error.message?.includes('not permitted')) {
-      throw new Error('Printer connection error. Please disconnect and reconnect to the thermal printer, then try again.');
-    }
-    
-    throw new Error(`Failed to print to thermal printer: ${error.message}`);
+    throw error instanceof Error ? error : new Error('Failed to print to thermal printer');
   }
 };
 
