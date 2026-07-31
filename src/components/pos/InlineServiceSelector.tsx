@@ -251,10 +251,9 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
                   {/* Services Section */}
                   {filteredServiceItems.length > 0 && (
                     <div className="space-y-2 sm:space-y-3">
-                      <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                        <span className="w-1 h-4 bg-blue-500 rounded"></span>
+                      <span className="inline-block rounded-full bg-pos-highlight/30 px-2.5 py-1 text-xs font-semibold text-primary">
                         Layanan Laundry
-                      </h3>
+                      </span>
                       {filteredServiceItems.map((service) => (
                         <Card key={service.id} className="p-2.5 sm:p-4">
                           <div className="flex items-start justify-between gap-2">
@@ -269,7 +268,7 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
                                 <p className="mt-0.5 flex flex-wrap items-center gap-1 text-[11px] text-gray-500 sm:text-xs">
                                   <Clock className="h-3 w-3 flex-shrink-0" />
                                   {service.duration}
-                                  <span className="text-green-600">
+                                  <span className="text-pos-success">
                                     · Siap {formatDate(calculateFinishDate(service.durationValue, service.durationUnit))}
                                   </span>
                                 </p>
@@ -290,7 +289,7 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
                           </div>
 
                           {disabled && (
-                            <p className="mt-1.5 text-[11px] text-amber-600 sm:text-xs">
+                            <p className="mt-1.5 text-[11px] text-pos-warning sm:text-xs">
                               Lengkapi informasi pelanggan terlebih dahulu.
                             </p>
                           )}
@@ -302,7 +301,7 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
                                 size="sm"
                                 onClick={() => addService(service, 'unit')}
                                 disabled={disabled}
-                                className={`h-8 flex-1 text-xs transition-all sm:h-9 sm:text-sm ${animatingButton === `${service.id}-unit` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
+                                className={`h-8 flex-1 text-xs transition-all sm:h-9 sm:text-sm ${animatingButton === `${service.id}-unit` ? 'animate-button-success bg-pos-success/10 border-pos-success/40' : ''}`}
                               >
                                 <Plus className="h-3 w-3 mr-1" />
                                 Tambah Satuan
@@ -314,7 +313,7 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
                                 size="sm"
                                 onClick={() => addService(service, 'kilo')}
                                 disabled={disabled}
-                                className={`h-8 flex-1 text-xs transition-all sm:h-9 sm:text-sm ${animatingButton === `${service.id}-kilo` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
+                                className={`h-8 flex-1 text-xs transition-all sm:h-9 sm:text-sm ${animatingButton === `${service.id}-kilo` ? 'animate-button-success bg-pos-success/10 border-pos-success/40' : ''}`}
                               >
                                 <Plus className="h-3 w-3 mr-1" />
                                 Tambah Kilo
@@ -329,10 +328,9 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
                   {/* Products Section */}
                   {filteredProductItems.length > 0 && (
                     <div className="space-y-2 sm:space-y-3">
-                      <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                        <span className="w-1 h-4 bg-cyan-500 rounded"></span>
+                      <span className="inline-block rounded-full bg-pos-highlight/30 px-2.5 py-1 text-xs font-semibold text-primary">
                         Produk & Barang
-                      </h3>
+                      </span>
                       {filteredProductItems.map((product) => (
                         <Card key={product.id} className="p-2.5 sm:p-4 border-cyan-200 bg-cyan-50/30">
                           <div className="flex items-start justify-between gap-2">
@@ -363,7 +361,7 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
                                 size="sm"
                                 onClick={() => addService(product, 'unit')}
                                 disabled={disabled}
-                                className={`h-8 flex-1 text-xs transition-all border-cyan-300 hover:bg-cyan-100 sm:h-9 sm:text-sm ${animatingButton === `${product.id}-unit` ? 'animate-button-success bg-green-50 border-green-300' : ''}`}
+                                className={`h-8 flex-1 text-xs transition-all border-cyan-300 hover:bg-cyan-100 sm:h-9 sm:text-sm ${animatingButton === `${product.id}-unit` ? 'animate-button-success bg-pos-success/10 border-pos-success/40' : ''}`}
                               >
                                 <Plus className="h-3 w-3 mr-1" />
                                 Tambah Produk
@@ -388,7 +386,7 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
                 variant="outline"
                 onClick={addDynamicItem}
                 disabled={disabled}
-                className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 w-full sm:w-auto"
+                className="bg-accent/10 border-accent/40 text-accent-foreground hover:bg-accent/20 w-full sm:w-auto"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Tambah Item Kustom
@@ -403,7 +401,7 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
             ) : (
               <div className="space-y-3">
                 {dynamicItems.map((item) => (
-                  <Card key={item.id} className="p-4 border-orange-200 bg-orange-50/50">
+                  <Card key={item.id} className="p-4 border-accent/30 bg-accent/5">
                     <div className="space-y-3">
                       <div className="flex justify-between items-start">
                         <div className="flex-1 space-y-3">
@@ -413,7 +411,7 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
                               placeholder="Contoh: Cuci Kering Khusus, Cuci Express"
                               value={item.itemName}
                               onChange={(e) => updateDynamicItem(item.id, 'itemName', e.target.value)}
-                              className={item.itemName.trim() === '' ? 'border-red-300' : ''}
+                              className={item.itemName.trim() === '' ? 'border-destructive' : ''}
                             />
                           </div>
 
@@ -471,7 +469,7 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
                               placeholder="15000"
                               value={item.price || ''}
                               onChange={(e) => updateDynamicItem(item.id, 'price', parseFloat(e.target.value) || 0)}
-                              className={item.price <= 0 ? 'border-red-300' : ''}
+                              className={item.price <= 0 ? 'border-destructive' : ''}
                             />
                           </div>
 
@@ -530,7 +528,7 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
                             <div className="bg-white p-2 rounded border">
                               <div className="text-sm">
                                 <div className="font-medium">Total Harga: Rp{(item.price * item.quantity).toLocaleString('id-ID')}</div>
-                                <div className="text-green-600 text-xs">
+                                <div className="text-pos-success text-xs">
                                   Siap: {formatDate(calculateFinishDate(item.durationValue, item.durationUnit))}
                                 </div>
                               </div>
@@ -542,7 +540,7 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
                           variant="ghost"
                           size="sm"
                           onClick={() => removeDynamicItem(item.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
                           <X className="h-4 w-4" />
                         </Button>

@@ -58,7 +58,7 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
         <DialogHeader className="space-y-6">
           {/* Success Icon */}
           <div className="flex justify-center mb-6">
-            <div className="w-32 h-32 rounded-full bg-green-500 flex items-center justify-center">
+            <div className="w-32 h-32 rounded-full bg-pos-success flex items-center justify-center">
               <CheckCircle className="h-20 w-20 text-white stroke-[3]" />
             </div>
           </div>
@@ -91,11 +91,11 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
 
           {/* WhatsApp Confirmation */}
           {whatsAppSent && (
-            <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center justify-center text-green-700">
+            <div className="mt-6 bg-pos-success/10 border border-pos-success/30 rounded-lg p-4">
+              <div className="flex items-center justify-center text-pos-success">
                 <CheckCircle className="h-5 w-5 mr-2" />
                 <span className="text-sm font-medium">
-                  Receipt sent to member via WhatsApp
+                  Struk terkirim ke pelanggan via WhatsApp
                 </span>
               </div>
             </div>
@@ -103,17 +103,17 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
 
           {/* Points Redeemed */}
           {pointsRedeemed && pointsRedeemed > 0 && (
-            <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg p-4">
+            <div className="mt-6 bg-pos-highlight/20 border-2 border-pos-highlight/50 rounded-lg p-4">
               <div className="flex items-center justify-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-blue-500 rounded-full">
+                <div className="flex items-center justify-center w-10 h-10 bg-primary rounded-full">
                   <Star className="h-5 w-5 text-white fill-white" />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm text-blue-700 font-medium">Poin Ditukar</p>
-                  <p className="text-2xl font-bold text-blue-600">-{pointsRedeemed} Poin</p>
+                  <p className="text-sm text-primary font-medium">Poin Ditukar</p>
+                  <p className="text-2xl font-bold text-primary">-{pointsRedeemed} Poin</p>
                 </div>
               </div>
-              <p className="text-xs text-blue-600 text-center mt-2">
+              <p className="text-xs text-primary/80 text-center mt-2">
                 🎁 Diskon Rp {(discountAmount || pointsRedeemed * POINTS_TO_CURRENCY_RATE).toLocaleString('id-ID')}
               </p>
             </div>
@@ -121,17 +121,17 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
 
           {/* Points Earned */}
           {pointsEarned && pointsEarned > 0 && (
-            <div className="mt-6 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-lg p-4">
+            <div className="mt-6 bg-accent/10 border-2 border-accent/40 rounded-lg p-4">
               <div className="flex items-center justify-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-amber-500 rounded-full">
-                  <Star className="h-5 w-5 text-white fill-white" />
+                <div className="flex items-center justify-center w-10 h-10 bg-accent rounded-full">
+                  <Star className="h-5 w-5 text-accent-foreground fill-accent-foreground" />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm text-amber-700 font-medium">Pelanggan mendapat</p>
-                  <p className="text-2xl font-bold text-amber-600">+{pointsEarned} Poin</p>
+                  <p className="text-sm text-accent-foreground font-medium">Pelanggan mendapat</p>
+                  <p className="text-2xl font-bold text-accent-foreground">+{pointsEarned} Poin</p>
                 </div>
               </div>
-              <p className="text-xs text-amber-600 text-center mt-2">
+              <p className="text-xs text-accent-foreground/80 text-center mt-2">
                 🎉 Poin dapat digunakan untuk diskon pada transaksi berikutnya
               </p>
             </div>
@@ -143,7 +143,8 @@ export const OrderSuccessDialog: React.FC<OrderSuccessDialogProps> = ({
           {/* Print Receipt Button */}
           <Button
             onClick={onPrintReceipt}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg font-semibold"
+            variant="pos"
+            className="w-full py-6 text-lg font-semibold"
             size="lg"
           >
             <Printer className="h-5 w-5 mr-2" />

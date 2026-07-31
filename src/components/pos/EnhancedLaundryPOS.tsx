@@ -522,18 +522,18 @@ export const EnhancedLaundryPOS = () => {
 
   if (servicesError) {
     return (
-      <Card className="border-red-200 bg-red-50">
+      <Card className="border-destructive/30 bg-destructive/5">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-medium text-red-800">Gagal memuat layanan</h3>
-              <p className="text-sm text-red-600">
+              <h3 className="font-medium text-destructive">Gagal memuat layanan</h3>
+              <p className="text-sm text-destructive/80">
                 Silakan coba refresh halaman atau hubungi dukungan.
               </p>
             </div>
-            <Button 
+            <Button
+              variant="destructive"
               onClick={() => window.location.reload()}
-              className="bg-red-600 hover:bg-red-700"
             >
               Refresh
             </Button>
@@ -547,12 +547,12 @@ export const EnhancedLaundryPOS = () => {
     <div className="space-y-6">
       {/* Service Management Notice */}
       {servicesData && servicesData.length === 0 && (
-        <Card className="border-orange-200 bg-orange-50">
+        <Card className="border-pos-warning/40 bg-pos-warning/10">
           <CardContent className="p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 className="font-medium text-orange-800">Belum ada layanan yang dikonfigurasi</h3>
-                <p className="text-sm text-orange-600">
+                <h3 className="font-medium text-pos-warning">Belum ada layanan yang dikonfigurasi</h3>
+                <p className="text-sm text-pos-warning/80">
                   Tambahkan layanan untuk mulai menerima pesanan. Muat contoh layanan untuk langsung mulai.
                 </p>
               </div>
@@ -560,14 +560,14 @@ export const EnhancedLaundryPOS = () => {
                 <Button
                   onClick={() => seedDefaultServices.mutate()}
                   disabled={seedDefaultServices.isPending}
-                  className="bg-orange-600 hover:bg-orange-700"
+                  className="bg-pos-warning text-white hover:bg-pos-warning/90"
                 >
                   {seedDefaultServices.isPending ? 'Memuat...' : 'Muat Contoh Layanan'}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => navigate('/services')}
-                  className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                  className="border-pos-warning/40 text-pos-warning hover:bg-pos-warning/10"
                 >
                   Kelola Layanan
                 </Button>
@@ -579,13 +579,13 @@ export const EnhancedLaundryPOS = () => {
 
       {/* Customer Information */}
       <Card className="shadow-medium animate-fade-in">
-        <CardHeader>
-          <CardTitle className="flex items-center text-lg">
-            <User className="h-5 w-5 mr-2 text-primary" />
+        <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-4">
+          <CardTitle className="flex items-center gap-1.5 text-base sm:gap-2 sm:text-lg">
+            <User className="h-4 w-4 flex-shrink-0 text-primary sm:h-5 sm:w-5" />
             Informasi Pelanggan
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 p-3 pt-0 sm:p-6 sm:pt-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -607,7 +607,7 @@ export const EnhancedLaundryPOS = () => {
               <div className="relative">
                 <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
                 {customerPhone && customerName && (
-                  <CheckCircle className="h-4 w-4 absolute right-3 top-3 text-green-500" />
+                  <CheckCircle className="h-4 w-4 absolute right-3 top-3 text-pos-success" />
                 )}
                 <Input
                   placeholder="Cari berdasarkan telepon/nama pelanggan..."

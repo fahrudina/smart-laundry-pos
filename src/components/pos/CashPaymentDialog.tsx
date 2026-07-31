@@ -118,7 +118,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
           <div className="grid gap-4 py-4">
             <div className="text-center">
               <p className="text-sm text-muted-foreground">Total Pembayaran</p>
-              <p className="text-3xl font-bold text-blue-600">
+              <p className="text-3xl font-bold text-primary">
                 Rp {formatCurrency(totalAmount)}
               </p>
             </div>
@@ -129,7 +129,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
             <div className="space-y-3">
               <Label>Jenis Pembayaran</Label>
               <RadioGroup value={paymentType} onValueChange={(value) => setPaymentType(value as 'full' | 'down_payment')}>
-                <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted cursor-pointer">
                   <RadioGroupItem value="full" id="full" />
                   <Label htmlFor="full" className="flex-1 cursor-pointer">
                     <div>
@@ -138,7 +138,7 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
                     </div>
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted cursor-pointer">
                   <RadioGroupItem value="down_payment" id="down_payment" />
                   <Label htmlFor="down_payment" className="flex-1 cursor-pointer">
                     <div>
@@ -186,27 +186,27 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
 
             {/* Full Payment - Show change */}
             {paymentType === 'full' && cashValue >= totalAmount && change > 0 && (
-              <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-sm text-green-700 font-medium">Kembalian</p>
-                <p className="text-2xl font-bold text-green-600">
+              <div className="text-center p-4 bg-pos-success/10 rounded-lg border border-pos-success/30">
+                <p className="text-sm text-pos-success font-medium">Kembalian</p>
+                <p className="text-2xl font-bold text-pos-success">
                   Rp {formatCurrency(change)}
                 </p>
               </div>
             )}
 
             {paymentType === 'full' && cashValue >= totalAmount && change === 0 && (
-              <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-700 font-medium">Uang Pas</p>
-                <p className="text-lg font-semibold text-blue-600">
+              <div className="text-center p-4 bg-pos-highlight/20 rounded-lg border border-pos-highlight/60">
+                <p className="text-sm text-primary font-medium">Uang Pas</p>
+                <p className="text-lg font-semibold text-primary">
                   Tidak ada kembalian
                 </p>
               </div>
             )}
 
             {paymentType === 'full' && cashValue > 0 && cashValue < totalAmount && (
-              <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
-                <p className="text-sm text-red-700 font-medium">Uang Kurang</p>
-                <p className="text-lg font-semibold text-red-600">
+              <div className="text-center p-3 bg-destructive/10 rounded-lg border border-destructive/30">
+                <p className="text-sm text-destructive font-medium">Uang Kurang</p>
+                <p className="text-lg font-semibold text-destructive">
                   Kurang Rp {formatCurrency(totalAmount - cashValue)}
                 </p>
               </div>
@@ -215,18 +215,18 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
             {/* Down Payment - Show remaining balance */}
             {paymentType === 'down_payment' && cashValue > 0 && cashValue <= totalAmount && (
               <div className="space-y-2">
-                <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <p className="text-sm text-yellow-700 font-medium">Uang Muka (DP)</p>
-                  <p className="text-2xl font-bold text-yellow-600">
+                <div className="text-center p-4 bg-pos-warning/10 rounded-lg border border-pos-warning/30">
+                  <p className="text-sm text-pos-warning font-medium">Uang Muka (DP)</p>
+                  <p className="text-2xl font-bold text-pos-warning">
                     Rp {formatCurrency(cashValue)}
                   </p>
                 </div>
-                <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-                  <p className="text-sm text-orange-700 font-medium">Sisa Pembayaran</p>
-                  <p className="text-2xl font-bold text-orange-600">
+                <div className="text-center p-4 bg-primary/5 rounded-lg border border-primary/20">
+                  <p className="text-sm text-primary font-medium">Sisa Pembayaran</p>
+                  <p className="text-2xl font-bold text-primary">
                     Rp {formatCurrency(remainingBalance)}
                   </p>
-                  <p className="text-xs text-orange-600 mt-1">
+                  <p className="text-xs text-primary/70 mt-1">
                     Akan dibayar saat pengambilan
                   </p>
                 </div>
@@ -234,9 +234,9 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
             )}
 
             {paymentType === 'down_payment' && cashValue > totalAmount && (
-              <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
-                <p className="text-sm text-red-700 font-medium">Jumlah Melebihi Total</p>
-                <p className="text-sm text-red-600">
+              <div className="text-center p-3 bg-destructive/10 rounded-lg border border-destructive/30">
+                <p className="text-sm text-destructive font-medium">Jumlah Melebihi Total</p>
+                <p className="text-sm text-destructive/80">
                   DP tidak boleh melebihi total pembayaran
                 </p>
               </div>
@@ -249,8 +249,8 @@ export const CashPaymentDialog: React.FC<CashPaymentDialogProps> = ({
             </Button>
             <Button
               type="submit"
+              variant="success"
               disabled={!isSubmitEnabled}
-              className="bg-green-600 hover:bg-green-700"
             >
               {isSubmitting ? 'Memproses...' : paymentType === 'full' ? 'Konfirmasi Pembayaran' : 'Konfirmasi DP'}
             </Button>
