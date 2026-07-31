@@ -269,6 +269,7 @@ export const EnhancedLaundryPOS = () => {
       price: dynamicItem.price,
       quantity: dynamicItem.quantity,
       totalPrice: dynamicItem.price * dynamicItem.quantity,
+      unitType: dynamicItem.unitType,
     };
 
     setDynamicItems(prev => [...prev, newDynamicItem]);

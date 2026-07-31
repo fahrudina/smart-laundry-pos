@@ -354,7 +354,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                   <div className="flex-1 min-w-0">
                     <h5 className="text-sm font-medium text-foreground truncate">{item.itemName}</h5>
                     <p className="text-xs text-muted-foreground">
-                      Rp{item.price.toLocaleString('id-ID')} × {item.quantity} unit{item.quantity !== 1 ? 's' : ''}
+                      Rp{item.price.toLocaleString('id-ID')} × {item.unitType === 'kilo' ? `${item.quantity.toFixed(1)} kg` : `${item.quantity} unit${item.quantity !== 1 ? 's' : ''}`}
                     </p>
                     <p className="text-xs text-pos-success">
                       Siap: {calculateDynamicItemFinishDate ? formatDate(calculateDynamicItemFinishDate(item, dropOffDate)) : '-'}

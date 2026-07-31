@@ -9,7 +9,7 @@ export interface Service {
   duration: string;
   durationValue: number;
   durationUnit: 'hours' | 'days';
-  category: 'wash' | 'dry' | 'special' | 'ironing' | 'folding' | 'detergent' | 'perfume' | 'softener' | 'other_goods';
+  category: string;
   supportsKilo?: boolean; // Whether this service supports kilo pricing
   kiloPrice?: number; // Price per kg if supports kilo
 }
@@ -32,4 +32,5 @@ export interface DynamicOrderItemData {
   price: number;
   quantity: number;
   totalPrice: number;
+  unitType: 'unit' | 'kilo';
 }

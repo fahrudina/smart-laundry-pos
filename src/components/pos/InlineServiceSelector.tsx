@@ -17,6 +17,7 @@ export interface Service {
   durationValue: number;
   durationUnit: 'hours' | 'days';
   category: string;
+  description?: string;
   itemType?: 'service' | 'product';
   supportsUnit?: boolean;
   supportsKilo?: boolean;
@@ -65,6 +66,7 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
       durationValue: serviceData.duration_value,
       durationUnit: serviceData.duration_unit,
       category: serviceData.category,
+      description: serviceData.description,
       itemType: serviceData.item_type || 'service',
       supportsUnit: serviceData.supports_unit,
       supportsKilo: serviceData.supports_kilo,
