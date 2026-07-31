@@ -33,3 +33,8 @@ public/favicon-generator.html
 
 research/
 .env*
+
+# Generated Capacitor native project - CI (.github/workflows/build-android.yml)
+# regenerates this fresh from the web build via `cap add android` on every run.
+android/
+ios/
