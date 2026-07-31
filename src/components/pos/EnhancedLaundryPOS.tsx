@@ -544,11 +544,11 @@ export const EnhancedLaundryPOS = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Service Management Notice */}
       {servicesData && servicesData.length === 0 && (
         <Card className="border-pos-warning/40 bg-pos-warning/10">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h3 className="font-medium text-pos-warning">Belum ada layanan yang dikonfigurasi</h3>
@@ -585,11 +585,11 @@ export const EnhancedLaundryPOS = () => {
             Informasi Pelanggan
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 p-3 pt-0 sm:p-6 sm:pt-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <CardContent className="space-y-3 p-3 pt-0 sm:space-y-4 sm:p-6 sm:pt-0">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-muted-foreground">
+              <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                <label className="text-xs font-medium text-muted-foreground sm:text-sm">
                   Nomor Telepon
                 </label>
                 {customerPhone && customerName && (
@@ -647,7 +647,7 @@ export const EnhancedLaundryPOS = () => {
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground sm:mb-2 sm:text-sm">
                 Nama Pelanggan
               </label>
               <Input
@@ -657,7 +657,7 @@ export const EnhancedLaundryPOS = () => {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground sm:mb-2 sm:text-sm">
                 Tanggal & Waktu Terima
               </label>
               <Input
@@ -682,7 +682,7 @@ export const EnhancedLaundryPOS = () => {
                 }}
                 className="w-full"
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">
                 Ini mempengaruhi estimasi waktu selesai untuk semua layanan
               </p>
             </div>
@@ -692,7 +692,7 @@ export const EnhancedLaundryPOS = () => {
 
       {/* Add Service Section */}
       <Card ref={serviceSectionRef} className="shadow-medium animate-scale-in">
-        <CardContent className="pt-6">
+        <CardContent className="p-3 pt-4 sm:p-6 sm:pt-6">
           <InlineServiceSelector
             onAddService={addServiceToOrder}
             onAddCustomItem={addCustomItemToOrder}
