@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { useServices, useSeedDefaultServices } from '@/hooks/useServices';
 import { EnhancedOrderItem, DynamicOrderItemData } from './orderTypes';
 import { getJakartaNow, buildOrderItems, validateOrderReadiness, ORDER_ERROR_TOAST_STYLE } from './orderPayload';
-import { EnhancedServiceSelectionPopup } from './EnhancedServiceSelectionPopup';
+import { InlineServiceSelector, Service as CatalogService, DynamicItem } from './InlineServiceSelector';
 import { FloatingOrderSummary } from './FloatingOrderSummary';
 import { CashPaymentDialog } from './CashPaymentDialog';
 import { OrderSuccessDialog } from './OrderSuccessDialog';
@@ -26,7 +26,6 @@ export const EnhancedLaundryPOS = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSelectingCustomer, setIsSelectingCustomer] = useState(false);
-  const [isServicePopupOpen, setIsServicePopupOpen] = useState(false);
   const [showCashPaymentDialog, setShowCashPaymentDialog] = useState(false);
   const [showOrderSuccessDialog, setShowOrderSuccessDialog] = useState(false);
   const [showThermalPrintDialog, setShowThermalPrintDialog] = useState(false);
@@ -49,6 +48,7 @@ export const EnhancedLaundryPOS = () => {
   const { customers, searchCustomers, getCustomerByPhone, loading: customersLoading } = useCustomers();
   const createOrderMutation = useCreateOrder();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const serviceSectionRef = useRef<HTMLDivElement>(null);
 
   // Load services from our service management system
   const { data: servicesData, isLoading: servicesLoading, error: servicesError } = useServices();
@@ -197,78 +197,66 @@ export const EnhancedLaundryPOS = () => {
     }, 200);
   };
 
-  // Handle services and dynamic items selected from popup
-  const handleServicesAndItemsSelected = (selectedServices: any[], selectedDynamicItems: any[]) => {
-    // Process regular services
-    selectedServices.forEach(selectedService => {
-      const service = {
-        id: selectedService.service.id,
-        name: selectedService.service.name,
-        price: selectedService.price,
-        duration: selectedService.service.duration,
-        durationValue: selectedService.service.durationValue,
-        durationUnit: selectedService.service.durationUnit,
-        category: selectedService.service.category,
-        supportsKilo: selectedService.service.supportsKilo,
-        kiloPrice: selectedService.service.kiloPrice,
-      };
+  // Add a service straight to the real cart - one click adds at quantity 1
+  // (or 1kg for kilo), further adjustment happens in FloatingOrderSummary's
+  // cart list. No staging cart in between.
+  const addServiceToOrder = (rawService: CatalogService, type: 'unit' | 'kilo') => {
+    const price = type === 'unit' ? rawService.price : (rawService.kiloPrice || 0);
+    const service = {
+      id: rawService.id,
+      name: rawService.name,
+      price,
+      duration: rawService.duration,
+      durationValue: rawService.durationValue,
+      durationUnit: rawService.durationUnit,
+      category: rawService.category,
+      supportsKilo: rawService.supportsKilo,
+      kiloPrice: rawService.kiloPrice,
+    };
 
-      // Add to regular order with the specified quantity
-      setCurrentOrder(prev => {
-        const existingItem = prev.find(item => 
-          item.service.id === service.id && 
-          item.serviceType === selectedService.type
+    setCurrentOrder(prev => {
+      const existingItem = prev.find(item =>
+        item.service.id === service.id &&
+        item.serviceType === type
+      );
+
+      if (existingItem) {
+        return prev.map(item =>
+          item.service.id === service.id && item.serviceType === type
+            ? {
+                ...item,
+                quantity: item.quantity + 1,
+                totalPrice: (item.quantity + 1) * service.price,
+                weight: type === 'kilo' ? item.quantity + 1 : item.weight
+              }
+            : item
         );
-        
-        if (existingItem) {
-          return prev.map(item =>
-            item.service.id === service.id && item.serviceType === selectedService.type
-              ? { 
-                  ...item, 
-                  quantity: item.quantity + selectedService.quantity,
-                  totalPrice: (item.quantity + selectedService.quantity) * service.price,
-                  weight: selectedService.type === 'kilo' ? selectedService.quantity : item.weight
-                }
-              : item
-          );
-        } else {
-          return [...prev, { 
-            service, 
-            quantity: selectedService.quantity, 
-            serviceType: selectedService.type as 'unit' | 'kilo',
-            weight: selectedService.type === 'kilo' ? selectedService.quantity : undefined,
-            totalPrice: selectedService.quantity * service.price
-          }];
-        }
-      });
+      } else {
+        return [...prev, {
+          service,
+          quantity: 1,
+          serviceType: type,
+          weight: type === 'kilo' ? 1 : undefined,
+          totalPrice: service.price
+        }];
+      }
     });
+  };
 
-    // Process dynamic items
-    selectedDynamicItems.forEach(dynamicItem => {
-      const newDynamicItem: DynamicOrderItemData = {
-        id: dynamicItem.id,
-        itemName: dynamicItem.itemName,
-        duration: `${dynamicItem.durationValue} ${dynamicItem.durationUnit}`,
-        durationValue: dynamicItem.durationValue,
-        durationUnit: dynamicItem.durationUnit,
-        price: dynamicItem.price,
-        quantity: dynamicItem.quantity,
-        totalPrice: dynamicItem.price * dynamicItem.quantity,
-      };
+  // Add a composed custom item straight to the real cart
+  const addCustomItemToOrder = (dynamicItem: DynamicItem) => {
+    const newDynamicItem: DynamicOrderItemData = {
+      id: dynamicItem.id,
+      itemName: dynamicItem.itemName,
+      duration: `${dynamicItem.durationValue} ${dynamicItem.durationUnit}`,
+      durationValue: dynamicItem.durationValue,
+      durationUnit: dynamicItem.durationUnit,
+      price: dynamicItem.price,
+      quantity: dynamicItem.quantity,
+      totalPrice: dynamicItem.price * dynamicItem.quantity,
+    };
 
-      setDynamicItems(prev => {
-        const existingIndex = prev.findIndex(item => item.id === dynamicItem.id);
-        if (existingIndex >= 0) {
-          // Update existing item
-          const updated = [...prev];
-          updated[existingIndex] = newDynamicItem;
-          return updated;
-        } else {
-          // Add new item
-          return [...prev, newDynamicItem];
-        }
-      });
-    });
+    setDynamicItems(prev => [...prev, newDynamicItem]);
   };
 
   // Remove item from order
@@ -698,14 +686,13 @@ export const EnhancedLaundryPOS = () => {
       </Card>
 
       {/* Add Service Section */}
-      <Card className="shadow-medium animate-scale-in">
+      <Card ref={serviceSectionRef} className="shadow-medium animate-scale-in">
         <CardContent className="pt-6">
-          <EnhancedServiceSelectionPopup
-            onServicesSelected={handleServicesAndItemsSelected}
+          <InlineServiceSelector
+            onAddService={addServiceToOrder}
+            onAddCustomItem={addCustomItemToOrder}
             disabled={!customerName || !customerPhone}
             dropOffDate={dropOffDate}
-            isOpen={isServicePopupOpen}
-            onOpenChange={setIsServicePopupOpen}
           />
         </CardContent>
       </Card>
@@ -726,7 +713,7 @@ export const EnhancedLaundryPOS = () => {
         dropOffDate={dropOffDate}
         onProcessPayment={processPayment}
         onCreateDraft={createDraftOrder}
-        onOpenServicePopup={() => setIsServicePopupOpen(true)}
+        onOpenServicePopup={() => serviceSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
         isProcessing={createOrderMutation.isPending}
         customerName={customerName}
         customerPhone={customerPhone}
