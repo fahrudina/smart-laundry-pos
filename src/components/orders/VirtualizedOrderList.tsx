@@ -54,22 +54,22 @@ const OrderItem = memo(({ index, style, data }: {
 
   const getExecutionStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'ready_for_pickup': return 'bg-emerald-100 text-emerald-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'in_queue': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-pos-success/10 text-pos-success border border-pos-success/30';
+      case 'ready_for_pickup': return 'bg-pos-warning/10 text-pos-warning border border-pos-warning/30';
+      case 'in_progress': return 'bg-pos-highlight/30 text-primary border border-primary/20';
+      case 'in_queue': return 'bg-pos-highlight/20 text-primary border border-pos-highlight/40';
+      case 'cancelled': return 'bg-destructive/10 text-destructive border border-destructive/30';
+      default: return 'bg-muted text-muted-foreground border border-border';
     }
   };
 
   const getPaymentStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'down_payment': return 'bg-orange-100 text-orange-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'refunded': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-pos-success/10 text-pos-success border border-pos-success/30';
+      case 'down_payment': return 'bg-pos-highlight/30 text-primary border border-primary/20';
+      case 'pending': return 'bg-pos-warning/10 text-pos-warning border border-pos-warning/30';
+      case 'refunded': return 'bg-destructive/10 text-destructive border border-destructive/30';
+      default: return 'bg-muted text-muted-foreground border border-border';
     }
   };
 
@@ -85,7 +85,7 @@ const OrderItem = memo(({ index, style, data }: {
 
   return (
     <div style={style} className="px-1 sm:px-4">
-      <Card className="mb-2 hover:shadow-md transition-shadow">
+      <Card className="mb-2 hover:shadow-medium transition-shadow">
         <CardContent className="p-2 sm:p-4">
           <div className="flex justify-between items-start">
             <div className="flex-1 min-w-0">
@@ -143,17 +143,17 @@ const OrderItem = memo(({ index, style, data }: {
 
               {/* Down Payment Information */}
               {order.payment_status === 'down_payment' && order.payment_amount !== null && order.payment_amount !== undefined && (
-                <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="mb-3 p-2 bg-pos-warning/10 border border-pos-warning/30 rounded-lg">
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span className="text-yellow-700 font-medium">DP Dibayar: </span>
-                      <span className="font-bold text-yellow-900">
+                      <span className="text-pos-warning font-medium">DP Dibayar: </span>
+                      <span className="font-bold text-pos-warning">
                         Rp{order.payment_amount.toLocaleString('id-ID')}
                       </span>
                     </div>
                     <div>
-                      <span className="text-orange-700 font-medium">Sisa: </span>
-                      <span className="font-bold text-orange-900">
+                      <span className="text-destructive/80 font-medium">Sisa: </span>
+                      <span className="font-bold text-destructive">
                         Rp{(order.total_amount - order.payment_amount).toLocaleString('id-ID')}
                       </span>
                     </div>
@@ -180,7 +180,7 @@ const OrderItem = memo(({ index, style, data }: {
                       variant="outline"
                       size="sm"
                       onClick={() => data.onViewReceipt!(order.id)}
-                      className="flex items-center justify-center space-x-1 text-xs border-blue-200 text-blue-700 hover:bg-blue-50"
+                      className="flex items-center justify-center space-x-1 text-xs border-primary/30 text-primary hover:bg-primary/5"
                     >
                       <Receipt className="h-3 w-3" />
                       <span>Struk</span>
@@ -194,7 +194,7 @@ const OrderItem = memo(({ index, style, data }: {
                     variant="outline"
                     size="sm"
                     onClick={() => data.onPrintThermal!(order.id)}
-                    className="w-full flex items-center justify-center space-x-1 text-xs border-green-200 text-green-700 hover:bg-green-50"
+                    className="w-full flex items-center justify-center space-x-1 text-xs border-primary/30 text-primary hover:bg-primary/5"
                   >
                     <Printer className="h-3 w-3" />
                     <span>Cetak Struk</span>
@@ -208,7 +208,7 @@ const OrderItem = memo(({ index, style, data }: {
                     size="sm"
                     onClick={() => data.onResendNotification!(order.id)}
                     disabled={isButtonLoading(order.id, 'resend_notification')}
-                    className="w-full flex items-center justify-center space-x-1 text-xs border-green-200 text-green-700 hover:bg-green-50"
+                    className="w-full flex items-center justify-center space-x-1 text-xs border-primary/30 text-primary hover:bg-primary/5"
                   >
                     {isButtonLoading(order.id, 'resend_notification') ? (
                       <>
@@ -231,7 +231,7 @@ const OrderItem = memo(({ index, style, data }: {
                     size="sm"
                     onClick={() => onUpdateExecution(order.id, 'in_progress')}
                     disabled={isButtonLoading(order.id, 'execution_in_progress')}
-                    className="w-full text-xs bg-blue-600 hover:bg-blue-700"
+                    className="w-full text-xs"
                   >
                     {isButtonLoading(order.id, 'execution_in_progress') ? (
                       <>
@@ -249,7 +249,7 @@ const OrderItem = memo(({ index, style, data }: {
                     size="sm"
                     onClick={() => onUpdateExecution(order.id, 'ready_for_pickup')}
                     disabled={isButtonLoading(order.id, 'execution_ready_for_pickup')}
-                    className="w-full text-xs bg-orange-600 hover:bg-orange-700"
+                    className="w-full text-xs bg-pos-warning text-white hover:bg-pos-warning/90"
                   >
                     {isButtonLoading(order.id, 'execution_ready_for_pickup') ? (
                       <>
@@ -263,11 +263,11 @@ const OrderItem = memo(({ index, style, data }: {
                 )}
                 {order.execution_status === 'ready_for_pickup' && (
                   <Button
-                    variant="default"
+                    variant="success"
                     size="sm"
                     onClick={() => onUpdateExecution(order.id, 'completed')}
                     disabled={isButtonLoading(order.id, 'execution_completed')}
-                    className="w-full text-xs bg-green-600 hover:bg-green-700"
+                    className="w-full text-xs"
                   >
                     {isButtonLoading(order.id, 'execution_completed') ? (
                       <>
@@ -283,11 +283,11 @@ const OrderItem = memo(({ index, style, data }: {
                 {/* Row 4: Payment Actions */}
                 {order.payment_status === 'pending' && data.onShowPaymentDialog && (
                   <Button
-                    variant="default"
+                    variant="success"
                     size="sm"
                     onClick={() => data.onShowPaymentDialog!(order)}
                     disabled={isButtonLoading(order.id, 'payment')}
-                    className="w-full text-xs bg-green-600 hover:bg-green-700"
+                    className="w-full text-xs"
                   >
                     {isButtonLoading(order.id, 'payment') ? (
                       <>
@@ -305,7 +305,7 @@ const OrderItem = memo(({ index, style, data }: {
                     size="sm"
                     onClick={() => data.onShowPaymentDialog!(order)}
                     disabled={isButtonLoading(order.id, 'payment')}
-                    className="w-full text-xs bg-orange-600 hover:bg-orange-700"
+                    className="w-full text-xs bg-pos-warning text-white hover:bg-pos-warning/90"
                   >
                     {isButtonLoading(order.id, 'payment') ? (
                       <>

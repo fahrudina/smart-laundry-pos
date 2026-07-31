@@ -80,7 +80,7 @@ export const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Smart Laundry POS</CardTitle>
@@ -110,7 +110,7 @@ export const Login: React.FC = () => {
                     })}
                   />
                   {loginForm.formState.errors.email && (
-                    <p className="text-sm text-red-500">{loginForm.formState.errors.email.message}</p>
+                    <p className="text-sm text-destructive">{loginForm.formState.errors.email.message}</p>
                   )}
                 </div>
 
@@ -138,14 +138,14 @@ export const Login: React.FC = () => {
                       onClick={() => setShowLoginPassword(!showLoginPassword)}
                     >
                       {showLoginPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-500" />
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
                       ) : (
-                        <Eye className="h-4 w-4 text-gray-500" />
+                        <Eye className="h-4 w-4 text-muted-foreground" />
                       )}
                     </Button>
                   </div>
                   {loginForm.formState.errors.password && (
-                    <p className="text-sm text-red-500">{loginForm.formState.errors.password.message}</p>
+                    <p className="text-sm text-destructive">{loginForm.formState.errors.password.message}</p>
                   )}
                 </div>
 
@@ -173,7 +173,7 @@ export const Login: React.FC = () => {
                     })}
                   />
                   {signUpForm.formState.errors.fullName && (
-                    <p className="text-sm text-red-500">{signUpForm.formState.errors.fullName.message}</p>
+                    <p className="text-sm text-destructive">{signUpForm.formState.errors.fullName.message}</p>
                   )}
                 </div>
 
@@ -192,7 +192,7 @@ export const Login: React.FC = () => {
                     })}
                   />
                   {signUpForm.formState.errors.email && (
-                    <p className="text-sm text-red-500">{signUpForm.formState.errors.email.message}</p>
+                    <p className="text-sm text-destructive">{signUpForm.formState.errors.email.message}</p>
                   )}
                 </div>
 
@@ -207,7 +207,7 @@ export const Login: React.FC = () => {
                     })}
                   />
                   {signUpForm.formState.errors.phone && (
-                    <p className="text-sm text-red-500">{signUpForm.formState.errors.phone.message}</p>
+                    <p className="text-sm text-destructive">{signUpForm.formState.errors.phone.message}</p>
                   )}
                 </div>
                 
@@ -235,14 +235,14 @@ export const Login: React.FC = () => {
                       onClick={() => setShowSignupPassword(!showSignupPassword)}
                     >
                       {showSignupPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-500" />
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
                       ) : (
-                        <Eye className="h-4 w-4 text-gray-500" />
+                        <Eye className="h-4 w-4 text-muted-foreground" />
                       )}
                     </Button>
                   </div>
                   {signUpForm.formState.errors.password && (
-                    <p className="text-sm text-red-500">{signUpForm.formState.errors.password.message}</p>
+                    <p className="text-sm text-destructive">{signUpForm.formState.errors.password.message}</p>
                   )}
                 </div>
 
@@ -257,7 +257,7 @@ export const Login: React.FC = () => {
                     })}
                   />
                   {signUpForm.formState.errors.storeName && (
-                    <p className="text-sm text-red-500">{signUpForm.formState.errors.storeName.message}</p>
+                    <p className="text-sm text-destructive">{signUpForm.formState.errors.storeName.message}</p>
                   )}
                 </div>
 
@@ -265,7 +265,7 @@ export const Login: React.FC = () => {
                   <CollapsibleTrigger asChild>
                     <button
                       type="button"
-                      className="flex w-full items-center justify-between rounded-md py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+                      className="flex w-full items-center justify-between rounded-md py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
                     >
                       <span>Detail toko (opsional)</span>
                       <ChevronDown
@@ -293,7 +293,7 @@ export const Login: React.FC = () => {
                         {...signUpForm.register('storePhone')}
                       />
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       Bisa dilengkapi nanti di Pengaturan Toko.
                     </p>
                   </CollapsibleContent>
@@ -315,7 +315,7 @@ export const Login: React.FC = () => {
           <GoogleLoginButton />
         </CardContent>
         <CardFooter className="text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Akses aman ke sistem manajemen laundry Anda
           </p>
         </CardFooter>

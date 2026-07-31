@@ -244,7 +244,7 @@ export const WhatsAppBroadcastPage: React.FC = () => {
   if (!currentStore) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">Please select a store to send broadcast messages</p>
+        <p className="text-muted-foreground">Please select a store to send broadcast messages</p>
       </div>
     );
   }
@@ -267,21 +267,21 @@ export const WhatsAppBroadcastPage: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">WhatsApp Broadcast</h1>
-            <p className="text-gray-600">Send messages to multiple customers at once</p>
+            <h1 className="text-2xl font-bold text-foreground">WhatsApp Broadcast</h1>
+            <p className="text-muted-foreground">Send messages to multiple customers at once</p>
           </div>
         </div>
       </div>
 
       {/* WhatsApp Configuration Warning */}
       {!isConfigured && (
-        <Card className="border-yellow-500 bg-yellow-50">
+        <Card className="border-pos-warning/40 bg-pos-warning/10">
           <CardContent className="pt-6">
             <div className="flex items-start space-x-3">
-              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-pos-warning mt-0.5" />
               <div>
-                <h3 className="font-medium text-yellow-900">WhatsApp Not Configured</h3>
-                <p className="text-sm text-yellow-800 mt-1">
+                <h3 className="font-medium text-pos-warning">WhatsApp Not Configured</h3>
+                <p className="text-sm text-pos-warning/80 mt-1">
                   WhatsApp service is not properly configured. Messages will not be sent.
                   Please check your environment variables.
                 </p>
@@ -315,7 +315,7 @@ export const WhatsAppBroadcastPage: React.FC = () => {
               {/* Search */}
               <div className="mb-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search customers by name, phone, or email..."
                     value={searchQuery}
@@ -334,9 +334,9 @@ export const WhatsAppBroadcastPage: React.FC = () => {
                 </div>
               ) : customers.length === 0 ? (
                 <div className="text-center py-8">
-                  <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No customers found</h3>
-                  <p className="text-gray-600">
+                  <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">No customers found</h3>
+                  <p className="text-muted-foreground">
                     {searchQuery ? 'Try adjusting your search terms' : 'No customers available in this store'}
                   </p>
                 </div>
@@ -350,7 +350,7 @@ export const WhatsAppBroadcastPage: React.FC = () => {
                             checked={allSelected}
                             onCheckedChange={handleSelectAll}
                             aria-label="Select all customers"
-                            className={someSelected ? "data-[state=checked]:bg-gray-500" : ""}
+                            className={someSelected ? "data-[state=checked]:bg-muted-foreground" : ""}
                           />
                         </TableHead>
                         <TableHead>Name</TableHead>
@@ -372,7 +372,7 @@ export const WhatsAppBroadcastPage: React.FC = () => {
                           </TableCell>
                           <TableCell className="font-medium">{customer.name}</TableCell>
                           <TableCell>{customer.phone}</TableCell>
-                          <TableCell className="text-gray-500">{customer.email || '-'}</TableCell>
+                          <TableCell className="text-muted-foreground">{customer.email || '-'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -405,33 +405,33 @@ export const WhatsAppBroadcastPage: React.FC = () => {
                   className="resize-none"
                 />
                 <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {message.length} characters
                   </p>
                 </div>
-                <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                  <p className="text-xs font-medium text-gray-700 mb-1">Available variables:</p>
+                <div className="mt-2 p-2 bg-muted rounded border border-border">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Available variables:</p>
                   <div className="flex flex-wrap gap-2">
-                    <code className="text-xs bg-white px-2 py-1 rounded border border-gray-300">{'{{userName}}'}</code>
-                    <code className="text-xs bg-white px-2 py-1 rounded border border-gray-300">{'{{phone}}'}</code>
-                    <code className="text-xs bg-white px-2 py-1 rounded border border-gray-300">{'{{email}}'}</code>
+                    <code className="text-xs bg-background px-2 py-1 rounded border border-border">{'{{userName}}'}</code>
+                    <code className="text-xs bg-background px-2 py-1 rounded border border-border">{'{{phone}}'}</code>
+                    <code className="text-xs bg-background px-2 py-1 rounded border border-border">{'{{email}}'}</code>
                   </div>
                 </div>
               </div>
 
               {selectedCustomerIds.size > 0 && (
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm font-medium text-blue-900 mb-2">
+                <div className="p-3 bg-pos-highlight/20 rounded-lg">
+                  <p className="text-sm font-medium text-primary mb-2">
                     Selected Recipients ({selectedCustomerIds.size})
                   </p>
                   <div className="space-y-1 max-h-32 overflow-y-auto">
                     {selectedCustomers.slice(0, MAX_RECIPIENTS_PREVIEW).map((customer) => (
-                      <p key={customer.id} className="text-xs text-blue-700">
+                      <p key={customer.id} className="text-xs text-primary/80">
                         • {customer.name}
                       </p>
                     ))}
                     {selectedCustomers.length > MAX_RECIPIENTS_PREVIEW && (
-                      <p className="text-xs text-blue-600">
+                      <p className="text-xs text-primary/70">
                         + {selectedCustomers.length - MAX_RECIPIENTS_PREVIEW} more
                       </p>
                     )}
@@ -487,7 +487,7 @@ export const WhatsAppBroadcastPage: React.FC = () => {
                     <TableCell>{result.phone}</TableCell>
                     <TableCell>
                       {result.success ? (
-                        <Badge variant="default" className="bg-green-600">
+                        <Badge variant="default" className="bg-pos-success">
                           <CheckCircle2 className="h-3 w-3 mr-1" />
                           Sent
                         </Badge>
@@ -498,7 +498,7 @@ export const WhatsAppBroadcastPage: React.FC = () => {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-sm text-gray-500">
+                    <TableCell className="text-sm text-muted-foreground">
                       {result.error || 'Message delivered successfully'}
                     </TableCell>
                   </TableRow>

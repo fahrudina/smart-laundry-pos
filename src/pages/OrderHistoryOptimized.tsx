@@ -282,22 +282,22 @@ export const OrderHistory = () => {
 
   const getExecutionStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'ready_for_pickup': return 'bg-emerald-100 text-emerald-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'in_queue': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-pos-success/10 text-pos-success border border-pos-success/30';
+      case 'ready_for_pickup': return 'bg-pos-warning/10 text-pos-warning border border-pos-warning/30';
+      case 'in_progress': return 'bg-pos-highlight/30 text-primary border border-primary/20';
+      case 'in_queue': return 'bg-pos-highlight/20 text-primary border border-pos-highlight/40';
+      case 'cancelled': return 'bg-destructive/10 text-destructive border border-destructive/30';
+      default: return 'bg-muted text-muted-foreground border border-border';
     }
   };
 
   const getPaymentStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'down_payment': return 'bg-orange-100 text-orange-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'refunded': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-pos-success/10 text-pos-success border border-pos-success/30';
+      case 'down_payment': return 'bg-pos-highlight/30 text-primary border border-primary/20';
+      case 'pending': return 'bg-pos-warning/10 text-pos-warning border border-pos-warning/30';
+      case 'refunded': return 'bg-destructive/10 text-destructive border border-destructive/30';
+      default: return 'bg-muted text-muted-foreground border border-border';
     }
   };
 
@@ -569,7 +569,7 @@ export const OrderHistory = () => {
                   <PopoverTrigger asChild>
                     <Button 
                       variant="outline" 
-                      className={`w-full sm:w-auto ${hasActiveFilters ? 'bg-blue-50 border-blue-200' : ''}`}
+                      className={`w-full sm:w-auto ${hasActiveFilters ? 'bg-muted border-primary/30' : ''}`}
                     >
                       <Filter className="h-4 w-4 mr-2" />
                       Filter

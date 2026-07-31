@@ -281,7 +281,7 @@ export const CustomersPage: React.FC = () => {
 
     return (
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="text-sm text-gray-500 text-center sm:text-left">
+        <div className="text-sm text-muted-foreground text-center sm:text-left">
           Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to{' '}
           {Math.min(currentPage * ITEMS_PER_PAGE, pagination.totalCount)} of{' '}
           {pagination.totalCount} customers
@@ -346,7 +346,7 @@ export const CustomersPage: React.FC = () => {
   if (!currentStore) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">Please select a store to view customers</p>
+        <p className="text-muted-foreground">Please select a store to view customers</p>
       </div>
     );
   }
@@ -365,13 +365,13 @@ export const CustomersPage: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Customers</h1>
-            <p className="text-sm sm:text-base text-gray-600">Manage your customer database</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Customers</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Manage your customer database</p>
           </div>
         </div>
         <AddCustomerDialog
           trigger={
-            <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
+            <Button className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Add Customer
             </Button>
@@ -417,7 +417,7 @@ export const CustomersPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
               <div className="relative flex-1 sm:max-w-sm">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search customers..."
                   value={searchQuery}
@@ -441,9 +441,9 @@ export const CustomersPage: React.FC = () => {
             </div>
           ) : customers.length === 0 ? (
             <div className="text-center py-8">
-              <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No customers found</h3>
-              <p className="text-gray-600">
+              <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No customers found</h3>
+              <p className="text-muted-foreground">
                 {searchQuery ? 'Try adjusting your search terms' : 'Get started by adding your first customer'}
               </p>
             </div>
@@ -463,28 +463,28 @@ export const CustomersPage: React.FC = () => {
                   {customers.map((customer) => (
                     <TableRow 
                       key={customer.id}
-                      className="cursor-pointer hover:bg-gray-50"
+                      className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleCustomerClick(customer)}
                     >
                       <TableCell>
                         <div>
                           <div className="font-medium">{customer.name}</div>
-                          <div className="text-sm text-gray-500 md:hidden flex items-center gap-1">
+                          <div className="text-sm text-muted-foreground md:hidden flex items-center gap-1">
                             <Phone className="h-3 w-3" />
                             {customer.phone}
                           </div>
                           {customer.email && (
-                            <div className="text-sm text-gray-500 hidden md:block">{customer.email}</div>
+                            <div className="text-sm text-muted-foreground hidden md:block">{customer.email}</div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         <div className="flex items-center space-x-2">
-                          <Phone className="h-4 w-4 text-gray-400" />
+                          <Phone className="h-4 w-4 text-muted-foreground" />
                           <span>{customer.phone}</span>
                         </div>
                         {customer.address && (
-                          <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
+                          <div className="flex items-center space-x-2 text-sm text-muted-foreground mt-1">
                             <MapPin className="h-3 w-3" />
                             <span className="truncate max-w-[200px]">{customer.address}</span>
                           </div>
@@ -498,7 +498,7 @@ export const CustomersPage: React.FC = () => {
                           <CustomerPointsBadge customerPhone={customer.phone} />
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-gray-500 hidden lg:table-cell">
+                      <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
                         {formatDate(customer.created_at)}
                       </TableCell>
                       <TableCell className="text-right">
@@ -537,7 +537,7 @@ export const CustomersPage: React.FC = () => {
                                 e.stopPropagation();
                                 handleDeleteClick(customer);
                               }}
-                              className="text-red-600"
+                              className="text-destructive"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Delete
@@ -575,25 +575,25 @@ export const CustomersPage: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <h3 className="font-medium text-lg">{selectedCustomer.name}</h3>
-                <p className="text-sm text-gray-500">Customer since {formatDate(selectedCustomer.created_at)}</p>
+                <p className="text-sm text-muted-foreground">Customer since {formatDate(selectedCustomer.created_at)}</p>
               </div>
 
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
-                  <Phone className="h-4 w-4 text-gray-400" />
+                  <Phone className="h-4 w-4 text-muted-foreground" />
                   <span>{selectedCustomer.phone}</span>
                 </div>
-                
+
                 {selectedCustomer.email && (
                   <div className="flex items-center space-x-3">
-                    <Mail className="h-4 w-4 text-gray-400" />
+                    <Mail className="h-4 w-4 text-muted-foreground" />
                     <span>{selectedCustomer.email}</span>
                   </div>
                 )}
-                
+
                 {selectedCustomer.address && (
                   <div className="flex items-start space-x-3">
-                    <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
+                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <span className="text-sm">{selectedCustomer.address}</span>
                   </div>
                 )}
@@ -661,9 +661,9 @@ export const CustomersPage: React.FC = () => {
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
             <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDeleteCustomer}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>
