@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X, CheckCircle2, ArrowDown } from 'lucide-react';
+import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X, CheckCircle2, ArrowDown, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -43,7 +44,10 @@ export const EnhancedLaundryPOS = () => {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [pointsRedeemed, setPointsRedeemed] = useState(0);
   const [dropOffDate, setDropOffDate] = useState(getJakartaNow);
-  
+  // Collapsed until customer info is complete, then auto-expands - no point
+  // showing the service list before there's a customer to attach it to.
+  const [isServiceSectionExpanded, setIsServiceSectionExpanded] = useState(false);
+
   const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading: customersLoading } = useCustomers();
   const createOrderMutation = useCreateOrder();
@@ -178,6 +182,15 @@ export const EnhancedLaundryPOS = () => {
       setSearchResults([]);
     }
   }, [customers, showResults, customerPhone, customerName, isSelectingCustomer]);
+
+  // Auto-expand the service section the moment customer info becomes
+  // complete, and collapse it again if the form is cleared. Only reacts to
+  // the readiness transition, so the user can still manually toggle it in
+  // between without this fighting their choice.
+  const isCustomerReady = Boolean(customerName && customerPhone);
+  useEffect(() => {
+    setIsServiceSectionExpanded(isCustomerReady);
+  }, [isCustomerReady]);
 
   // Handle customer selection from search
   const handleCustomerSelect = (customer: any) => {
@@ -740,15 +753,33 @@ export const EnhancedLaundryPOS = () => {
 
       {/* Add Service Section */}
       <Card ref={serviceSectionRef} className="shadow-medium animate-scale-in">
-        <CardContent className="p-3 pt-4 sm:p-6 sm:pt-6">
-          <InlineServiceSelector
-            quantities={quantities}
-            onQuantityChange={setServiceQuantity}
-            onAddCustomItem={addCustomItemToOrder}
-            disabled={!customerName || !customerPhone}
-            dropOffDate={dropOffDate}
-          />
-        </CardContent>
+        <Collapsible open={isServiceSectionExpanded} onOpenChange={setIsServiceSectionExpanded}>
+          <CollapsibleTrigger asChild>
+            <button
+              type="button"
+              className="flex w-full items-center justify-between gap-2 p-3 text-left sm:p-6"
+            >
+              <span className="flex items-center gap-1.5 text-sm font-semibold sm:gap-2 sm:text-base">
+                <Plus className="h-4 w-4 flex-shrink-0" />
+                Tambah Layanan & Item
+              </span>
+              <ChevronDown
+                className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${isServiceSectionExpanded ? 'rotate-180' : ''}`}
+              />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <InlineServiceSelector
+                quantities={quantities}
+                onQuantityChange={setServiceQuantity}
+                onAddCustomItem={addCustomItemToOrder}
+                disabled={!customerName || !customerPhone}
+                dropOffDate={dropOffDate}
+              />
+            </CardContent>
+          </CollapsibleContent>
+        </Collapsible>
       </Card>
 
       {/* FloatingOrderSummary instead of fixed Current Order card */}

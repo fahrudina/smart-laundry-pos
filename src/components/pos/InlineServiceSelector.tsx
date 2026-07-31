@@ -207,11 +207,6 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
 
   return (
     <div className="space-y-3 sm:space-y-4">
-      <h3 className="flex items-center gap-1.5 text-sm font-semibold sm:gap-2 sm:text-base">
-        <Plus className="h-4 w-4 flex-shrink-0" />
-        Tambah Layanan & Item
-      </h3>
-
       <Tabs defaultValue="services" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="services" className="text-xs sm:text-sm">Layanan Tersedia</TabsTrigger>
