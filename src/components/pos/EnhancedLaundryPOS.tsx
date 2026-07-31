@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X, CheckCircle2 } from 'lucide-react';
+import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -699,6 +699,25 @@ export const EnhancedLaundryPOS = () => {
               </p>
             </div>
           </div>
+
+          {customerPhone && customerName && (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-pos-success/30 bg-pos-success/10 p-2.5 sm:p-3">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-pos-success sm:text-sm">
+                <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                Pelanggan siap
+              </div>
+              <Button
+                type="button"
+                variant="pos"
+                size="sm"
+                onClick={() => serviceSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="gap-1.5"
+              >
+                Pilih Layanan
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
