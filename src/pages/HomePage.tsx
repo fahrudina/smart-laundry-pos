@@ -20,6 +20,7 @@ import {
   QrCode,
   Package,
   XCircle,
+  ClipboardList,
   TrendingUp,
   TrendingDown,
   Home as HomeIcon,
@@ -126,6 +127,14 @@ export const HomePage: React.FC = () => {
       color: 'text-rose-400',
       bgColor: 'bg-rose-50',
       onClick: () => navigate('/pos')
+    },
+    {
+      id: 'order-list',
+      title: 'Daftar Pesanan',
+      icon: ClipboardList,
+      color: 'text-rose-400',
+      bgColor: 'bg-rose-50',
+      onClick: () => navigate('/order-history')
     },
     {
       id: 'customers',
