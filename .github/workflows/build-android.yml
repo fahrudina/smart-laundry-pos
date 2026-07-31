@@ -8,17 +8,6 @@ name: Build Android
 # sideloading onto a test device - not for a Play Store release.
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'index.html'
-      - 'capacitor.config.ts'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'vite.config.ts'
-      - '.github/workflows/build-android.yml'
   push:
     branches: [main]
     paths:
