@@ -1,9 +1,11 @@
 import React from 'react';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
+import { MobileBottomNav } from './MobileBottomNav';
 import { useStore } from '@/contexts/StoreContext';
 import { StoreSelector } from '@/components/stores/StoreSelector';
 import { Separator } from '@/components/ui/separator';
+import { useMobileBottomNavItems } from '@/hooks/useMobileBottomNavItems';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -11,7 +13,8 @@ interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { isOwner } = useStore();
-  
+  const bottomNavItems = useMobileBottomNavItems();
+
   return (
     <SidebarProvider defaultOpen={false}>
       <AppSidebar />
@@ -34,10 +37,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </header>
         {/* Main Content */}
         <main className="flex-1 overflow-x-hidden bg-gray-50">
-          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+          <div className="mx-auto max-w-7xl px-4 pt-4 pb-24 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8 md:pb-6 lg:pb-8">
             {children}
           </div>
         </main>
+        <MobileBottomNav items={bottomNavItems} />
       </SidebarInset>
     </SidebarProvider>
   );

@@ -172,7 +172,9 @@ export const HomePage: React.FC = () => {
   // Grid excludes "new-order" - it's promoted to a full-width hero button instead.
   const gridActions = quickActions.filter((action) => action.id !== 'new-order');
 
-  const bottomNavItems = [
+  // Only used by the desktop fallback view below - the mobile view's bottom nav
+  // now comes from AppLayout (shared across every screen, not just Home).
+  const desktopBottomNavItems = [
     {
       id: 'home',
       title: 'Beranda',
@@ -230,7 +232,6 @@ export const HomePage: React.FC = () => {
         totalSteps={activation?.totalSteps ?? 1}
         onCreateOrder={() => navigate('/pos')}
         gridActions={gridActions}
-        bottomNavItems={bottomNavItems}
       />
     );
   }
@@ -390,7 +391,7 @@ export const HomePage: React.FC = () => {
       {/* Bottom Navigation Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
         <div className={`flex justify-center gap-4 max-w-md mx-auto px-4`}>
-          {bottomNavItems.map((item) => (
+          {desktopBottomNavItems.map((item) => (
             <button
               key={item.id}
               onClick={item.onClick}
