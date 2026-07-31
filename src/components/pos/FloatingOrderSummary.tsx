@@ -184,7 +184,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
           <div className="flex min-w-0 items-center gap-2">
             <ShoppingCart className="h-5 w-5 flex-shrink-0 text-blue-600" />
             <span className="truncate text-sm font-semibold text-gray-800 sm:text-base">
-              {itemCount} item{itemCount !== 1 ? 's' : ''} · Rp{formatCurrency(totalAmount)}
+              {itemCount} item · Rp{formatCurrency(totalAmount)}
             </span>
           </div>
           <ChevronUp className="h-5 w-5 flex-shrink-0 text-blue-600" />
@@ -201,9 +201,9 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
           <div className="flex items-center justify-between mb-2 sm:mb-3">
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-              <span className="font-semibold text-gray-800 text-sm sm:text-base">Current Order</span>
+              <span className="font-semibold text-gray-800 text-sm sm:text-base">Pesanan Saat Ini</span>
               <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs sm:text-sm">
-                {itemCount} items
+                {itemCount} item
               </Badge>
             </div>
             <Button
@@ -214,7 +214,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                 onOpenServicePopup?.();
               }}
               className="h-7 w-7 p-0 text-gray-500 hover:bg-gray-100 flex-shrink-0"
-              title="Tutup untuk tambah layanan lain"
+              title="Sembunyikan untuk menambah layanan lain"
             >
               <ChevronDown className="h-4 w-4" />
             </Button>
@@ -225,20 +225,20 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
             <div className="mb-2 sm:mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center gap-2 mb-1">
                 <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-                <span className="text-xs sm:text-sm font-medium text-blue-900">Estimated Completion</span>
+                <span className="text-xs sm:text-sm font-medium text-blue-900">Estimasi Selesai</span>
               </div>
               <p className="text-xs sm:text-sm text-blue-800 font-semibold">
                 {formatDate(completionTime)}
               </p>
               <p className="text-xs text-blue-600">
-                Drop-off: {formatDate(dropOffDate)}
+                Diterima: {formatDate(dropOffDate)}
               </p>
             </div>
           )}
 
           {/* Order Items List */}
           <div className="mb-2 sm:mb-3">
-            <h4 className="text-sm font-medium text-gray-800 mb-1 sm:mb-2">Order Items</h4>
+            <h4 className="text-sm font-medium text-gray-800 mb-1 sm:mb-2">Item Pesanan</h4>
             <div className="space-y-1 sm:space-y-2 max-h-40 overflow-y-auto">
               {currentOrder.map((item, index) => (
                 <div key={`${item.service.id}-${item.serviceType}-${index}`} className="flex items-center justify-between p-1.5 sm:p-2 bg-gray-50 rounded-lg">
@@ -248,7 +248,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                       Rp{item.service.price.toLocaleString('id-ID')} × {item.serviceType === 'kilo' ? `${item.quantity.toFixed(1)} kg` : `${item.quantity} unit${item.quantity !== 1 ? 's' : ''}`}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Ready: {formatDate(calculateFinishDate(item.service, dropOffDate))}
+                      Siap: {formatDate(calculateFinishDate(item.service, dropOffDate))}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 ml-2">
@@ -330,12 +330,12 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                       Rp{item.price.toLocaleString('id-ID')} × {item.quantity} unit{item.quantity !== 1 ? 's' : ''}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Ready: {calculateDynamicItemFinishDate ? formatDate(calculateDynamicItemFinishDate(item, dropOffDate)) : 'TBD'}
+                      Siap: {calculateDynamicItemFinishDate ? formatDate(calculateDynamicItemFinishDate(item, dropOffDate)) : '-'}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 ml-2">
                     <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800">
-                      Custom
+                      Kustom
                     </Badge>
                     <Button
                       variant="ghost"
@@ -365,7 +365,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                 <TabsList className="grid w-full grid-cols-2 h-8">
                   <TabsTrigger value="custom" className="flex items-center gap-1 text-xs">
                     <Percent className="h-3 w-3" />
-                    Custom
+                    Kustom
                   </TabsTrigger>
                   <TabsTrigger value="points" className="flex items-center gap-1 text-xs" disabled={!hasPoints}>
                     <Gift className="h-3 w-3" />
@@ -474,7 +474,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
               disabled={isProcessing || isPaymentStarted || !customerName || !customerPhone || pointsError || discountError}
             >
               <CreditCard className="h-4 w-4 mr-2" />
-              {isProcessing || isPaymentStarted ? "Processing..." : "Bayar Sekarang"}
+              {isProcessing || isPaymentStarted ? "Memproses..." : "Bayar Sekarang"}
             </Button>
 
             <Button

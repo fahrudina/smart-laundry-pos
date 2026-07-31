@@ -117,11 +117,11 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
     const isTomorrow = date.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString();
 
     if (isToday) {
-      return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return `Hari ini pukul ${date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
     } else if (isTomorrow) {
-      return `Tomorrow at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return `Besok pukul ${date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
     } else {
-      return date.toLocaleDateString([], {
+      return date.toLocaleDateString('id-ID', {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
