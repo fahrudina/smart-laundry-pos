@@ -18,6 +18,10 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'vite.config.ts'
+      - 'tsconfig*.json'
+      - 'tailwind.config.ts'
+      - 'postcss.config.js'
+      - 'components.json'
       - '.github/workflows/build-android.yml'
   workflow_dispatch: {}
 

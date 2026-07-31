@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home as HomeIcon, Plus, TrendingUp, History, Building2 } from 'lucide-react';
-import { useStore } from '@/contexts/StoreContext';
 import { BottomNavItem } from '@/components/layout/MobileBottomNav';
+import { useStore } from '@/contexts/StoreContext';
 
 /**
  * Builds the shared bottom-nav item set used across every screen: Beranda, Buat Pesanan,

@@ -347,10 +347,10 @@ export const WhatsAppBroadcastPage: React.FC = () => {
                       <TableRow>
                         <TableHead className="w-12">
                           <Checkbox
-                            checked={allSelected}
+                            checked={someSelected ? 'indeterminate' : allSelected}
                             onCheckedChange={handleSelectAll}
                             aria-label="Select all customers"
-                            className={someSelected ? "data-[state=checked]:bg-muted-foreground" : ""}
+                            className={someSelected ? "data-[state=indeterminate]:bg-muted-foreground" : ""}
                           />
                         </TableHead>
                         <TableHead>Name</TableHead>

@@ -21,6 +21,7 @@ import { OwnerRoute } from "./components/auth/OwnerRoute";
 import { ProtectedRedirect } from "./components/auth/ProtectedRedirect";
 import { AppLayout } from "./components/layout/AppLayout";
 import { AndroidBackButtonHandler } from "./components/layout/AndroidBackButtonHandler";
+import { NativeSplashScreenHider } from "./components/layout/NativeSplashScreenHider";
 import { queryClient } from "./lib/queryClient";
 import { PublicReceiptPage } from "./pages/PublicReceiptPage";
 import { PWAManagementPage } from "./pages/PWAManagementPage";
@@ -31,8 +32,9 @@ import { RevenueReportPage } from "./pages/RevenueReportPage";
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <NativeSplashScreenHider />
       <Toaster />
-      <Sonner 
+      <Sonner
         position="top-center"
         richColors
         closeButton

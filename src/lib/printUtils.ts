@@ -384,6 +384,11 @@ export const isBluetoothSupported = (): boolean => {
  * Find a writable characteristic among a device's discovered services, preferring the
  * known thermal-printer service UUIDs but falling back to any writable characteristic
  * if none of those are present.
+ *
+ * Note: the "fall back to any service" path only does anything useful on native platforms.
+ * On web, requestDevice's optionalServices (set to THERMAL_PRINTER_SERVICES) is a hard
+ * allowlist enforced by the Web Bluetooth API itself - getServices() can never return a
+ * service outside that list there, so `services` is already equivalent to `knownServices`.
  */
 const findWritableCharacteristic = async (
   deviceId: string,
@@ -409,8 +414,8 @@ const findWritableCharacteristic = async (
           await BleClient.write(deviceId, service.uuid, characteristic.uuid, testData);
         }
         return { serviceUuid: service.uuid, characteristicUuid: characteristic.uuid, useWithoutResponse };
-      } catch {
-        // Not actually writable in practice, try the next candidate
+      } catch (error) {
+        console.warn(`Characteristic ${characteristic.uuid} (service ${service.uuid}) rejected the test write:`, error);
       }
     }
   }
@@ -435,7 +440,7 @@ export const isThermerAppAvailable = (): boolean => {
  */
 export const connectThermalPrinter = async (
   onDisconnect?: (deviceId: string) => void
-): Promise<ThermalPrinterConnection | null> => {
+): Promise<ThermalPrinterConnection> => {
   if (!isBluetoothSupported()) {
     throw new Error('Bluetooth is not supported on this device');
   }
@@ -449,9 +454,25 @@ export const connectThermalPrinter = async (
       optionalServices: THERMAL_PRINTER_SERVICES,
     });
 
-    await BleClient.connect(device.deviceId, onDisconnect);
+    // Don't forward onDisconnect until setup actually succeeds below - otherwise the
+    // cleanup disconnect() in the !writable branch would fire it, showing a spurious
+    // "printer disconnected" toast right before the real "connection failed" one.
+    let setupComplete = false;
+    await BleClient.connect(device.deviceId, (disconnectedDeviceId) => {
+      if (setupComplete) {
+        onDisconnect?.(disconnectedDeviceId);
+      }
+    });
 
-    const services = await BleClient.getServices(device.deviceId);
+    let services = await BleClient.getServices(device.deviceId);
+    const hasDiscoveredCharacteristics = services.some(service => service.characteristics.length > 0);
+    // Some Android devices resolve `connect` before GATT service discovery has actually
+    // finished, leaving getServices() empty - force a fresh discovery and retry once.
+    if (!hasDiscoveredCharacteristics && Capacitor.isNativePlatform()) {
+      await BleClient.discoverServices(device.deviceId);
+      services = await BleClient.getServices(device.deviceId);
+    }
+
     const writable = await findWritableCharacteristic(device.deviceId, services);
 
     if (!writable) {
@@ -459,6 +480,7 @@ export const connectThermalPrinter = async (
       throw new Error(`No compatible thermal printer service/characteristic found for ${device.name || 'this device'}. Please ensure the printer is in pairing mode and try again.`);
     }
 
+    setupComplete = true;
     return {
       deviceId: device.deviceId,
       deviceName: device.name,
@@ -863,8 +885,20 @@ export const printToThermalPrinter = async (
       ...options
     });
 
-    // Split data into smaller chunks to be more conservative with Bluetooth
-    const CHUNK_SIZE = 128;
+    // Native BLE writes are capped at the negotiated MTU minus 3 bytes of ATT overhead -
+    // a fixed 128-byte chunk can exceed that (default MTU is often only 23 bytes) and every
+    // write then fails. getMtu isn't available on web, where the plugin's Web Bluetooth
+    // backing handles this differently, so keep the previous fixed size there.
+    let CHUNK_SIZE = 128;
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const mtu = await BleClient.getMtu(connection.deviceId);
+        CHUNK_SIZE = Math.max(20, mtu - 3);
+      } catch (error) {
+        console.warn('Failed to read negotiated MTU, falling back to a conservative chunk size:', error);
+        CHUNK_SIZE = 20;
+      }
+    }
     const chunks: Uint8Array[] = [];
 
     for (let i = 0; i < printData.byteLength; i += CHUNK_SIZE) {

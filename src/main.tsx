@@ -6,7 +6,6 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
-import { SplashScreen } from "@capacitor/splash-screen";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -17,12 +16,16 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 );
 
 // Native-only startup: let content sit under the status bar (safe-area insets in the
-// CSS make room for it) with dark icons for this app's light theme, then swap the
-// native splash screen for the real UI now that it's rendered.
+// CSS make room for it) with dark icons for this app's light theme. The native splash
+// screen is hidden from inside <App> instead, after its first commit - hiding it here
+// would race root.render(), which doesn't paint synchronously.
 if (Capacitor.isNativePlatform()) {
-  StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
-  StatusBar.setStyle({ style: Style.Light }).catch(() => {});
-  SplashScreen.hide().catch(() => {});
+  StatusBar.setOverlaysWebView({ overlay: true }).catch((error) => {
+    console.error('Failed to set status bar overlay mode:', error);
+  });
+  StatusBar.setStyle({ style: Style.Light }).catch((error) => {
+    console.error('Failed to set status bar style:', error);
+  });
 }
 
 // Register service worker for PWA functionality

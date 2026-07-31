@@ -13,7 +13,8 @@ interface BeforeInstallPromptEvent extends Event {
 export const usePWAInstall = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
+  // Already installed by definition inside the native app shell.
+  const [isInstalled, setIsInstalled] = useState(() => Capacitor.isNativePlatform());
 
   useEffect(() => {
     // Already installed by definition inside the native app shell - the browser-only
@@ -63,6 +64,10 @@ export const usePWAInstall = () => {
   }, []);
 
   const installPWA = async () => {
+    if (Capacitor.isNativePlatform()) {
+      return;
+    }
+
     if (!deferredPrompt) {
       // For iOS Safari, show instructions
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
