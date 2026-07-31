@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X, CheckCircle2 } from 'lucide-react';
+import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,9 +9,9 @@ import { useCustomers } from '@/hooks/useCustomers';
 import { useCreateOrderWithNotifications as useCreateOrder, UnitItem } from '@/hooks/useOrdersWithNotifications';
 import { toast } from 'sonner';
 import { useServices, useSeedDefaultServices } from '@/hooks/useServices';
-import { EnhancedOrderItem } from './EnhancedServiceSelector';
-import { DynamicOrderItemData } from './DynamicOrderItem';
-import { EnhancedServiceSelectionPopup } from './EnhancedServiceSelectionPopup';
+import { EnhancedOrderItem, DynamicOrderItemData } from './orderTypes';
+import { getJakartaNow, buildOrderItems, validateOrderReadiness, ORDER_ERROR_TOAST_STYLE } from './orderPayload';
+import { InlineServiceSelector, Service as CatalogService, DynamicItem } from './InlineServiceSelector';
 import { FloatingOrderSummary } from './FloatingOrderSummary';
 import { CashPaymentDialog } from './CashPaymentDialog';
 import { OrderSuccessDialog } from './OrderSuccessDialog';
@@ -26,7 +26,6 @@ export const EnhancedLaundryPOS = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSelectingCustomer, setIsSelectingCustomer] = useState(false);
-  const [isServicePopupOpen, setIsServicePopupOpen] = useState(false);
   const [showCashPaymentDialog, setShowCashPaymentDialog] = useState(false);
   const [showOrderSuccessDialog, setShowOrderSuccessDialog] = useState(false);
   const [showThermalPrintDialog, setShowThermalPrintDialog] = useState(false);
@@ -43,20 +42,13 @@ export const EnhancedLaundryPOS = () => {
   } | null>(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [pointsRedeemed, setPointsRedeemed] = useState(0);
-  const [dropOffDate, setDropOffDate] = useState(() => {
-    // Set to current date/time in Asia/Jakarta timezone
-    const now = new Date();
-    // Create a new date that represents the current time in Jakarta
-    const jakartaOffset = 7 * 60; // Jakarta is UTC+7
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const jakartaTime = new Date(utc + (jakartaOffset * 60000));
-    return jakartaTime;
-  });
+  const [dropOffDate, setDropOffDate] = useState(getJakartaNow);
   
   const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading: customersLoading } = useCustomers();
   const createOrderMutation = useCreateOrder();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const serviceSectionRef = useRef<HTMLDivElement>(null);
 
   // Load services from our service management system
   const { data: servicesData, isLoading: servicesLoading, error: servicesError } = useServices();
@@ -95,15 +87,15 @@ export const EnhancedLaundryPOS = () => {
     const isTomorrow = date.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString();
     
     if (isToday) {
-      return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return `Hari ini pukul ${date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
     } else if (isTomorrow) {
-      return `Tomorrow at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return `Besok pukul ${date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
     } else {
-      return date.toLocaleDateString([], { 
-        month: 'short', 
-        day: 'numeric', 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      return date.toLocaleDateString('id-ID', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       });
     }
   };
@@ -188,18 +180,18 @@ export const EnhancedLaundryPOS = () => {
     }, 500);
   };
 
-  // Clear customer form
+  // Clear customer form - also clears the cart, since items added so far were
+  // being built up for the customer that's now being cleared.
   const clearCustomerForm = () => {
     setCustomerPhone('');
     setCustomerName('');
     setSearchResults([]);
     setShowResults(false);
-    // Reset to current Jakarta time
-    const now = new Date();
-    const jakartaOffset = 7 * 60; // Jakarta is UTC+7
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const jakartaTime = new Date(utc + (jakartaOffset * 60000));
-    setDropOffDate(jakartaTime);
+    setDropOffDate(getJakartaNow());
+    setCurrentOrder([]);
+    setDynamicItems([]);
+    setDiscountAmount(0);
+    setPointsRedeemed(0);
   };
 
   // Handle phone input blur
@@ -210,78 +202,78 @@ export const EnhancedLaundryPOS = () => {
     }, 200);
   };
 
-  // Handle services and dynamic items selected from popup
-  const handleServicesAndItemsSelected = (selectedServices: any[], selectedDynamicItems: any[]) => {
-    // Process regular services
-    selectedServices.forEach(selectedService => {
-      const service = {
-        id: selectedService.service.id,
-        name: selectedService.service.name,
-        price: selectedService.price,
-        duration: selectedService.service.duration,
-        durationValue: selectedService.service.durationValue,
-        durationUnit: selectedService.service.durationUnit,
-        category: selectedService.service.category,
-        supportsKilo: selectedService.service.supportsKilo,
-        kiloPrice: selectedService.service.kiloPrice,
-      };
+  // Confirm an add-to-cart with a short toast - the cart panel itself is
+  // collapsed by default, so a silent state update is easy to miss.
+  const notifyItemAdded = (itemName: string) => {
+    toast.success(`${itemName} ditambahkan ke pesanan`, {
+      duration: 1600,
+      className: 'border border-pos-success/30 bg-pos-success/10 text-foreground',
+    });
+  };
 
-      // Add to regular order with the specified quantity
-      setCurrentOrder(prev => {
-        const existingItem = prev.find(item => 
-          item.service.id === service.id && 
-          item.serviceType === selectedService.type
+  // Add a service straight to the real cart - one click adds at quantity 1
+  // (or 1kg for kilo), further adjustment happens in FloatingOrderSummary's
+  // cart list. No staging cart in between.
+  const addServiceToOrder = (rawService: CatalogService, type: 'unit' | 'kilo') => {
+    const price = type === 'unit' ? rawService.price : (rawService.kiloPrice || 0);
+    const service = {
+      id: rawService.id,
+      name: rawService.name,
+      price,
+      duration: rawService.duration,
+      durationValue: rawService.durationValue,
+      durationUnit: rawService.durationUnit,
+      category: rawService.category,
+      supportsKilo: rawService.supportsKilo,
+      kiloPrice: rawService.kiloPrice,
+    };
+
+    setCurrentOrder(prev => {
+      const existingItem = prev.find(item =>
+        item.service.id === service.id &&
+        item.serviceType === type
+      );
+
+      if (existingItem) {
+        return prev.map(item =>
+          item.service.id === service.id && item.serviceType === type
+            ? {
+                ...item,
+                quantity: item.quantity + 1,
+                totalPrice: (item.quantity + 1) * service.price,
+                weight: type === 'kilo' ? item.quantity + 1 : item.weight
+              }
+            : item
         );
-        
-        if (existingItem) {
-          return prev.map(item =>
-            item.service.id === service.id && item.serviceType === selectedService.type
-              ? { 
-                  ...item, 
-                  quantity: item.quantity + selectedService.quantity,
-                  totalPrice: (item.quantity + selectedService.quantity) * service.price,
-                  weight: selectedService.type === 'kilo' ? selectedService.quantity : item.weight
-                }
-              : item
-          );
-        } else {
-          return [...prev, { 
-            service, 
-            quantity: selectedService.quantity, 
-            serviceType: selectedService.type as 'unit' | 'kilo',
-            weight: selectedService.type === 'kilo' ? selectedService.quantity : undefined,
-            totalPrice: selectedService.quantity * service.price
-          }];
-        }
-      });
+      } else {
+        return [...prev, {
+          service,
+          quantity: 1,
+          serviceType: type,
+          weight: type === 'kilo' ? 1 : undefined,
+          totalPrice: service.price
+        }];
+      }
     });
+    notifyItemAdded(service.name);
+  };
 
-    // Process dynamic items
-    selectedDynamicItems.forEach(dynamicItem => {
-      const newDynamicItem: DynamicOrderItemData = {
-        id: dynamicItem.id,
-        itemName: dynamicItem.itemName,
-        duration: `${dynamicItem.durationValue} ${dynamicItem.durationUnit}`,
-        durationValue: dynamicItem.durationValue,
-        durationUnit: dynamicItem.durationUnit,
-        price: dynamicItem.price,
-        quantity: dynamicItem.quantity,
-        totalPrice: dynamicItem.price * dynamicItem.quantity,
-      };
+  // Add a composed custom item straight to the real cart
+  const addCustomItemToOrder = (dynamicItem: DynamicItem) => {
+    const newDynamicItem: DynamicOrderItemData = {
+      id: dynamicItem.id,
+      itemName: dynamicItem.itemName,
+      duration: `${dynamicItem.durationValue} ${dynamicItem.durationUnit}`,
+      durationValue: dynamicItem.durationValue,
+      durationUnit: dynamicItem.durationUnit,
+      price: dynamicItem.price,
+      quantity: dynamicItem.quantity,
+      totalPrice: dynamicItem.price * dynamicItem.quantity,
+      unitType: dynamicItem.unitType,
+    };
 
-      setDynamicItems(prev => {
-        const existingIndex = prev.findIndex(item => item.id === dynamicItem.id);
-        if (existingIndex >= 0) {
-          // Update existing item
-          const updated = [...prev];
-          updated[existingIndex] = newDynamicItem;
-          return updated;
-        } else {
-          // Add new item
-          return [...prev, newDynamicItem];
-        }
-      });
-    });
+    setDynamicItems(prev => [...prev, newDynamicItem]);
+    notifyItemAdded(dynamicItem.itemName);
   };
 
   // Remove item from order
@@ -315,33 +307,9 @@ export const EnhancedLaundryPOS = () => {
 
   // Process payment
   const processPayment = async (paymentMethod: string = 'cash') => {
-    if (currentOrder.length === 0 && dynamicItems.length === 0) {
-      toast.error("❌ Tidak ada item dalam pesanan", {
-        style: {
-          minWidth: '320px',
-          maxWidth: '500px',
-          width: '90vw',
-          padding: '16px',
-          fontSize: '16px',
-          borderRadius: '12px',
-          border: '2px solid #ef4444',
-        }
-      });
-      return;
-    }
-
-    if (!customerName || !customerPhone) {
-      toast.error("❌ Mohon lengkapi informasi pelanggan", {
-        style: {
-          minWidth: '320px',
-          maxWidth: '500px',
-          width: '90vw',
-          padding: '16px',
-          fontSize: '16px',
-          borderRadius: '12px',
-          border: '2px solid #ef4444',
-        }
-      });
+    const validationError = validateOrderReadiness({ currentOrder, dynamicItems, customerName, customerPhone });
+    if (validationError) {
+      toast.error(`❌ ${validationError}`, { style: ORDER_ERROR_TOAST_STYLE });
       return;
     }
 
@@ -359,35 +327,13 @@ export const EnhancedLaundryPOS = () => {
       const subtotal = getTotalPrice();
       const totalAmount = subtotal - discountAmount;
       const completionDate = getOrderCompletionTime();
-
-      // Combine regular order items and dynamic items
-      const regularItems = currentOrder.map(item => ({
-        service_name: item.service.name,
-        service_price: item.service.price,
-        quantity: item.quantity,
-        estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
-        service_type: item.serviceType,
-        weight_kg: item.weight,
-        unit_items: item.unitItems,
-        category: item.service.category,
-        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
-      }));
-
-      const dynamicOrderItems = dynamicItems.map(item => ({
-        service_name: item.itemName,
-        service_price: item.price,
-        quantity: item.quantity,
-        estimated_completion: calculateDynamicItemFinishDate(item, dropOffDate).toISOString(),
-        service_type: 'unit' as const,
-        weight_kg: undefined,
-        unit_items: undefined,
-        category: 'other_goods',
-        item_type: 'service' as const,
-      }));
-
-      // Check if all items are products (no services)
-      const allItems = [...regularItems, ...dynamicOrderItems];
-      const allItemsAreProducts = allItems.every(item => item.item_type === 'product');
+      const { items, allItemsAreProducts } = buildOrderItems({
+        currentOrder,
+        dynamicItems,
+        dropOffDate,
+        calculateFinishDate,
+        calculateDynamicItemFinishDate,
+      });
 
       // Determine payment status based on whether it's a down payment
       const paymentStatus = isDownPayment ? 'down_payment' : 'completed';
@@ -396,7 +342,7 @@ export const EnhancedLaundryPOS = () => {
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: allItems,
+        items,
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
@@ -429,40 +375,18 @@ export const EnhancedLaundryPOS = () => {
       const subtotal = getTotalPrice();
       const totalAmount = subtotal - discountAmount;
       const completionDate = getOrderCompletionTime();
-
-      // Combine regular order items and dynamic items
-      const regularItems = currentOrder.map(item => ({
-        service_name: item.service.name,
-        service_price: item.service.price,
-        quantity: item.quantity,
-        estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
-        service_type: item.serviceType,
-        weight_kg: item.weight,
-        unit_items: item.unitItems,
-        category: item.service.category,
-        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
-      }));
-
-      const dynamicOrderItems = dynamicItems.map(item => ({
-        service_name: item.itemName,
-        service_price: item.price,
-        quantity: item.quantity,
-        estimated_completion: calculateDynamicItemFinishDate(item, dropOffDate).toISOString(),
-        service_type: 'unit' as const,
-        weight_kg: undefined,
-        unit_items: undefined,
-        category: 'other_goods',
-        item_type: 'service' as const,
-      }));
-
-      // Check if all items are products (no services)
-      const allItems = [...regularItems, ...dynamicOrderItems];
-      const allItemsAreProducts = allItems.every(item => item.item_type === 'product');
+      const { items, allItemsAreProducts } = buildOrderItems({
+        currentOrder,
+        dynamicItems,
+        dropOffDate,
+        calculateFinishDate,
+        calculateDynamicItemFinishDate,
+      });
 
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: allItems,
+        items,
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
@@ -487,33 +411,9 @@ export const EnhancedLaundryPOS = () => {
 
   // Create draft order
   const createDraftOrder = async () => {
-    if (currentOrder.length === 0 && dynamicItems.length === 0) {
-      toast.error("❌ Tidak ada item dalam pesanan", {
-        style: {
-          minWidth: '320px',
-          maxWidth: '500px',
-          width: '90vw',
-          padding: '16px',
-          fontSize: '16px',
-          borderRadius: '12px',
-          border: '2px solid #ef4444',
-        }
-      });
-      return;
-    }
-
-    if (!customerName || !customerPhone) {
-      toast.error("❌ Mohon lengkapi informasi pelanggan", {
-        style: {
-          minWidth: '320px',
-          maxWidth: '500px',
-          width: '90vw',
-          padding: '16px',
-          fontSize: '16px',
-          borderRadius: '12px',
-          border: '2px solid #ef4444',
-        }
-      });
+    const validationError = validateOrderReadiness({ currentOrder, dynamicItems, customerName, customerPhone });
+    if (validationError) {
+      toast.error(`❌ ${validationError}`, { style: ORDER_ERROR_TOAST_STYLE });
       return;
     }
 
@@ -521,40 +421,18 @@ export const EnhancedLaundryPOS = () => {
       const subtotal = getTotalPrice();
       const totalAmount = subtotal - discountAmount;
       const completionDate = getOrderCompletionTime();
-
-      // Combine regular order items and dynamic items
-      const regularItems = currentOrder.map(item => ({
-        service_name: item.service.name,
-        service_price: item.service.price,
-        quantity: item.quantity,
-        estimated_completion: calculateFinishDate(item.service, dropOffDate).toISOString(),
-        service_type: item.serviceType,
-        weight_kg: item.weight,
-        unit_items: item.unitItems,
-        category: item.service.category,
-        item_type: ['detergent', 'perfume', 'softener', 'other_goods'].includes(item.service.category) ? 'product' : 'service',
-      }));
-
-      const dynamicOrderItems = dynamicItems.map(item => ({
-        service_name: item.itemName,
-        service_price: item.price,
-        quantity: item.quantity,
-        estimated_completion: calculateDynamicItemFinishDate(item, dropOffDate).toISOString(),
-        service_type: 'unit' as const,
-        weight_kg: undefined,
-        unit_items: undefined,
-        category: 'other_goods',
-        item_type: 'service' as const,
-      }));
-
-      // Check if all items are products (no services)
-      const allItems = [...regularItems, ...dynamicOrderItems];
-      const allItemsAreProducts = allItems.every(item => item.item_type === 'product');
+      const { items, allItemsAreProducts } = buildOrderItems({
+        currentOrder,
+        dynamicItems,
+        dropOffDate,
+        calculateFinishDate,
+        calculateDynamicItemFinishDate,
+      });
 
       const orderData = {
         customer_name: customerName,
         customer_phone: customerPhone,
-        items: allItems,
+        items,
         subtotal,
         tax_amount: 0,
         total_amount: totalAmount,
@@ -636,13 +514,9 @@ export const EnhancedLaundryPOS = () => {
     
     // Reset last created order
     setLastCreatedOrder(null);
-    
+
     // Reset drop off date to current time
-    const now = new Date();
-    const jakartaOffset = 7 * 60;
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const jakartaTime = new Date(utc + (jakartaOffset * 60000));
-    setDropOffDate(jakartaTime);
+    setDropOffDate(getJakartaNow());
   };
 
   // Handle dialog close - clear customer info
@@ -660,18 +534,18 @@ export const EnhancedLaundryPOS = () => {
 
   if (servicesError) {
     return (
-      <Card className="border-red-200 bg-red-50">
+      <Card className="border-destructive/30 bg-destructive/5">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-medium text-red-800">Gagal memuat layanan</h3>
-              <p className="text-sm text-red-600">
+              <h3 className="font-medium text-destructive">Gagal memuat layanan</h3>
+              <p className="text-sm text-destructive/80">
                 Silakan coba refresh halaman atau hubungi dukungan.
               </p>
             </div>
-            <Button 
+            <Button
+              variant="destructive"
               onClick={() => window.location.reload()}
-              className="bg-red-600 hover:bg-red-700"
             >
               Refresh
             </Button>
@@ -682,15 +556,15 @@ export const EnhancedLaundryPOS = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Service Management Notice */}
       {servicesData && servicesData.length === 0 && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="p-4">
+        <Card className="border-pos-warning/40 bg-pos-warning/10">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 className="font-medium text-orange-800">Belum ada layanan yang dikonfigurasi</h3>
-                <p className="text-sm text-orange-600">
+                <h3 className="font-medium text-pos-warning">Belum ada layanan yang dikonfigurasi</h3>
+                <p className="text-sm text-pos-warning/80">
                   Tambahkan layanan untuk mulai menerima pesanan. Muat contoh layanan untuk langsung mulai.
                 </p>
               </div>
@@ -698,14 +572,14 @@ export const EnhancedLaundryPOS = () => {
                 <Button
                   onClick={() => seedDefaultServices.mutate()}
                   disabled={seedDefaultServices.isPending}
-                  className="bg-orange-600 hover:bg-orange-700"
+                  className="bg-pos-warning text-white hover:bg-pos-warning/90"
                 >
                   {seedDefaultServices.isPending ? 'Memuat...' : 'Muat Contoh Layanan'}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => navigate('/services')}
-                  className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                  className="border-pos-warning/40 text-pos-warning hover:bg-pos-warning/10"
                 >
                   Kelola Layanan
                 </Button>
@@ -717,17 +591,17 @@ export const EnhancedLaundryPOS = () => {
 
       {/* Customer Information */}
       <Card className="shadow-medium animate-fade-in">
-        <CardHeader>
-          <CardTitle className="flex items-center text-lg">
-            <User className="h-5 w-5 mr-2 text-primary" />
+        <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-4">
+          <CardTitle className="flex items-center gap-1.5 text-base sm:gap-2 sm:text-lg">
+            <User className="h-4 w-4 flex-shrink-0 text-primary sm:h-5 sm:w-5" />
             Informasi Pelanggan
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <CardContent className="space-y-3 p-3 pt-0 sm:space-y-4 sm:p-6 sm:pt-0">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-muted-foreground">
+              <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                <label className="text-xs font-medium text-muted-foreground sm:text-sm">
                   Nomor Telepon
                 </label>
                 {customerPhone && customerName && (
@@ -745,15 +619,15 @@ export const EnhancedLaundryPOS = () => {
               <div className="relative">
                 <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
                 {customerPhone && customerName && (
-                  <CheckCircle className="h-4 w-4 absolute right-3 top-3 text-green-500" />
+                  <CheckCircle className="h-4 w-4 absolute right-3 top-3 text-pos-success" />
                 )}
                 <Input
-                  placeholder="Cari berdasarkan telepon/nama pelanggan..."
+                  placeholder="No. HP atau nama pelanggan"
                   value={customerPhone}
                   onChange={(e) => {
                     const newValue = e.target.value;
                     setCustomerPhone(newValue);
-                    
+
                     if (customerName.trim().length > 0 && newValue !== customerPhone) {
                       setCustomerName('');
                     }
@@ -785,7 +659,7 @@ export const EnhancedLaundryPOS = () => {
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground sm:mb-2 sm:text-sm">
                 Nama Pelanggan
               </label>
               <Input
@@ -795,7 +669,7 @@ export const EnhancedLaundryPOS = () => {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground sm:mb-2 sm:text-sm">
                 Tanggal & Waktu Terima
               </label>
               <Input
@@ -820,23 +694,41 @@ export const EnhancedLaundryPOS = () => {
                 }}
                 className="w-full"
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">
                 Ini mempengaruhi estimasi waktu selesai untuk semua layanan
               </p>
             </div>
           </div>
+
+          {customerPhone && customerName && (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-pos-success/30 bg-pos-success/10 p-2.5 sm:p-3">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-pos-success sm:text-sm">
+                <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                Pelanggan siap
+              </div>
+              <Button
+                type="button"
+                variant="pos"
+                size="sm"
+                onClick={() => serviceSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="gap-1.5"
+              >
+                Pilih Layanan
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Add Service Section */}
-      <Card className="shadow-medium animate-scale-in">
-        <CardContent className="pt-6">
-          <EnhancedServiceSelectionPopup
-            onServicesSelected={handleServicesAndItemsSelected}
+      <Card ref={serviceSectionRef} className="shadow-medium animate-scale-in">
+        <CardContent className="p-3 pt-4 sm:p-6 sm:pt-6">
+          <InlineServiceSelector
+            onAddService={addServiceToOrder}
+            onAddCustomItem={addCustomItemToOrder}
             disabled={!customerName || !customerPhone}
             dropOffDate={dropOffDate}
-            isOpen={isServicePopupOpen}
-            onOpenChange={setIsServicePopupOpen}
           />
         </CardContent>
       </Card>
@@ -857,7 +749,7 @@ export const EnhancedLaundryPOS = () => {
         dropOffDate={dropOffDate}
         onProcessPayment={processPayment}
         onCreateDraft={createDraftOrder}
-        onOpenServicePopup={() => setIsServicePopupOpen(true)}
+        onOpenServicePopup={() => serviceSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
         isProcessing={createOrderMutation.isPending}
         customerName={customerName}
         customerPhone={customerPhone}
