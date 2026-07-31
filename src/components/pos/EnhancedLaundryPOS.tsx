@@ -610,12 +610,12 @@ export const EnhancedLaundryPOS = () => {
                   <CheckCircle className="h-4 w-4 absolute right-3 top-3 text-pos-success" />
                 )}
                 <Input
-                  placeholder="Cari berdasarkan telepon/nama pelanggan..."
+                  placeholder="No. HP atau nama pelanggan"
                   value={customerPhone}
                   onChange={(e) => {
                     const newValue = e.target.value;
                     setCustomerPhone(newValue);
-                    
+
                     if (customerName.trim().length > 0 && newValue !== customerPhone) {
                       setCustomerName('');
                     }
