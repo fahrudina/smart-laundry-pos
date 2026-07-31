@@ -180,13 +180,18 @@ export const EnhancedLaundryPOS = () => {
     }, 500);
   };
 
-  // Clear customer form
+  // Clear customer form - also clears the cart, since items added so far were
+  // being built up for the customer that's now being cleared.
   const clearCustomerForm = () => {
     setCustomerPhone('');
     setCustomerName('');
     setSearchResults([]);
     setShowResults(false);
     setDropOffDate(getJakartaNow());
+    setCurrentOrder([]);
+    setDynamicItems([]);
+    setDiscountAmount(0);
+    setPointsRedeemed(0);
   };
 
   // Handle phone input blur
