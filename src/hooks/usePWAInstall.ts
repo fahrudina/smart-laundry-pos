@@ -13,8 +13,15 @@ interface BeforeInstallPromptEvent extends Event {
 export const usePWAInstall = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
-  // Already installed by definition inside the native app shell.
-  const [isInstalled, setIsInstalled] = useState(() => Capacitor.isNativePlatform());
+  // Already installed by definition inside the native app shell or an installed
+  // (standalone-display-mode) PWA - computed synchronously so consumers that branch
+  // UI on this value (e.g. SmartHomePage picking a welcome screen) never flash the
+  // "not installed" state for a frame before this flips true.
+  const [isInstalled, setIsInstalled] = useState(() =>
+    Capacitor.isNativePlatform() ||
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as any).standalone === true
+  );
 
   useEffect(() => {
     // Already installed by definition inside the native app shell - the browser-only
@@ -39,15 +46,9 @@ export const usePWAInstall = () => {
 
     // Listen for the beforeinstallprompt event
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
-    
+
     // Listen for the appinstalled event
     window.addEventListener('appinstalled', handleAppInstalled);
-
-    // Check if app is already installed (standalone mode)
-    if (window.matchMedia('(display-mode: standalone)').matches || 
-        (window.navigator as any).standalone === true) {
-      setIsInstalled(true);
-    }
 
     // Check for iOS Safari "Add to Home Screen" prompt
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
