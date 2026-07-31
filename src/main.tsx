@@ -4,6 +4,9 @@ import App from "./App.tsx";
 import "./index.css";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Capacitor } from "@capacitor/core";
+import { StatusBar, Style } from "@capacitor/status-bar";
+import { SplashScreen } from "@capacitor/splash-screen";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -12,6 +15,15 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <SpeedInsights />
   </React.StrictMode>,
 );
+
+// Native-only startup: let content sit under the status bar (safe-area insets in the
+// CSS make room for it) with dark icons for this app's light theme, then swap the
+// native splash screen for the real UI now that it's rendered.
+if (Capacitor.isNativePlatform()) {
+  StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
+  StatusBar.setStyle({ style: Style.Light }).catch(() => {});
+  SplashScreen.hide().catch(() => {});
+}
 
 // Register service worker for PWA functionality
 if ('serviceWorker' in navigator) {

@@ -20,7 +20,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       <AppSidebar />
       <SidebarInset className="w-full overflow-x-hidden">
         {/* Top Header Bar with trigger */}
-        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
+        <header
+          className="sticky top-0 z-40 flex min-h-14 shrink-0 items-center gap-2 border-b bg-background px-4"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-6" />
           <div className="flex-1 min-w-0">

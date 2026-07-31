@@ -51,15 +51,32 @@ interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
   VariantProps<typeof sheetVariants> { }
 
+// Sides that touch the top/bottom of the viewport (inset-y-0) need extra clearance for
+// the status bar / gesture bar on top of their normal p-6 padding; "top"/"bottom" sheets
+// only need it on the edge they're anchored to.
+const SIDE_SAFE_AREA_STYLE: Record<NonNullable<VariantProps<typeof sheetVariants>["side"]>, React.CSSProperties> = {
+  top: { paddingTop: "max(1.5rem, env(safe-area-inset-top))" },
+  bottom: { paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" },
+  left: {
+    paddingTop: "max(1.5rem, env(safe-area-inset-top))",
+    paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
+  },
+  right: {
+    paddingTop: "max(1.5rem, env(safe-area-inset-top))",
+    paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
+  },
+}
+
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
+>(({ side = "right", className, children, style, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitive.Content
       ref={ref}
       className={cn(sheetVariants({ side }), className)}
+      style={{ ...SIDE_SAFE_AREA_STYLE[side ?? "right"], ...style }}
       {...props}
     >
       {children}

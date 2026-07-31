@@ -20,6 +20,7 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { OwnerRoute } from "./components/auth/OwnerRoute";
 import { ProtectedRedirect } from "./components/auth/ProtectedRedirect";
 import { AppLayout } from "./components/layout/AppLayout";
+import { AndroidBackButtonHandler } from "./components/layout/AndroidBackButtonHandler";
 import { queryClient } from "./lib/queryClient";
 import { PublicReceiptPage } from "./pages/PublicReceiptPage";
 import { PWAManagementPage } from "./pages/PWAManagementPage";
@@ -47,6 +48,7 @@ const App = () => (
         }}
       />
       <BrowserRouter>
+        <AndroidBackButtonHandler />
         <AuthProvider>
           <StoreProvider>
             <ThermalPrinterProvider>
