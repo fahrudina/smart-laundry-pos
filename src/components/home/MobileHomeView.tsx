@@ -17,7 +17,6 @@ export interface QuickAction {
   title: string;
   icon: LucideIcon;
   onClick: () => void;
-  disabled?: boolean;
 }
 
 export interface BottomNavItem {
@@ -191,11 +190,7 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
             <button
               key={action.id}
               onClick={action.onClick}
-              disabled={action.disabled}
-              className={cn(
-                'flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-4 shadow-soft transition-shadow hover:shadow-medium active:scale-95',
-                action.disabled && 'cursor-not-allowed opacity-50'
-              )}
+              className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-4 shadow-soft transition-shadow hover:shadow-medium active:scale-95"
             >
               <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-pos-highlight/40">
                 <action.icon className="h-6 w-6 text-primary" />
