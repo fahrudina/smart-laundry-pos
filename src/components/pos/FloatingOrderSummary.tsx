@@ -82,9 +82,25 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
   // Collapsed by default so the cart/checkout panel doesn't sit on top of the
   // service list - it only covers the page once the user asks to see it.
   const [isExpanded, setIsExpanded] = useState(false);
+  // Briefly highlights the collapsed bar when an item lands, since the cart
+  // is easy to miss otherwise while it's collapsed.
+  const [justAdded, setJustAdded] = useState(false);
 
   const { currentStore } = useStore();
   const { data: customerPoints } = useCustomerPoints(customerPhone);
+
+  const itemCount = currentOrder.reduce((sum, item) => sum + item.quantity, 0) + dynamicItems.length;
+  const prevItemCountRef = React.useRef(itemCount);
+
+  useEffect(() => {
+    if (itemCount > prevItemCountRef.current) {
+      setJustAdded(true);
+      const timer = setTimeout(() => setJustAdded(false), 500);
+      prevItemCountRef.current = itemCount;
+      return () => clearTimeout(timer);
+    }
+    prevItemCountRef.current = itemCount;
+  }, [itemCount]);
 
   const paymentMethods = [
     { id: 'cash', name: 'Tunai', icon: Banknote, color: 'bg-green-500' },
@@ -165,7 +181,6 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
   const subtotal = getTotalPrice();
   const totalAmount = subtotal - discountAmount;
   const completionTime = getOrderCompletionTime();
-  const itemCount = currentOrder.reduce((sum, item) => sum + item.quantity, 0) + dynamicItems.length;
 
   const formatCurrency = (amount: number) => {
     return amount.toLocaleString('id-ID');
@@ -181,10 +196,12 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
           <button
             type="button"
             onClick={() => setIsExpanded(true)}
-            className="flex w-full items-center justify-between gap-2 rounded-t-2xl rounded-b-xl border-2 border-t-2 border-dashed border-primary/25 bg-card px-3 py-2.5 shadow-2xl animate-slide-up sm:px-4 sm:py-3"
+            className={`flex w-full items-center justify-between gap-2 rounded-t-2xl rounded-b-xl border-2 border-t-2 border-dashed bg-card px-3 py-2.5 shadow-2xl transition-colors animate-slide-up sm:px-4 sm:py-3 ${
+              justAdded ? 'animate-button-success border-pos-success/50 bg-pos-success/10' : 'border-primary/25'
+            }`}
           >
             <div className="flex min-w-0 items-center gap-2">
-              <ShoppingCart className="h-5 w-5 flex-shrink-0 text-primary" />
+              <ShoppingCart className={`h-5 w-5 flex-shrink-0 ${justAdded ? 'text-pos-success' : 'text-primary'}`} />
               <span className="truncate text-sm font-semibold text-foreground sm:text-base">
                 {itemCount} item · <span className="text-primary">Rp{formatCurrency(totalAmount)}</span>
               </span>
@@ -207,7 +224,12 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               <span className="font-semibold text-foreground text-sm sm:text-base">Pesanan Saat Ini</span>
-              <Badge variant="secondary" className="bg-pos-highlight/40 text-primary text-xs sm:text-sm">
+              <Badge
+                variant="secondary"
+                className={`text-xs sm:text-sm transition-colors ${
+                  justAdded ? 'animate-button-success bg-pos-success/20 text-pos-success' : 'bg-pos-highlight/40 text-primary'
+                }`}
+              >
                 {itemCount} item
               </Badge>
             </div>

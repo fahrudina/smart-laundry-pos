@@ -202,6 +202,15 @@ export const EnhancedLaundryPOS = () => {
     }, 200);
   };
 
+  // Confirm an add-to-cart with a short toast - the cart panel itself is
+  // collapsed by default, so a silent state update is easy to miss.
+  const notifyItemAdded = (itemName: string) => {
+    toast.success(`${itemName} ditambahkan ke pesanan`, {
+      duration: 1600,
+      className: 'border border-pos-success/30 bg-pos-success/10 text-foreground',
+    });
+  };
+
   // Add a service straight to the real cart - one click adds at quantity 1
   // (or 1kg for kilo), further adjustment happens in FloatingOrderSummary's
   // cart list. No staging cart in between.
@@ -246,6 +255,7 @@ export const EnhancedLaundryPOS = () => {
         }];
       }
     });
+    notifyItemAdded(service.name);
   };
 
   // Add a composed custom item straight to the real cart
@@ -262,6 +272,7 @@ export const EnhancedLaundryPOS = () => {
     };
 
     setDynamicItems(prev => [...prev, newDynamicItem]);
+    notifyItemAdded(dynamicItem.itemName);
   };
 
   // Remove item from order
