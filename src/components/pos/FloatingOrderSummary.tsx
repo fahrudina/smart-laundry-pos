@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCustomerPoints } from '@/hooks/useCustomerPoints';
 import { useStore } from '@/contexts/StoreContext';
+import { DynamicOrderItemData } from './orderTypes';
 
 interface OrderItem {
   service: {
@@ -23,17 +24,6 @@ interface OrderItem {
   quantity: number;
   serviceType: 'unit' | 'kilo' | 'combined';
   weight?: number;
-  totalPrice: number;
-}
-
-interface DynamicOrderItemData {
-  id: string;
-  itemName: string;
-  duration: string;
-  durationValue: number;
-  durationUnit: 'hours' | 'days';
-  price: number;
-  quantity: number;
   totalPrice: number;
 }
 
