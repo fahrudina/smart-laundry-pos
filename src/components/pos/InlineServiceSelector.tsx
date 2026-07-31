@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useServices } from '@/hooks/useServices';
+import { QuantityStepper, AddToCartButton } from './QuantityStepper';
 
 // Service interface for compatibility with existing Enhanced POS
 export interface Service {
@@ -35,14 +36,16 @@ export interface DynamicItem {
 }
 
 interface InlineServiceSelectorProps {
-  onAddService: (service: Service, type: 'unit' | 'kilo') => void;
+  quantities: Record<string, number>;
+  onQuantityChange: (service: Service, type: 'unit' | 'kilo', quantity: number) => void;
   onAddCustomItem: (item: DynamicItem) => void;
   disabled?: boolean;
   dropOffDate?: Date;
 }
 
 export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
-  onAddService,
+  quantities,
+  onQuantityChange,
   onAddCustomItem,
   disabled = false,
   dropOffDate = new Date(),
@@ -50,7 +53,6 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
   // Draft custom items being composed - cleared per-item once added to the order,
   // never a staging area for the real cart (services add straight to the order).
   const [dynamicItems, setDynamicItems] = useState<DynamicItem[]>([]);
-  const [animatingButton, setAnimatingButton] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { data: servicesData = [], isLoading } = useServices();
 
@@ -164,14 +166,8 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
     }
   };
 
-  const addService = (service: Service, type: 'unit' | 'kilo') => {
-    // Trigger animation
-    const buttonKey = `${service.id}-${type}`;
-    setAnimatingButton(buttonKey);
-    setTimeout(() => setAnimatingButton(null), 300);
-
-    onAddService(service, type);
-  };
+  const getQuantity = (serviceId: string, type: 'unit' | 'kilo') =>
+    quantities[`${serviceId}-${type}`] ?? 0;
 
   const addDynamicItem = () => {
     const newItem: DynamicItem = {
@@ -296,30 +292,44 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
                             </p>
                           )}
 
-                          <div className="mt-2 flex gap-1.5 sm:mt-3 sm:gap-2">
+                          <div className="mt-2 flex flex-col gap-1.5 sm:mt-3">
                             {service.supportsUnit && service.price && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => addService(service, 'unit')}
-                                disabled={disabled}
-                                className={`h-8 flex-1 text-xs transition-all sm:h-9 sm:text-sm ${animatingButton === `${service.id}-unit` ? 'animate-button-success bg-pos-success/10 border-pos-success/40' : ''}`}
-                              >
-                                <Plus className="h-3 w-3 mr-1" />
-                                Tambah Satuan
-                              </Button>
+                              <div className="flex items-center justify-between gap-1.5 rounded-md border p-1.5">
+                                <span className="text-[11px] text-muted-foreground sm:text-xs">Satuan</span>
+                                <div className="flex items-center gap-1.5">
+                                  <QuantityStepper
+                                    value={getQuantity(service.id, 'unit')}
+                                    unitType="unit"
+                                    disabled={disabled}
+                                    onChange={(qty) => onQuantityChange(service, 'unit', qty)}
+                                  />
+                                  <AddToCartButton
+                                    value={getQuantity(service.id, 'unit')}
+                                    unitType="unit"
+                                    disabled={disabled}
+                                    onChange={(qty) => onQuantityChange(service, 'unit', qty)}
+                                  />
+                                </div>
+                              </div>
                             )}
                             {service.supportsKilo && service.kiloPrice && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => addService(service, 'kilo')}
-                                disabled={disabled}
-                                className={`h-8 flex-1 text-xs transition-all sm:h-9 sm:text-sm ${animatingButton === `${service.id}-kilo` ? 'animate-button-success bg-pos-success/10 border-pos-success/40' : ''}`}
-                              >
-                                <Plus className="h-3 w-3 mr-1" />
-                                Tambah Kilo
-                              </Button>
+                              <div className="flex items-center justify-between gap-1.5 rounded-md border p-1.5">
+                                <span className="text-[11px] text-muted-foreground sm:text-xs">Kilo</span>
+                                <div className="flex items-center gap-1.5">
+                                  <QuantityStepper
+                                    value={getQuantity(service.id, 'kilo')}
+                                    unitType="kilo"
+                                    disabled={disabled}
+                                    onChange={(qty) => onQuantityChange(service, 'kilo', qty)}
+                                  />
+                                  <AddToCartButton
+                                    value={getQuantity(service.id, 'kilo')}
+                                    unitType="kilo"
+                                    disabled={disabled}
+                                    onChange={(qty) => onQuantityChange(service, 'kilo', qty)}
+                                  />
+                                </div>
+                              </div>
                             )}
                           </div>
                         </Card>
@@ -356,18 +366,25 @@ export const InlineServiceSelector: React.FC<InlineServiceSelectorProps> = ({
                             </div>
                           </div>
 
-                          <div className="mt-2 flex gap-1.5 sm:mt-3 sm:gap-2">
+                          <div className="mt-2 sm:mt-3">
                             {product.supportsUnit && product.price && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => addService(product, 'unit')}
-                                disabled={disabled}
-                                className={`h-8 flex-1 text-xs transition-all border-cyan-300 hover:bg-cyan-100 sm:h-9 sm:text-sm ${animatingButton === `${product.id}-unit` ? 'animate-button-success bg-pos-success/10 border-pos-success/40' : ''}`}
-                              >
-                                <Plus className="h-3 w-3 mr-1" />
-                                Tambah Produk
-                              </Button>
+                              <div className="flex items-center justify-between gap-1.5 rounded-md border border-cyan-300 bg-cyan-50/50 p-1.5">
+                                <span className="text-[11px] text-cyan-700 sm:text-xs">Jumlah</span>
+                                <div className="flex items-center gap-1.5">
+                                  <QuantityStepper
+                                    value={getQuantity(product.id, 'unit')}
+                                    unitType="unit"
+                                    disabled={disabled}
+                                    onChange={(qty) => onQuantityChange(product, 'unit', qty)}
+                                  />
+                                  <AddToCartButton
+                                    value={getQuantity(product.id, 'unit')}
+                                    unitType="unit"
+                                    disabled={disabled}
+                                    onChange={(qty) => onQuantityChange(product, 'unit', qty)}
+                                  />
+                                </div>
+                              </div>
                             )}
                           </div>
                         </Card>

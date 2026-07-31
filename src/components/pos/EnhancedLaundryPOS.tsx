@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X, CheckCircle2, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -99,6 +99,18 @@ export const EnhancedLaundryPOS = () => {
       });
     }
   };
+
+  // Live lookup of "what's already in the cart" for the service cards' steppers,
+  // keyed the same way as the card's own quantity request.
+  const quantities = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    currentOrder.forEach(item => {
+      if (item.serviceType === 'unit' || item.serviceType === 'kilo') {
+        map[`${item.service.id}-${item.serviceType}`] = item.quantity;
+      }
+    });
+    return map;
+  }, [currentOrder]);
 
   // Get total price including both regular and dynamic items
   const getTotalPrice = () => {
@@ -211,10 +223,16 @@ export const EnhancedLaundryPOS = () => {
     });
   };
 
-  // Add a service straight to the real cart - one click adds at quantity 1
-  // (or 1kg for kilo), further adjustment happens in FloatingOrderSummary's
-  // cart list. No staging cart in between.
-  const addServiceToOrder = (rawService: CatalogService, type: 'unit' | 'kilo') => {
+  // Set a service line to an absolute quantity, straight on the real cart -
+  // the service card's stepper already computed the target value, including
+  // add (0 -> positive) and remove (-> 0). No staging cart in between, and no
+  // toast here: the live number on the card is its own feedback.
+  const setServiceQuantity = (rawService: CatalogService, type: 'unit' | 'kilo', quantity: number) => {
+    if (quantity <= 0) {
+      removeServiceFromOrder(rawService.id, type);
+      return;
+    }
+
     const price = type === 'unit' ? rawService.price : (rawService.kiloPrice || 0);
     const service = {
       id: rawService.id,
@@ -239,23 +257,22 @@ export const EnhancedLaundryPOS = () => {
           item.service.id === service.id && item.serviceType === type
             ? {
                 ...item,
-                quantity: item.quantity + 1,
-                totalPrice: (item.quantity + 1) * service.price,
-                weight: type === 'kilo' ? item.quantity + 1 : item.weight
+                quantity,
+                totalPrice: quantity * service.price,
+                weight: type === 'kilo' ? quantity : item.weight
               }
             : item
         );
       } else {
         return [...prev, {
           service,
-          quantity: 1,
+          quantity,
           serviceType: type,
-          weight: type === 'kilo' ? 1 : undefined,
-          totalPrice: service.price
+          weight: type === 'kilo' ? quantity : undefined,
+          totalPrice: quantity * service.price
         }];
       }
     });
-    notifyItemAdded(service.name);
   };
 
   // Add a composed custom item straight to the real cart
@@ -714,7 +731,7 @@ export const EnhancedLaundryPOS = () => {
                 className="gap-1.5"
               >
                 Pilih Layanan
-                <ArrowRight className="h-3.5 w-3.5" />
+                <ArrowDown className="h-3.5 w-3.5" />
               </Button>
             </div>
           )}
@@ -725,7 +742,8 @@ export const EnhancedLaundryPOS = () => {
       <Card ref={serviceSectionRef} className="shadow-medium animate-scale-in">
         <CardContent className="p-3 pt-4 sm:p-6 sm:pt-6">
           <InlineServiceSelector
-            onAddService={addServiceToOrder}
+            quantities={quantities}
+            onQuantityChange={setServiceQuantity}
             onAddCustomItem={addCustomItemToOrder}
             disabled={!customerName || !customerPhone}
             dropOffDate={dropOffDate}
