@@ -12,6 +12,17 @@ const config: CapacitorConfig = {
       backgroundColor: '#2563eb',
       androidScaleType: 'CENTER_CROP',
     },
+    // Only Google sign-in is used natively - excludes the other providers'
+    // native SDKs from the APK (see @capgo/capacitor-social-login's
+    // capacitor:sync:before script, which reads this on every `cap sync`).
+    SocialLogin: {
+      providers: {
+        google: true,
+        facebook: false,
+        apple: false,
+        twitter: false,
+      },
+    },
   },
 };
 
