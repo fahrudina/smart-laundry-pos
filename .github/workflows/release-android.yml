@@ -125,7 +125,12 @@ jobs:
             exit 1
           fi
 
-          ACTUAL_SHA256=$(echo "$VERIFY_OUTPUT" | grep "Signer #1 certificate SHA-256 digest" | awk -F': ' '{print $2}' | tr 'A-Z' 'a-z')
+          # apksigner's output format varies by build-tools version - older versions print
+          # "Signer #1 certificate SHA-256 digest: ...", newer ones print "V2 Signer:
+          # certificate SHA-256 digest: ..." - match on the common "certificate SHA-256
+          # digest" substring and split on "digest: " rather than the first colon, since
+          # newer output has an earlier colon in the "V2 Signer:" prefix.
+          ACTUAL_SHA256=$(echo "$VERIFY_OUTPUT" | grep -m1 "certificate SHA-256 digest" | awk -F'digest: ' '{print $2}' | tr 'A-Z' 'a-z')
           if [ -z "$ACTUAL_SHA256" ]; then
             echo "::error::Could not extract signer SHA-256 digest from apksigner output"
             exit 1
