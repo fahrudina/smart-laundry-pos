@@ -120,14 +120,40 @@ jobs:
         env:
           EXPECTED_SIGNER_SHA256: ${{ secrets.ANDROID_RELEASE_EXPECTED_SIGNER_SHA256 }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
           if [ -z "${EXPECTED_SIGNER_SHA256:-}" ]; then
             echo "::error::ANDROID_RELEASE_EXPECTED_SIGNER_SHA256 secret is not set - refusing to publish an unverified release APK"
             exit 1
           fi
-          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
-          ACTUAL_SHA256=$("$APKSIGNER" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk \
-            | grep "Signer #1 certificate SHA-256 digest" | awk -F': ' '{print $2}' | tr 'A-Z' 'a-z')
+
+          # Gradle signs via its own bundled apksig library, not necessarily the SDK's
+          # standalone build-tools CLI - don't assume that directory is populated.
+          APKSIGNER=$(find "$ANDROID_HOME" -type f -name apksigner 2>/dev/null | sort -V | tail -1)
+          if [ -z "$APKSIGNER" ]; then
+            echo "apksigner not found under \$ANDROID_HOME ($ANDROID_HOME) - installing build-tools"
+            yes | sdkmanager --install "build-tools;35.0.0" > /dev/null
+            APKSIGNER=$(find "$ANDROID_HOME" -type f -name apksigner 2>/dev/null | sort -V | tail -1)
+          fi
+          if [ -z "$APKSIGNER" ]; then
+            echo "::error::Could not locate apksigner even after installing build-tools;35.0.0"
+            exit 1
+          fi
+          echo "Using apksigner: $APKSIGNER"
+
+          VERIFY_OUTPUT=$("$APKSIGNER" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk)
+          verify_exit=$?
+          echo "$VERIFY_OUTPUT"
+          if [ "$verify_exit" -ne 0 ]; then
+            echo "::error::apksigner verify failed (exit $verify_exit)"
+            exit 1
+          fi
+
+          ACTUAL_SHA256=$(echo "$VERIFY_OUTPUT" | grep "Signer #1 certificate SHA-256 digest" | awk -F': ' '{print $2}' | tr 'A-Z' 'a-z')
+          if [ -z "$ACTUAL_SHA256" ]; then
+            echo "::error::Could not extract signer SHA-256 digest from apksigner output"
+            exit 1
+          fi
+
           EXPECTED_SHA256=$(echo "$EXPECTED_SIGNER_SHA256" | tr -d ':' | tr 'A-Z' 'a-z')
           echo "Release APK signer SHA-256: $ACTUAL_SHA256"
           if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
