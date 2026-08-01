@@ -453,6 +453,13 @@ export const connectThermalPrinter = async (
     // scan results instead of erroring.
     await BleClient.initialize();
 
+    // Android 13+ forbids silently turning Bluetooth on for the user - requestEnable() is
+    // the closest available thing, showing the native "Turn on Bluetooth?" system prompt
+    // instead of making the user dig into Settings manually before every connect attempt.
+    if (Capacitor.getPlatform() === 'android' && !(await BleClient.isEnabled())) {
+      await BleClient.requestEnable();
+    }
+
     // Let the user pick from all nearby BLE devices - printer name/branding varies too much
     // across vendors to reliably pre-filter, so we discover the write characteristic afterward instead.
     const device = await BleClient.requestDevice({
@@ -524,7 +531,10 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   commands.push(ESC_POS.ALIGN_CENTER);
   commands.push(ESC_POS.SIZE_DOUBLE);
   commands.push(ESC_POS.BOLD_ON);
-  commands.push(textToBytes(centerText(receiptData.storeName || 'SMART LAUNDRY POS', paperWidth)));
+  // SIZE_DOUBLE doubles character width, so only half as many fit per physical line -
+  // centerText's padding must be computed against paperWidth / 2, or it overflows the
+  // line and wraps instead of centering (same reasoning as the service name below).
+  commands.push(textToBytes(centerText(receiptData.storeName || 'SMART LAUNDRY POS', paperWidth / 2)));
   commands.push(ESC_POS.CRLF);
   commands.push(ESC_POS.BOLD_OFF);
   commands.push(ESC_POS.SIZE_NORMAL);
@@ -554,34 +564,35 @@ const formatReceiptForThermal = (receiptData: any, options: ThermalPrintOptions 
   commands.push(textToBytes(createLine('=', paperWidth)));
   commands.push(ESC_POS.CRLF);
   
-  // Order details
+  // Customer Information - printed above Order ID so the customer is the first
+  // thing staff see/scan for when handing over or looking up an order.
   commands.push(ESC_POS.ALIGN_LEFT);
-  commands.push(ESC_POS.BOLD_ON);
-  commands.push(textToBytes(`ORDER ID: ${receiptData.orderId || ''}`));
-  commands.push(ESC_POS.CRLF);
-  commands.push(ESC_POS.BOLD_OFF);
-  
-  // Customer Information
   commands.push(ESC_POS.BOLD_ON);
   commands.push(textToBytes('CUSTOMER INFO:'));
   commands.push(ESC_POS.CRLF);
   commands.push(ESC_POS.BOLD_OFF);
-  
+
   // Customer name - make it more prominent
   commands.push(ESC_POS.BOLD_ON);
-  commands.push(ESC_POS.SIZE_DOUBLE_WIDTH);
+  commands.push(ESC_POS.SIZE_DOUBLE);
   commands.push(textToBytes(`${receiptData.customerName || 'CUSTOMER'}`));
   commands.push(ESC_POS.CRLF);
   commands.push(ESC_POS.BOLD_OFF);
   commands.push(ESC_POS.SIZE_NORMAL);
-  
+
   if (receiptData.customerPhone) {
     // Mask phone number for privacy
     const maskedPhone = receiptData.customerPhone.replace(/(\d{2,3})\d{4}(\d{2,3})/, '$1****$2');
     commands.push(textToBytes(`No. HP: ${maskedPhone}`));
     commands.push(ESC_POS.CRLF);
   }
-  
+
+  // Order details
+  commands.push(ESC_POS.BOLD_ON);
+  commands.push(textToBytes(`ORDER ID: ${receiptData.orderId || ''}`));
+  commands.push(ESC_POS.CRLF);
+  commands.push(ESC_POS.BOLD_OFF);
+
   // Add extra line break and ensure we're back to normal formatting
   commands.push(ESC_POS.ALIGN_LEFT);
   commands.push(ESC_POS.SIZE_NORMAL);
