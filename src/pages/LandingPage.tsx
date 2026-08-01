@@ -648,6 +648,13 @@ export const LandingPage: React.FC = () => {
                   <Download className="h-4 w-4" />
                   Install Guide
                 </button>
+                <a
+                  href="https://github.com/fahrudina/smart-laundry-pos/releases/latest/download/smart-laundry-pos-latest.apk"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium border border-white/25 rounded-sm hover:bg-white/10 transition-colors"
+                >
+                  <Smartphone className="h-4 w-4" />
+                  Download APK Android
+                </a>
               </div>
               <div className="opacity-80 text-sm">
                 <p className="mb-1">

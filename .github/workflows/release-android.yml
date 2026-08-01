@@ -12,6 +12,11 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing git tag to build and release (e.g. v0.0.1) - for re-running against a tag pushed before a workflow fix'
+        required: true
 
 permissions:
   contents: write
@@ -24,6 +29,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
+      RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
       # Gradle evaluates the whole build.gradle - including the signingConfigs block added
       # by the patch script - during project configuration regardless of which task runs,
       # so these must be visible to the Gradle invocation below.
@@ -34,6 +40,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -73,9 +81,8 @@ jobs:
 
       - name: Compute release version from tag
         run: |
-          TAG_NAME="${{ github.ref_name }}"
           echo "RELEASE_VERSION_CODE=${{ github.run_number }}" >> "$GITHUB_ENV"
-          echo "RELEASE_VERSION_NAME=${TAG_NAME#v}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION_NAME=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
 
       - name: Patch Android version and release signing config
         run: node .github/scripts/patch-android-release-gradle.cjs
@@ -144,14 +151,33 @@ jobs:
           fi
           echo "Release APK signer verified OK"
 
-      - name: Rename APK for release asset
-        run: cp android/app/build/outputs/apk/release/app-release.apk smart-laundry-pos-${{ github.ref_name }}.apk
+      - name: Prepare release APK assets
+        # Two copies: a versioned filename for clarity on the release page, and a
+        # fixed-name alias so external links (e.g. the landing page's download button)
+        # can always point at .../releases/latest/download/smart-laundry-pos-latest.apk
+        # without needing to change every time a new version is tagged.
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk "smart-laundry-pos-${RELEASE_TAG}.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk smart-laundry-pos-latest.apk
 
-      - name: Create GitHub Release
+      - name: Create or update GitHub Release
+        # Pushing a tag via GitHub's own "Draft a new release" UI creates the tag and a
+        # Release object together, before this workflow ever runs - `gh release create`
+        # would then fail with "a release with the same tag name already exists". Falls
+        # back to uploading assets onto that existing release instead of erroring.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ github.ref_name }}" \
-            "smart-laundry-pos-${{ github.ref_name }}.apk" \
-            --title "${{ github.ref_name }}" \
-            --generate-notes
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists - uploading APK assets to it"
+            gh release upload "$RELEASE_TAG" \
+              "smart-laundry-pos-${RELEASE_TAG}.apk" \
+              smart-laundry-pos-latest.apk \
+              --clobber
+          else
+            gh release create "$RELEASE_TAG" \
+              "smart-laundry-pos-${RELEASE_TAG}.apk" \
+              smart-laundry-pos-latest.apk \
+              --title "$RELEASE_TAG" \
+              --generate-notes
+          fi
