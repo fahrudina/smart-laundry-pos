@@ -1,47 +1,32 @@
-name: Build Android
+name: Release Android
 
-# This repo doesn't check the generated android/ native project into git (see
-# capacitor.config.ts) - this workflow regenerates it fresh from the web build
-# every run via `cap add`/`cap sync`, then builds both a debug APK and a signed
-# release APK with Gradle. Both are for direct sideload distribution (install
-# the APK directly on a device) - there's no Play Store submission set up,
-# that would need an .aab bundle and a Play Console listing instead.
-#
-# The release APK is signed with a permanent key stored as GitHub secrets
-# (ANDROID_RELEASE_KEYSTORE_BASE64/STORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD) -
-# every future release must keep using this same key, or devices with an
-# earlier release installed won't be able to update in place.
+# Triggered by pushing a version tag (v1.2.3) - builds a signed release APK using the
+# same permanent signing key as build-android.yml's workflow_dispatch/main-push release
+# build, then publishes it as a GitHub Release asset for that tag. Kept as a separate
+# workflow from build-android.yml (which builds on every main push, for CI smoke-testing
+# and ad-hoc sideloads) since a pushed tag is an intentional "this is a real release"
+# event with its own version scheme: versionName comes from the tag itself (v1.2.3 ->
+# 1.2.3) rather than the date+run-number scheme used for untagged builds.
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'index.html'
-      - 'capacitor.config.ts'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'vite.config.ts'
-      - 'tsconfig*.json'
-      - 'tailwind.config.ts'
-      - 'postcss.config.js'
-      - 'components.json'
-      - '.github/workflows/build-android.yml'
-  workflow_dispatch: {}
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
 
 concurrency:
-  group: build-android-${{ github.ref }}
-  cancel-in-progress: true
+  group: release-android-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     env:
       # Gradle evaluates the whole build.gradle - including the signingConfigs block added
       # by the patch script - during project configuration regardless of which task runs,
-      # so these must be visible to every Gradle invocation in this job, not just the
-      # release one, or even `assembleDebug` fails resolving file(System.getenv(...)).
+      # so these must be visible to the Gradle invocation below.
       ANDROID_RELEASE_STORE_FILE: release.keystore
       ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}
       ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
@@ -60,12 +45,7 @@ jobs:
         run: npm ci
 
       - name: Build web app
-        # WhatsApp credentials stay server-side (Vercel serverless function) - these are
-        # just feature flags plus the deployed site's absolute origin, since the packaged
-        # app's WebView has no backend of its own at its local origin to resolve a
-        # relative API path against. VITE_GOOGLE_CLIENT_ID is a public OAuth client ID
-        # (meant to appear in frontend requests), not a secret. None of these values need
-        # to be kept out of the workflow file.
+        # See build-android.yml for why these are set here and why none need to be secret.
         env:
           VITE_WHATSAPP_ENABLED: 'true'
           VITE_WHATSAPP_NOTIFY_ORDER_CREATED: 'true'
@@ -91,10 +71,11 @@ jobs:
       - name: Sync web build into native project
         run: npx cap sync android
 
-      - name: Compute release version
+      - name: Compute release version from tag
         run: |
+          TAG_NAME="${{ github.ref_name }}"
           echo "RELEASE_VERSION_CODE=${{ github.run_number }}" >> "$GITHUB_ENV"
-          echo "RELEASE_VERSION_NAME=$(date -u +%Y.%m.%d)-${{ github.run_number }}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION_NAME=${TAG_NAME#v}" >> "$GITHUB_ENV"
 
       - name: Patch Android version and release signing config
         run: node .github/scripts/patch-android-release-gradle.cjs
@@ -102,10 +83,6 @@ jobs:
       - name: Decode release keystore
         working-directory: android/app
         run: echo "${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
-
-      - name: Build debug APK
-        working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
 
       - name: Build release APK
         working-directory: android
@@ -115,7 +92,7 @@ jobs:
         # Confirms the built APK is actually signed with the expected permanent key,
         # not a different/wrong keystore - a mismatch here would silently break
         # in-place updates for anyone who already installed a build signed with the
-        # real key, so this fails the workflow before either APK gets uploaded.
+        # real key, so this fails the workflow before the GitHub Release gets created.
         working-directory: android
         env:
           EXPECTED_SIGNER_SHA256: ${{ secrets.ANDROID_RELEASE_EXPECTED_SIGNER_SHA256 }}
@@ -167,18 +144,14 @@ jobs:
           fi
           echo "Release APK signer verified OK"
 
-      - name: Upload debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: smart-laundry-pos-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 14
-          if-no-files-found: error
+      - name: Rename APK for release asset
+        run: cp android/app/build/outputs/apk/release/app-release.apk smart-laundry-pos-${{ github.ref_name }}.apk
 
-      - name: Upload release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: smart-laundry-pos-release-apk
-          path: android/app/build/outputs/apk/release/app-release.apk
-          retention-days: 14
-          if-no-files-found: error
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            "smart-laundry-pos-${{ github.ref_name }}.apk" \
+            --title "${{ github.ref_name }}" \
+            --generate-notes
