@@ -41,9 +41,15 @@ const NativeGoogleLoginButton: React.FC = () => {
         nativeGoogleInitialized = true;
       }
 
+      // Don't pass a custom `scopes` option here: the plugin's Android side hard-rejects
+      // any login() call with custom scopes unless MainActivity implements
+      // ModifiedMainActivityForSocialLoginPlugin ("You CANNOT use scopes without
+      // modifying the main activity"). It already requests userinfo.email,
+      // userinfo.profile, and openid as default scopes regardless, which is all
+      // signInWithGoogle needs from the ID token.
       const { result } = await SocialLogin.login({
         provider: 'google',
-        options: { scopes: ['email', 'profile'] },
+        options: {},
       });
 
       if (result.responseType !== 'online') {
