@@ -1,4 +1,28 @@
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { WhatsAppConfig, WhatsAppMessage, WhatsAppResponse } from './types';
+
+// On native platforms, an absolute cross-origin fetch() from the WebView's
+// `https://localhost` origin to the deployed API domain is a real browser CORS
+// request - and "Failed to fetch" is the generic error a WebView throws for it
+// with no further detail, regardless of whether the server's CORS headers are
+// actually correct. Native HTTP requests aren't subject to same-origin/CORS at
+// all, so routing through Capacitor's native bridge sidesteps the whole class
+// of WebView-network quirks. Falls back to a JSON-parsed body the same way the
+// web fetch path does, since the WhatsApp API doesn't always set a JSON
+// Content-Type on its response.
+const parseNativeBody = (data: unknown): WhatsAppResponse => {
+  if (data && typeof data === 'object') {
+    return data as WhatsAppResponse;
+  }
+  if (typeof data === 'string') {
+    try {
+      return JSON.parse(data);
+    } catch {
+      return { success: true, message: 'Message sent successfully', id: 'unknown' };
+    }
+  }
+  return { success: true, message: 'Message sent successfully', id: 'unknown' };
+};
 
 /**
  * WhatsApp API Client
@@ -36,13 +60,10 @@ export class WhatsAppClient {
         throw new Error('Invalid sender phone number format. Use format like 6281234567890');
       }
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
-
       // Determine if we're using local proxy, Vercel serverless function, or direct API
       const isUsingLocalProxy = this.config.baseUrl.includes('localhost') && this.config.baseUrl.includes('/api/whatsapp');
       const isUsingVercelFunction = this.config.baseUrl.startsWith('/api/');
-      
+
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -69,6 +90,26 @@ export class WhatsAppClient {
         requestBody.from = message.from;
       }
 
+      if (Capacitor.isNativePlatform()) {
+        const response = await CapacitorHttp.post({
+          url: endpoint,
+          headers,
+          data: requestBody,
+          connectTimeout: this.config.timeout,
+          readTimeout: this.config.timeout,
+        });
+
+        if (response.status < 200 || response.status >= 300) {
+          const errorText = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        return parseNativeBody(response.data);
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers,
@@ -84,7 +125,7 @@ export class WhatsAppClient {
       }
 
       const responseText = await response.text();
-      
+
       // Try to parse as JSON, if it fails, return a generic success response
       let result: WhatsAppResponse;
       try {
@@ -97,7 +138,7 @@ export class WhatsAppClient {
           id: 'unknown',
         };
       }
-      
+
       return result;
     } catch (error) {
       console.error('WhatsApp API Error:', error);
@@ -137,14 +178,10 @@ export class WhatsAppClient {
         message: 'Connection test - this message should not be sent',
       };
 
-      // Don't actually send the test message, just test the API endpoint
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
       // Determine if we're using local proxy, Vercel serverless function, or direct API
       const isUsingLocalProxy = this.config.baseUrl.includes('localhost') && this.config.baseUrl.includes('/api/whatsapp');
       const isUsingVercelFunction = this.config.baseUrl.startsWith('/api/');
-      
+
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -160,15 +197,34 @@ export class WhatsAppClient {
         endpoint = this.config.baseUrl; // Vercel function URL is complete
       }
 
+      const testBody = JSON.stringify({ ...testMessage, message: '' }); // Empty message to test auth
+
+      // Don't actually send the test message, just test the API endpoint
+      if (Capacitor.isNativePlatform()) {
+        const response = await CapacitorHttp.post({
+          url: endpoint,
+          headers,
+          data: { ...testMessage, message: '' },
+          connectTimeout: 5000,
+          readTimeout: 5000,
+        });
+
+        // Even if it returns an error for empty message, 401 means auth failed
+        return response.status !== 401;
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ ...testMessage, message: '' }), // Empty message to test auth
+        body: testBody,
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
-      
+
       // Even if it returns an error for empty message, 401 means auth failed
       return response.status !== 401;
     } catch (error) {
