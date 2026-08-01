@@ -37,6 +37,15 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Gradle evaluates the whole build.gradle - including the signingConfigs block added
+      # by the patch script - during project configuration regardless of which task runs,
+      # so these must be visible to every Gradle invocation in this job, not just the
+      # release one, or even `assembleDebug` fails resolving file(System.getenv(...)).
+      ANDROID_RELEASE_STORE_FILE: release.keystore
+      ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}
+      ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+      ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,11 +63,14 @@ jobs:
         # WhatsApp credentials stay server-side (Vercel serverless function) - these are
         # just feature flags plus the deployed site's absolute origin, since the packaged
         # app's WebView has no backend of its own at its local origin to resolve a
-        # relative API path against. None of these values are sensitive.
+        # relative API path against. VITE_GOOGLE_CLIENT_ID is a public OAuth client ID
+        # (meant to appear in frontend requests), not a secret. None of these values need
+        # to be kept out of the workflow file.
         env:
           VITE_WHATSAPP_ENABLED: 'true'
           VITE_WHATSAPP_NOTIFY_ORDER_CREATED: 'true'
           VITE_APP_ORIGIN: 'https://pos.fahrudina.my.id'
+          VITE_GOOGLE_CLIENT_ID: '215218745424-fdgt918nk9alov6vacn4n41670k2u2hq.apps.googleusercontent.com'
         run: npm run build
 
       - name: Set up JDK
@@ -97,11 +109,6 @@ jobs:
 
       - name: Build release APK
         working-directory: android
-        env:
-          ANDROID_RELEASE_STORE_FILE: release.keystore
-          ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}
-          ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
-          ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
         run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload debug APK
