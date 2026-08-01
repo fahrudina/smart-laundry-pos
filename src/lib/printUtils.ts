@@ -446,7 +446,12 @@ export const connectThermalPrinter = async (
   }
 
   try {
-    await BleClient.initialize({ androidNeverForLocation: true });
+    // androidNeverForLocation defaults to false - this repo's android/ project is
+    // regenerated fresh by CI (npx cap add android) with no manifest patch step, so we
+    // can't assert neverForLocation without the matching AndroidManifest.xml declaration.
+    // Asserting it without that manifest entry makes Android silently return zero BLE
+    // scan results instead of erroring.
+    await BleClient.initialize();
 
     // Let the user pick from all nearby BLE devices - printer name/branding varies too much
     // across vendors to reliably pre-filter, so we discover the write characteristic afterward instead.
