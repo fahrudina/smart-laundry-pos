@@ -224,8 +224,16 @@ export const useCreateOrderWithNotifications = () => {
 
           await notifyOrderCreated(orderData.customer_phone, notificationData);
         } catch (error) {
-          // Log WhatsApp notification errors but don't fail the order
+          // Log WhatsApp notification errors but don't fail the order. Still
+          // surface it to the user - this runs detached from the mutation so
+          // notifyOrderCreated's own toasts on send failure never fire, and on
+          // native builds there's no console access to see the console.warn.
           console.warn('WhatsApp notification failed:', error);
+          toast({
+            title: 'WhatsApp Gagal Terkirim',
+            description: error instanceof Error ? error.message : 'Gagal menyiapkan notifikasi WhatsApp',
+            variant: 'destructive',
+          });
         }
       })();
 
@@ -506,8 +514,16 @@ export const useUpdateOrderStatusWithNotifications = () => {
 
             await notifyPaymentConfirmation(orderData.customer_phone, notificationData);
           } catch (error) {
-            // Log WhatsApp notification errors but don't fail the status update
+            // Log WhatsApp notification errors but don't fail the status update.
+            // Still surface it - this runs detached from the mutation so
+            // notifyPaymentConfirmation's own failure toast never fires, and on
+            // native builds there's no console access to see the console.warn.
             console.warn('WhatsApp notification failed:', error);
+            toast({
+              title: 'WhatsApp Gagal Terkirim',
+              description: error instanceof Error ? error.message : 'Gagal menyiapkan notifikasi WhatsApp',
+              variant: 'destructive',
+            });
           }
         })();
       }
@@ -533,8 +549,16 @@ export const useUpdateOrderStatusWithNotifications = () => {
 
             await notifyOrderReadyForPickup(orderData.customer_phone, notificationData);
           } catch (error) {
-            // Log WhatsApp notification errors but don't fail the status update
+            // Log WhatsApp notification errors but don't fail the status update.
+            // Still surface it - this runs detached from the mutation so
+            // notifyOrderReadyForPickup's own failure toast never fires, and on
+            // native builds there's no console access to see the console.warn.
             console.warn('WhatsApp notification failed:', error);
+            toast({
+              title: 'WhatsApp Gagal Terkirim',
+              description: error instanceof Error ? error.message : 'Gagal menyiapkan notifikasi WhatsApp',
+              variant: 'destructive',
+            });
           }
         })();
       }
