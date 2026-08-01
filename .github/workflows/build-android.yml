@@ -111,6 +111,31 @@ jobs:
         working-directory: android
         run: ./gradlew assembleRelease --no-daemon
 
+      - name: Verify release APK signer
+        # Confirms the built APK is actually signed with the expected permanent key,
+        # not a different/wrong keystore - a mismatch here would silently break
+        # in-place updates for anyone who already installed a build signed with the
+        # real key, so this fails the workflow before either APK gets uploaded.
+        working-directory: android
+        env:
+          EXPECTED_SIGNER_SHA256: ${{ secrets.ANDROID_RELEASE_EXPECTED_SIGNER_SHA256 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${EXPECTED_SIGNER_SHA256:-}" ]; then
+            echo "::error::ANDROID_RELEASE_EXPECTED_SIGNER_SHA256 secret is not set - refusing to publish an unverified release APK"
+            exit 1
+          fi
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
+          ACTUAL_SHA256=$("$APKSIGNER" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk \
+            | grep "Signer #1 certificate SHA-256 digest" | awk -F': ' '{print $2}' | tr 'A-Z' 'a-z')
+          EXPECTED_SHA256=$(echo "$EXPECTED_SIGNER_SHA256" | tr -d ':' | tr 'A-Z' 'a-z')
+          echo "Release APK signer SHA-256: $ACTUAL_SHA256"
+          if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+            echo "::error::Release APK signer SHA-256 ($ACTUAL_SHA256) does not match the expected signing key ($EXPECTED_SHA256)"
+            exit 1
+          fi
+          echo "Release APK signer verified OK"
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
