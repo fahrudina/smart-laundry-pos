@@ -24,6 +24,26 @@ const parseNativeBody = (data: unknown): WhatsAppResponse => {
   return { success: true, message: 'Message sent successfully', id: 'unknown' };
 };
 
+// baseUrl is a same-origin relative path ('/api/whatsapp-send') on the web
+// deployment, but an absolute URL ('https://.../api/whatsapp-send') on native
+// builds, which bake in VITE_APP_ORIGIN (see whatsapp-config.ts) since the
+// packaged app's WebView has no same-origin backend to resolve a relative
+// path against. Resolving against a dummy base handles both forms uniformly
+// (the base is ignored when baseUrl is already absolute) and normalizes dot
+// segments. Compares the pathname exactly (not a prefix) so it doesn't
+// false-match '/api/whatsapp-sender', '/api/whatsapp-send-message', a
+// sub-path, or the local dev proxy's distinct '/api/whatsapp' base URL.
+const isVercelFunctionUrl = (baseUrl: string): boolean => {
+  let pathname: string;
+  try {
+    pathname = new URL(baseUrl, 'http://localhost/').pathname;
+  } catch {
+    return false;
+  }
+  const normalized = pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+  return normalized === '/api/whatsapp-send';
+};
+
 /**
  * WhatsApp API Client
  * Handles communication with the WhatsApp messaging service
@@ -62,7 +82,7 @@ export class WhatsAppClient {
 
       // Determine if we're using local proxy, Vercel serverless function, or direct API
       const isUsingLocalProxy = this.config.baseUrl.includes('localhost') && this.config.baseUrl.includes('/api/whatsapp');
-      const isUsingVercelFunction = this.config.baseUrl.startsWith('/api/');
+      const isUsingVercelFunction = isVercelFunctionUrl(this.config.baseUrl);
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -180,7 +200,7 @@ export class WhatsAppClient {
 
       // Determine if we're using local proxy, Vercel serverless function, or direct API
       const isUsingLocalProxy = this.config.baseUrl.includes('localhost') && this.config.baseUrl.includes('/api/whatsapp');
-      const isUsingVercelFunction = this.config.baseUrl.startsWith('/api/');
+      const isUsingVercelFunction = isVercelFunctionUrl(this.config.baseUrl);
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
