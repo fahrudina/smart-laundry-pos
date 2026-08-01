@@ -46,6 +46,14 @@ jobs:
         run: npm ci
 
       - name: Build web app
+        # WhatsApp credentials stay server-side (Vercel serverless function) - these are
+        # just feature flags plus the deployed site's absolute origin, since the packaged
+        # app's WebView has no backend of its own at its local origin to resolve a
+        # relative API path against. None of these values are sensitive.
+        env:
+          VITE_WHATSAPP_ENABLED: 'true'
+          VITE_WHATSAPP_NOTIFY_ORDER_CREATED: 'true'
+          VITE_APP_ORIGIN: 'https://pos.fahrudina.my.id'
         run: npm run build
 
       - name: Set up JDK
