@@ -2,10 +2,15 @@ name: Build Android
 
 # This repo doesn't check the generated android/ native project into git (see
 # capacitor.config.ts) - this workflow regenerates it fresh from the web build
-# every run via `cap add`/`cap sync`, then builds a debug APK with Gradle.
-# There's no release signing set up yet, so this produces a debug build only,
-# good for verifying the Capacitor+Gradle pipeline still builds and for
-# sideloading onto a test device - not for a Play Store release.
+# every run via `cap add`/`cap sync`, then builds both a debug APK and a signed
+# release APK with Gradle. Both are for direct sideload distribution (install
+# the APK directly on a device) - there's no Play Store submission set up,
+# that would need an .aab bundle and a Play Console listing instead.
+#
+# The release APK is signed with a permanent key stored as GitHub secrets
+# (ANDROID_RELEASE_KEYSTORE_BASE64/STORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD) -
+# every future release must keep using this same key, or devices with an
+# earlier release installed won't be able to update in place.
 
 on:
   push:
@@ -74,14 +79,43 @@ jobs:
       - name: Sync web build into native project
         run: npx cap sync android
 
+      - name: Compute release version
+        run: |
+          echo "RELEASE_VERSION_CODE=${{ github.run_number }}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION_NAME=$(date -u +%Y.%m.%d)-${{ github.run_number }}" >> "$GITHUB_ENV"
+
+      - name: Patch Android version and release signing config
+        run: node .github/scripts/patch-android-release-gradle.cjs
+
+      - name: Decode release keystore
+        working-directory: android/app
+        run: echo "${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
+
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
+
+      - name: Build release APK
+        working-directory: android
+        env:
+          ANDROID_RELEASE_STORE_FILE: release.keystore
+          ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}
+          ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+          ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: smart-laundry-pos-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-laundry-pos-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 14
           if-no-files-found: error
