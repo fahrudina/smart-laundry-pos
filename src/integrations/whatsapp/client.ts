@@ -28,22 +28,20 @@ const parseNativeBody = (data: unknown): WhatsAppResponse => {
 // deployment, but an absolute URL ('https://.../api/whatsapp-send') on native
 // builds, which bake in VITE_APP_ORIGIN (see whatsapp-config.ts) since the
 // packaged app's WebView has no same-origin backend to resolve a relative
-// path against. Checking only the string prefix misses the absolute case -
-// it starts with "https://", not "/api/" - so this resolves the actual path,
-// whichever form baseUrl takes. Matches only the specific serverless-function
-// path (not just any "/api/" prefix), so it doesn't collide with the local
-// dev proxy's '/api/whatsapp' base URL, which is a distinct case below.
+// path against. Resolving against a dummy base handles both forms uniformly
+// (the base is ignored when baseUrl is already absolute) and normalizes dot
+// segments. Compares the pathname exactly (not a prefix) so it doesn't
+// false-match '/api/whatsapp-sender', '/api/whatsapp-send-message', a
+// sub-path, or the local dev proxy's distinct '/api/whatsapp' base URL.
 const isVercelFunctionUrl = (baseUrl: string): boolean => {
-  const path = baseUrl.startsWith('/')
-    ? baseUrl
-    : (() => {
-        try {
-          return new URL(baseUrl).pathname;
-        } catch {
-          return '';
-        }
-      })();
-  return path.startsWith('/api/whatsapp-send');
+  let pathname: string;
+  try {
+    pathname = new URL(baseUrl, 'http://localhost/').pathname;
+  } catch {
+    return false;
+  }
+  const normalized = pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+  return normalized === '/api/whatsapp-send';
 };
 
 /**
