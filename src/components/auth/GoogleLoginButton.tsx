@@ -22,11 +22,16 @@ const GoogleDivider: React.FC = () => (
 );
 
 /**
- * Native (Android/iOS) Google button. The web GSI script (@react-oauth/google) never
+ * Native (Android) Google button. The web GSI script (@react-oauth/google) never
  * renders inside the Capacitor WebView: it validates window.location.origin
  * (https://localhost there) against the OAuth client's Authorized JavaScript Origins,
  * and Google also actively blocks GSI/OAuth flows detected running inside embedded
  * WebViews. Native Credential Manager sign-in sidesteps both problems.
+ *
+ * Android only: @capgo/capacitor-social-login also requires a separate iOSClientId
+ * for iOS, which this project doesn't have configured (there's no iOS platform set
+ * up at all yet). Routing iOS through this flow would fail silently, so it falls
+ * back to WebGoogleLoginButton until iOS support is actually added.
  */
 const NativeGoogleLoginButton: React.FC = () => {
   const { signInWithGoogle } = useAuth();
@@ -61,10 +66,14 @@ const NativeGoogleLoginButton: React.FC = () => {
         return;
       }
 
-      await signInWithGoogle(result.idToken);
-    } catch {
-      // Error toast handled in AuthContext for signInWithGoogle failures; this catch
-      // also covers SocialLogin.initialize/login rejecting (e.g. user cancelled).
+      try {
+        await signInWithGoogle(result.idToken);
+      } catch {
+        // Error toast already shown by AuthContext for signInWithGoogle failures.
+      }
+    } catch (error) {
+      // Covers SocialLogin.initialize/login rejecting (e.g. user cancelled, plugin error).
+      console.error('Native Google sign-in failed', error);
       toast({ title: 'Error', description: 'Gagal masuk dengan Google', variant: 'destructive' });
     }
   };
@@ -133,5 +142,5 @@ export const GoogleLoginButton: React.FC = () => {
     return null;
   }
 
-  return Capacitor.isNativePlatform() ? <NativeGoogleLoginButton /> : <WebGoogleLoginButton />;
+  return Capacitor.getPlatform() === 'android' ? <NativeGoogleLoginButton /> : <WebGoogleLoginButton />;
 };
