@@ -9,7 +9,7 @@ import {
   Gift,
   Megaphone,
   Smartphone,
-  Monitor,
+  ClipboardList,
   Globe,
   Wifi,
   Download,
@@ -280,22 +280,22 @@ export const LandingPage: React.FC = () => {
               Dari meja kasir ke genggaman tangan
             </h2>
             <p className="text-lg text-[var(--tk-ink-soft)] max-w-2xl mx-auto">
-              Antarmuka yang sama enaknya dipakai di HP kasir maupun layar besar di meja depan toko.
+              Dari ringkasan toko sampai bikin pesanan baru, semua langsung dari HP kasir.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-            {/* Mobile View */}
+            {/* Mobile View - dashboard */}
             <div className="tk-stub rounded-sm">
               <div className="tk-stub__num">No. 0021</div>
               <div className="flex items-center gap-2 mb-5">
                 <Smartphone className="h-5 w-5 text-[var(--tk-ink)]" />
-                <h3 className="text-lg font-bold text-[var(--tk-graphite)]">Tampilan Mobile</h3>
+                <h3 className="text-lg font-bold text-[var(--tk-graphite)]">Ringkasan Toko</h3>
               </div>
               <div className="relative bg-[var(--tk-paper-soft)] overflow-hidden border-8 border-[var(--tk-graphite)] rounded-2xl aspect-[9/19] max-h-[420px] mx-auto">
                 <img
                   src="/screenshots/mobile-1.png"
-                  alt="Smart Laundry POS Mobile View"
+                  alt="Dashboard Smart Laundry POS di HP"
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -328,18 +328,18 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Desktop View */}
+            {/* Mobile View - create order */}
             <div className="tk-stub rounded-sm">
               <div className="tk-stub__num">No. 0022</div>
               <div className="flex items-center gap-2 mb-5">
-                <Monitor className="h-5 w-5 text-[var(--tk-ink)]" />
-                <h3 className="text-lg font-bold text-[var(--tk-graphite)]">Tampilan Desktop</h3>
+                <ClipboardList className="h-5 w-5 text-[var(--tk-ink)]" />
+                <h3 className="text-lg font-bold text-[var(--tk-graphite)]">Buat Pesanan</h3>
               </div>
-              <div className="relative bg-[var(--tk-paper-soft)] overflow-hidden border-4 border-[var(--tk-line)] rounded-xl aspect-video">
+              <div className="relative bg-[var(--tk-paper-soft)] overflow-hidden border-8 border-[var(--tk-graphite)] rounded-2xl aspect-[9/19] max-h-[420px] mx-auto">
                 <img
-                  src="/favicon-512.png"
-                  alt="Smart Laundry POS Desktop View"
-                  className="w-full h-full object-contain p-12"
+                  src="/screenshots/mobile-2.png"
+                  alt="Layar pilih layanan saat membuat pesanan baru"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
@@ -347,8 +347,8 @@ export const LandingPage: React.FC = () => {
                     if (parent) {
                       parent.innerHTML = `
                         <div class="flex flex-col items-center justify-center h-full text-[var(--tk-graphite-soft)] p-8">
-                          <p class="text-center text-lg font-medium">Dashboard Desktop</p>
-                          <p class="text-center text-sm mt-2">Kelola bisnis dengan tampilan penuh</p>
+                          <p class="text-center text-lg font-medium">Buat Pesanan Baru</p>
+                          <p class="text-center text-sm mt-2">Pilih layanan langsung dari smartphone</p>
                         </div>
                       `;
                     }
@@ -358,11 +358,11 @@ export const LandingPage: React.FC = () => {
               <div className="mt-6 grid grid-cols-3 gap-3 text-center tk-mono">
                 <div>
                   <BarChart3 className="h-4 w-4 mx-auto mb-1 text-[var(--tk-ink)]" />
-                  <div className="text-xs text-[var(--tk-graphite-soft)]">Dashboard</div>
+                  <div className="text-xs text-[var(--tk-graphite-soft)]">Kalkulasi Otomatis</div>
                 </div>
                 <div>
                   <Zap className="h-4 w-4 mx-auto mb-1 text-[var(--tk-ink)]" />
-                  <div className="text-xs text-[var(--tk-graphite-soft)]">Pintasan Keyboard</div>
+                  <div className="text-xs text-[var(--tk-graphite-soft)]">Estimasi Selesai</div>
                 </div>
                 <div>
                   <Receipt className="h-4 w-4 mx-auto mb-1 text-[var(--tk-ink)]" />
