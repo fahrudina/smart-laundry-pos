@@ -1,0 +1,152 @@
+name: Release Android
+
+# Triggered by pushing a version tag (v1.2.3) - builds a signed release APK using the
+# same permanent signing key as build-android.yml's workflow_dispatch/main-push release
+# build, then publishes it as a GitHub Release asset for that tag. Kept as a separate
+# workflow from build-android.yml (which builds on every main push, for CI smoke-testing
+# and ad-hoc sideloads) since a pushed tag is an intentional "this is a real release"
+# event with its own version scheme: versionName comes from the tag itself (v1.2.3 ->
+# 1.2.3) rather than the date+run-number scheme used for untagged builds.
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-android-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      # Gradle evaluates the whole build.gradle - including the signingConfigs block added
+      # by the patch script - during project configuration regardless of which task runs,
+      # so these must be visible to the Gradle invocation below.
+      ANDROID_RELEASE_STORE_FILE: release.keystore
+      ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}
+      ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+      ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        # See build-android.yml for why these are set here and why none need to be secret.
+        env:
+          VITE_WHATSAPP_ENABLED: 'true'
+          VITE_WHATSAPP_NOTIFY_ORDER_CREATED: 'true'
+          VITE_APP_ORIGIN: 'https://pos.fahrudina.my.id'
+          VITE_GOOGLE_CLIENT_ID: '215218745424-fdgt918nk9alov6vacn4n41670k2u2hq.apps.googleusercontent.com'
+        run: npm run build
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Sync web build into native project
+        run: npx cap sync android
+
+      - name: Compute release version from tag
+        run: |
+          TAG_NAME="${{ github.ref_name }}"
+          echo "RELEASE_VERSION_CODE=${{ github.run_number }}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION_NAME=${TAG_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Patch Android version and release signing config
+        run: node .github/scripts/patch-android-release-gradle.cjs
+
+      - name: Decode release keystore
+        working-directory: android/app
+        run: echo "${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
+
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Verify release APK signer
+        # Confirms the built APK is actually signed with the expected permanent key,
+        # not a different/wrong keystore - a mismatch here would silently break
+        # in-place updates for anyone who already installed a build signed with the
+        # real key, so this fails the workflow before the GitHub Release gets created.
+        working-directory: android
+        env:
+          EXPECTED_SIGNER_SHA256: ${{ secrets.ANDROID_RELEASE_EXPECTED_SIGNER_SHA256 }}
+        run: |
+          set -uo pipefail
+          if [ -z "${EXPECTED_SIGNER_SHA256:-}" ]; then
+            echo "::error::ANDROID_RELEASE_EXPECTED_SIGNER_SHA256 secret is not set - refusing to publish an unverified release APK"
+            exit 1
+          fi
+
+          # Gradle signs via its own bundled apksig library, not necessarily the SDK's
+          # standalone build-tools CLI - don't assume that directory is populated.
+          APKSIGNER=$(find "$ANDROID_HOME" -type f -name apksigner 2>/dev/null | sort -V | tail -1)
+          if [ -z "$APKSIGNER" ]; then
+            echo "apksigner not found under \$ANDROID_HOME ($ANDROID_HOME) - installing build-tools"
+            yes | sdkmanager --install "build-tools;35.0.0" > /dev/null
+            APKSIGNER=$(find "$ANDROID_HOME" -type f -name apksigner 2>/dev/null | sort -V | tail -1)
+          fi
+          if [ -z "$APKSIGNER" ]; then
+            echo "::error::Could not locate apksigner even after installing build-tools;35.0.0"
+            exit 1
+          fi
+          echo "Using apksigner: $APKSIGNER"
+
+          VERIFY_OUTPUT=$("$APKSIGNER" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk)
+          verify_exit=$?
+          echo "$VERIFY_OUTPUT"
+          if [ "$verify_exit" -ne 0 ]; then
+            echo "::error::apksigner verify failed (exit $verify_exit)"
+            exit 1
+          fi
+
+          ACTUAL_SHA256=$(echo "$VERIFY_OUTPUT" | grep "Signer #1 certificate SHA-256 digest" | awk -F': ' '{print $2}' | tr 'A-Z' 'a-z')
+          if [ -z "$ACTUAL_SHA256" ]; then
+            echo "::error::Could not extract signer SHA-256 digest from apksigner output"
+            exit 1
+          fi
+
+          EXPECTED_SHA256=$(echo "$EXPECTED_SIGNER_SHA256" | tr -d ':' | tr 'A-Z' 'a-z')
+          echo "Release APK signer SHA-256: $ACTUAL_SHA256"
+          if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+            echo "::error::Release APK signer SHA-256 ($ACTUAL_SHA256) does not match the expected signing key ($EXPECTED_SHA256)"
+            exit 1
+          fi
+          echo "Release APK signer verified OK"
+
+      - name: Rename APK for release asset
+        run: cp android/app/build/outputs/apk/release/app-release.apk smart-laundry-pos-${{ github.ref_name }}.apk
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            "smart-laundry-pos-${{ github.ref_name }}.apk" \
+            --title "${{ github.ref_name }}" \
+            --generate-notes
