@@ -26,7 +26,8 @@ import {
   History,
   CheckCircle2,
   Circle,
-  ArrowRight
+  ArrowRight,
+  MessageSquare
 } from 'lucide-react';
 
 const getGreeting = (hour: number) => {
@@ -172,6 +173,22 @@ export const HomePage: React.FC = () => {
   // Grid excludes "new-order" - it's promoted to a full-width hero button instead.
   const gridActions = quickActions.filter((action) => action.id !== 'new-order');
 
+  // Full app menu shown in the "Lainnya" bottom sheet - includes items already
+  // visible above (Home, grid actions) plus owner-only sections not otherwise
+  // reachable from this page (mirrors the sidebar's Kelola section).
+  const moreMenuItems = [
+    { id: 'home', title: 'Beranda', icon: HomeIcon, onClick: () => navigate('/home') },
+    { id: 'new-order', title: 'Buat Pesanan', icon: Plus, onClick: () => navigate('/pos') },
+    ...gridActions.map((action) => ({ id: action.id, title: action.title, icon: action.icon, onClick: action.onClick })),
+    ...(isOwner
+      ? [
+          { id: 'stores', title: 'Manajemen Toko', icon: Building2, onClick: () => navigate('/stores') },
+          { id: 'whatsapp-broadcast', title: 'Broadcast WhatsApp', icon: MessageSquare, onClick: () => navigate('/whatsapp-broadcast') },
+          { id: 'revenue-report', title: 'Laporan Pendapatan', icon: TrendingUp, onClick: () => navigate('/revenue-report') },
+        ]
+      : []),
+  ];
+
   // Only used by the desktop fallback view below - the mobile view's bottom nav
   // now comes from AppLayout (shared across every screen, not just Home).
   const desktopBottomNavItems = [
@@ -232,6 +249,7 @@ export const HomePage: React.FC = () => {
         totalSteps={activation?.totalSteps ?? 1}
         onCreateOrder={() => navigate('/pos')}
         gridActions={gridActions}
+        moreMenuItems={moreMenuItems}
       />
     );
   }
