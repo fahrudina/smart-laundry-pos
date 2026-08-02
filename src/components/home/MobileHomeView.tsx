@@ -175,22 +175,24 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
           </Button>
         )}
 
-        <div className="grid grid-cols-3 gap-3">
-          {gridActions.map((action) => (
-            <button
-              key={action.id}
-              onClick={action.onClick}
-              className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-4 shadow-soft transition-shadow hover:shadow-medium active:scale-95"
-            >
-              <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-pos-highlight/40">
-                <action.icon className="h-6 w-6 text-primary" />
-              </div>
-              <p className="text-center text-xs font-medium leading-tight text-foreground">
-                {action.title}
-              </p>
-            </button>
-          ))}
-        </div>
+        <Card className="border-0 shadow-medium">
+          <CardContent className="grid grid-cols-4 gap-y-4 p-4">
+            {gridActions.map((action) => (
+              <button
+                key={action.id}
+                onClick={action.onClick}
+                className="flex flex-col items-center justify-center gap-2 rounded-xl py-1 transition-colors active:bg-muted"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-pos-highlight/30">
+                  <action.icon className="h-6 w-6 text-primary" />
+                </div>
+                <p className="text-center text-xs font-medium leading-tight text-foreground">
+                  {action.title}
+                </p>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
