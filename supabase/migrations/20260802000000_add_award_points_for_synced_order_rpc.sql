@@ -33,13 +33,19 @@ BEGIN
     RETURN;
   END IF;
 
+  -- Inside ON CONFLICT DO UPDATE / RETURNING, the target table must be
+  -- referenced by its unqualified name (or an alias) - a schema-qualified
+  -- "public.points.column" here makes Postgres try to resolve "public" as
+  -- a range-table entry and fail with "missing FROM-clause entry for
+  -- table public". The bare "points." prefix still disambiguates against
+  -- the RETURNS TABLE columns of the same name.
   INSERT INTO public.points (customer_phone, store_id, accumulated_points, current_points)
   VALUES (p_customer_phone, p_store_id, p_points_earned, p_points_earned)
   ON CONFLICT (customer_phone, store_id) DO UPDATE SET
-    accumulated_points = public.points.accumulated_points + p_points_earned,
-    current_points = public.points.current_points + p_points_earned,
+    accumulated_points = points.accumulated_points + p_points_earned,
+    current_points = points.current_points + p_points_earned,
     updated_at = now()
-  RETURNING public.points.point_id, public.points.current_points INTO v_point_id, v_current_points;
+  RETURNING points.point_id, points.current_points INTO v_point_id, v_current_points;
 
   INSERT INTO public.point_transactions (point_id, order_id, points_changed, transaction_type, notes)
   VALUES (
@@ -52,7 +58,7 @@ BEGIN
 
   RETURN QUERY SELECT true, v_point_id, v_current_points;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public, pg_temp;
 
 COMMENT ON FUNCTION public.award_points_for_synced_order(UUID, UUID, TEXT, INTEGER) IS
   'Atomically awards points for a completed order. Safe to call more than once for the same order_id - the second call is a confirmed no-op via the points_earned guard on orders, not a double-credit.';

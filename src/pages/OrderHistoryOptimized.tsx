@@ -477,9 +477,16 @@ export const OrderHistory = () => {
   }, [resendNotification]);
 
   const handleRetryOfflineOrder = useCallback(async (id: string) => {
+    if (!navigator.onLine) {
+      toast.error('Tidak ada koneksi internet. Sinkronisasi akan berjalan otomatis saat koneksi kembali.');
+      return;
+    }
     setRetryingOrderId(id);
     try {
       await retryOfflineOrderNow(id, notifyOrderCreated);
+    } catch (error) {
+      console.error('Error retrying offline order:', id, error);
+      toast.error('Gagal menyinkronkan pesanan. Silakan coba lagi.');
     } finally {
       setRetryingOrderId(null);
     }
@@ -759,7 +766,9 @@ export const OrderHistory = () => {
                             Rp{order.payload.total_amount.toLocaleString('id-ID')} · {statusLabel[order.status] || order.status}
                           </p>
                           {order.status === 'error_permanent' && order.lastError && (
-                            <p className="text-xs text-destructive">{order.lastError.message}</p>
+                            <p className="text-xs text-destructive">
+                              Sinkronisasi gagal pada tahap {order.lastError.step}. Hubungi admin jika berulang.
+                            </p>
                           )}
                         </div>
                         {(order.status === 'error_permanent' || order.status === 'error_retryable') && (

@@ -37,16 +37,22 @@ export const ThermalPrintDialog: React.FC<ThermalPrintDialogProps> = ({
     console.error('Thermal print error:', error);
   };
 
+  // For an offline order, orderId is null (it hasn't synced to Supabase
+  // yet) but localReceiptData carries its local id - fall back to that so
+  // the description still shows the specific receipt being printed
+  // instead of the generic "connect your printer" message.
+  const displayOrderId = orderId || localReceiptData?.orderId;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Thermal Printer</DialogTitle>
           <DialogDescription>
-            {customerName && orderId ? (
-              <>Print receipt for <strong>{customerName}</strong> (Order #{orderId})</>
-            ) : orderId ? (
-              <>Print receipt for Order #{orderId}</>
+            {customerName && displayOrderId ? (
+              <>Print receipt for <strong>{customerName}</strong> (Order #{displayOrderId})</>
+            ) : displayOrderId ? (
+              <>Print receipt for Order #{displayOrderId}</>
             ) : (
               'Connect to your thermal printer to print receipts'
             )}

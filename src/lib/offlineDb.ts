@@ -30,10 +30,13 @@ export interface QueuedOfflineOrder {
   status: OfflineOrderStatus;
   attempts: number;
   nextAttemptAt: number | null; // epoch ms; scheduler ignores the record until Date.now() >= this
+  // epoch ms set when status becomes 'syncing'. If the tab/app dies mid-sync,
+  // this is what lets the scheduler notice a record has been stuck in
+  // 'syncing' too long and reclaim it rather than leaving it stranded forever.
+  syncStartedAt: number | null;
   lastError: OfflineOrderError | null;
   queuedAt: number; // epoch ms, used for FIFO processing order
   queuedByUserId: string;
-  syncedAt: number | null;
 }
 
 export interface CachedServices {

@@ -63,18 +63,13 @@ export const EnhancedLaundryPOS = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const serviceSectionRef = useRef<HTMLDivElement>(null);
 
-  // Routes an order through the normal online mutation, or - only when this
-  // store has opted in - queues it locally to sync automatically once
-  // connectivity returns. Points redemption is never part of the offline
-  // path (see docs on offline order creation): the field is stripped here,
-  // not just zeroed, so an offline order can never carry a stale redemption
-  // the sync worker would otherwise have to reconcile against a balance it
-  // has no live read on.
-  const submitOrder = async (orderData: CreateOrderData): Promise<{ id: string; points_earned?: number }> => {
-    if (isOnline) {
-      return await createOrderMutation.mutateAsync(orderData);
-    }
-
+  // Queues an order locally to sync automatically once connectivity
+  // returns. Points redemption is never part of the offline path (see docs
+  // on offline order creation): the field is stripped here, not just
+  // zeroed, so an offline order can never carry a stale redemption the
+  // sync worker would otherwise have to reconcile against a balance it has
+  // no live read on.
+  const queueOrderOffline = async (orderData: CreateOrderData): Promise<{ id: string; points_earned?: number }> => {
     if (!currentStore?.enable_offline_mode) {
       toast.error('❌ Toko belum mengaktifkan mode offline. Sambungkan internet untuk membuat pesanan.', {
         style: ORDER_ERROR_TOAST_STYLE,
@@ -104,11 +99,38 @@ export const EnhancedLaundryPOS = () => {
     } catch (error) {
       if (error instanceof OfflineSessionExpiredError) {
         toast.error(`❌ ${error.message}`, { style: ORDER_ERROR_TOAST_STYLE });
+      } else {
+        // Any other failure (e.g. an IndexedDB write/quota error) means the
+        // order was neither queued nor created - staff must be told, not
+        // just left with a dialog that quietly closes.
+        toast.error('❌ Gagal menyimpan pesanan offline. Silakan coba lagi.', {
+          style: ORDER_ERROR_TOAST_STYLE,
+        });
       }
       throw error;
     } finally {
       setIsQueuingOffline(false);
     }
+  };
+
+  // Routes an order through the normal online mutation, or - only when this
+  // store has opted in - queues it locally instead. `navigator.onLine` can
+  // report true while the device has no real route to the internet, so a
+  // failed online attempt still falls back to the offline queue rather
+  // than surfacing a lost order.
+  const submitOrder = async (orderData: CreateOrderData): Promise<{ id: string; points_earned?: number }> => {
+    if (isOnline) {
+      try {
+        return await createOrderMutation.mutateAsync(orderData);
+      } catch (error) {
+        if (!currentStore?.enable_offline_mode) {
+          throw error;
+        }
+        return queueOrderOffline(orderData);
+      }
+    }
+
+    return queueOrderOffline(orderData);
   };
 
   // Load services from our service management system

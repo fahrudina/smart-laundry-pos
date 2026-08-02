@@ -466,4 +466,4 @@ export const useOrdersByCustomer = (customerPhone: string) => {
   });
 };
 
-export type { Order, OrderItem, UnitItem, CreateOrderData, OrderFilters };
+export type { Order, OrderItem, OrderFilters };

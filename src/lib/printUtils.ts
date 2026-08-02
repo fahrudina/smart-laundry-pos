@@ -1002,6 +1002,7 @@ export const buildReceiptDataFromLocalOrder = (
     orderDate: payload.order_date || new Date().toISOString(),
     items: payload.items.map((item) => ({
       ...item,
+      item_type: item.item_type || 'service',
       line_total: item.service_price * item.quantity,
     })),
     totalAmount: payload.total_amount || 0,

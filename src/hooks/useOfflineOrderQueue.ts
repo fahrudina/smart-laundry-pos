@@ -33,10 +33,10 @@ export async function queueOfflineOrder(
     status: 'queued',
     attempts: 0,
     nextAttemptAt: null,
+    syncStartedAt: null,
     lastError: null,
     queuedAt: Date.now(),
     queuedByUserId: authService.getCurrentUser()?.id ?? 'unknown',
-    syncedAt: null,
   };
 
   await offlineDb.offlineOrderQueue.add(record);
@@ -50,16 +50,21 @@ export async function retryQueuedOrder(id: string): Promise<void> {
   await offlineDb.offlineOrderQueue.update(id, {
     status: 'queued',
     nextAttemptAt: null,
+    syncStartedAt: null,
     lastError: null,
   });
 }
 
+// No storeId (StoreContext still loading, or no store selected) must never
+// fall back to querying every store's queue - that would briefly render
+// another store's customer names and order totals, breaking the
+// multi-tenant isolation this app requires everywhere else.
 export const usePendingOrders = (storeId?: string) => {
   const records = useLiveQuery(
     () =>
       storeId
         ? offlineDb.offlineOrderQueue.where('storeId').equals(storeId).sortBy('queuedAt')
-        : offlineDb.offlineOrderQueue.orderBy('queuedAt').toArray(),
+        : Promise.resolve([]),
     [storeId]
   );
   return records ?? [];

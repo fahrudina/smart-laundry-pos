@@ -82,7 +82,7 @@ BEGIN
     AND s.is_active = true;
   END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 COMMENT ON FUNCTION public.get_user_stores_by_userid IS 'Returns stores accessible by a user with enable_qr, enable_points, enable_offline_mode, wa_use_store_number, wa_sender_id, and wa_sender_last_verified fields for store features';
 
@@ -123,7 +123,7 @@ BEGIN
 
   RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 COMMENT ON FUNCTION public.set_store_feature_flags(UUID, UUID, BOOLEAN, BOOLEAN, BOOLEAN) IS
   'Sets enable_qr, enable_points, and enable_offline_mode after verifying the caller owns the store.';
