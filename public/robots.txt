@@ -1,52 +1,24 @@
+# A named User-agent group is matched exclusively (RFC 9309) - it does NOT also
+# inherit the "*" group's rules. So every crawler that should be kept out of the
+# authenticated app shares this one group with the wildcard, rather than each
+# getting its own "Allow: /"-only block that would leave /home, /customers, etc.
+# open to them.
 User-agent: Googlebot
-Allow: /
-
 User-agent: Bingbot
-Allow: /
-
 User-agent: Twitterbot
-Allow: /
-
 User-agent: facebookexternalhit
-Allow: /
-
-# AI / answer engine and generative search crawlers
 User-agent: GPTBot
-Allow: /
-
 User-agent: ChatGPT-User
-Allow: /
-
 User-agent: OAI-SearchBot
-Allow: /
-
 User-agent: ClaudeBot
-Allow: /
-
 User-agent: Claude-User
-Allow: /
-
 User-agent: Claude-SearchBot
-Allow: /
-
 User-agent: anthropic-ai
-Allow: /
-
 User-agent: PerplexityBot
-Allow: /
-
 User-agent: Perplexity-User
-Allow: /
-
 User-agent: Google-Extended
-Allow: /
-
 User-agent: Applebot-Extended
-Allow: /
-
 User-agent: CCBot
-Allow: /
-
 User-agent: *
 Allow: /
 Allow: /login

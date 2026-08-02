@@ -182,7 +182,7 @@ const faqs: { question: string; answer: string }[] = [
   {
     question: 'Apakah Smart Laundry POS punya sistem poin loyalitas pelanggan?',
     answer:
-      'Punya. Fitur Smart Point mengumpulkan poin secara otomatis dari setiap transaksi pelanggan, dan bisa diaktifkan atau dimatikan sesuai kebutuhan masing-masing toko di menu pengaturan.',
+      'Punya. Fitur Smart Point mengumpulkan poin secara otomatis untuk transaksi yang sudah lunas, jika pemilik toko mengaktifkan fitur ini di menu pengaturan (nonaktif secara default).',
   },
   {
     question: 'Perlu instal aplikasi khusus atau bisa langsung dipakai dari HP?',

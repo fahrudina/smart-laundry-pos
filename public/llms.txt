@@ -21,8 +21,8 @@ content and customer communication is in Indonesian (Bahasa Indonesia).
   branch, under a single account.
 - Automatic WhatsApp notifications to customers when an order's status changes to
   ready for pickup.
-- Smart Point: automatic customer loyalty points per transaction, toggleable per
-  store in settings.
+- Smart Point: automatic customer loyalty points on paid transactions, only when
+  a store owner has enabled points in that store's settings (off by default).
 - Works offline; orders sync automatically once connectivity returns.
 - Runs in the browser and can be installed as a PWA (no app-store download required).
 - Dual order tracking: execution status (queue, in progress, ready, completed,
