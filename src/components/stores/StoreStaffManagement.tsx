@@ -5,10 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { authService } from '@/services/authService';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 import { Users, UserPlus, Mail, Phone, Calendar } from 'lucide-react';
 import { StoreWithOwnershipInfo } from '@/types/multi-tenant';
 
@@ -35,6 +38,13 @@ interface CreateStaffForm {
 }
 
 export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ store }) => {
+  const isMobile = useIsMobile();
+  const DialogRoot = isMobile ? Drawer : Dialog;
+  const DialogTriggerEl = isMobile ? DrawerTrigger : DialogTrigger;
+  const DialogContentEl = isMobile ? DrawerContent : DialogContent;
+  const DialogHeaderEl = isMobile ? DrawerHeader : DialogHeader;
+  const DialogTitleEl = isMobile ? DrawerTitle : DialogTitle;
+
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [unassignedStaff, setUnassignedStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(false);
@@ -188,23 +198,34 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className={cn('flex flex-col gap-3', !isMobile && 'sm:flex-row sm:items-center sm:justify-between')}>
           <CardTitle className="flex min-w-0 items-center gap-2 text-lg sm:text-2xl">
             <Users className="h-5 w-5 flex-shrink-0" />
-            <span className="truncate">Manajemen Staf - {store.store_name}</span>
+            <span className="truncate">
+              {isMobile ? 'Anggota Staf' : `Manajemen Staf - ${store.store_name}`}
+            </span>
           </CardTitle>
-          <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-shrink-0 sm:flex-wrap">
-            <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                  Tugaskan yang Ada
+          <div className={cn('grid grid-cols-2 gap-2', !isMobile && 'sm:flex sm:flex-shrink-0 sm:flex-wrap')}>
+            <DialogRoot open={assignDialogOpen} onOpenChange={setAssignDialogOpen} {...(isMobile ? { shouldScaleBackground: false } : {})}>
+              <DialogTriggerEl asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn('w-full', isMobile ? 'px-2 text-xs' : 'sm:w-auto')}
+                >
+                  {isMobile ? 'Tugaskan' : 'Tugaskan yang Ada'}
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Tugaskan Staf yang Ada</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
+              </DialogTriggerEl>
+              <DialogContentEl className={isMobile ? 'flex max-h-[85vh] flex-col' : 'max-w-lg'}>
+                <DialogHeaderEl>
+                  <DialogTitleEl>Tugaskan Staf yang Ada</DialogTitleEl>
+                </DialogHeaderEl>
+                <div
+                  className={cn(
+                    'space-y-4',
+                    isMobile && 'min-h-0 flex-1 overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]'
+                  )}
+                >
                   {unassignedStaff.length === 0 ? (
                     <p className="text-muted-foreground">Tidak ada staf yang belum ditugaskan</p>
                   ) : (
@@ -236,21 +257,27 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
                     </div>
                   )}
                 </div>
-              </DialogContent>
-            </Dialog>
+              </DialogContentEl>
+            </DialogRoot>
 
-            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="w-full sm:w-auto">
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Tambah Staf Baru
+            <DialogRoot open={createDialogOpen} onOpenChange={setCreateDialogOpen} {...(isMobile ? { shouldScaleBackground: false } : {})}>
+              <DialogTriggerEl asChild>
+                <Button size="sm" className={cn('w-full', isMobile ? 'px-2 text-xs' : 'sm:w-auto')}>
+                  {!isMobile && <UserPlus className="h-4 w-4 mr-2" />}
+                  {isMobile ? 'Tambah Staf' : 'Tambah Staf Baru'}
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Buat Anggota Staf Baru</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleCreateStaff} className="space-y-4">
+              </DialogTriggerEl>
+              <DialogContentEl className={isMobile ? 'flex max-h-[85vh] flex-col' : 'max-w-lg'}>
+                <DialogHeaderEl>
+                  <DialogTitleEl>Buat Anggota Staf Baru</DialogTitleEl>
+                </DialogHeaderEl>
+                <form
+                  onSubmit={handleCreateStaff}
+                  className={cn(
+                    'space-y-4',
+                    isMobile && 'min-h-0 flex-1 overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]'
+                  )}
+                >
                   <div>
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -303,8 +330,8 @@ export const StoreStaffManagement: React.FC<StoreStaffManagementProps> = ({ stor
                     </Button>
                   </div>
                 </form>
-              </DialogContent>
-            </Dialog>
+              </DialogContentEl>
+            </DialogRoot>
           </div>
         </div>
       </CardHeader>

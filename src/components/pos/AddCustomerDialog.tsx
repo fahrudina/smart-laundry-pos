@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UserPlus } from 'lucide-react';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 interface AddCustomerDialogProps {
   onCustomerAdded?: (customer: any) => void;
@@ -13,6 +16,13 @@ interface AddCustomerDialogProps {
 }
 
 export const AddCustomerDialog = ({ onCustomerAdded, trigger }: AddCustomerDialogProps) => {
+  const isMobile = useIsMobile();
+  const Root = isMobile ? Drawer : Dialog;
+  const Trigger = isMobile ? DrawerTrigger : DialogTrigger;
+  const Content = isMobile ? DrawerContent : DialogContent;
+  const Header = isMobile ? DrawerHeader : DialogHeader;
+  const Title = isMobile ? DrawerTitle : DialogTitle;
+
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -61,20 +71,26 @@ export const AddCustomerDialog = ({ onCustomerAdded, trigger }: AddCustomerDialo
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <Root open={open} onOpenChange={setOpen} {...(isMobile ? { shouldScaleBackground: false } : {})}>
+      <Trigger asChild>
         {trigger || (
           <Button variant="outline" className="gap-2">
             <UserPlus className="h-4 w-4" />
             Tambah Pelanggan Baru
           </Button>
         )}
-      </DialogTrigger>
-      <DialogContent className="w-[95vw] max-w-[425px] max-h-[90vh] overflow-y-auto mx-4 my-8">
-        <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">Tambah Pelanggan Baru</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pb-2">
+      </Trigger>
+      <Content className={isMobile ? 'flex max-h-[85vh] flex-col' : 'w-[95vw] max-w-[425px] max-h-[90vh] overflow-y-auto mx-4 my-8'}>
+        <Header>
+          <Title className="text-lg sm:text-xl">Tambah Pelanggan Baru</Title>
+        </Header>
+        <form
+          onSubmit={handleSubmit}
+          className={cn(
+            'space-y-4 pb-2',
+            isMobile && 'min-h-0 flex-1 overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]'
+          )}
+        >
           <div className="space-y-2">
             <Label htmlFor="name" className="text-sm font-medium">Nama *</Label>
             <Input
@@ -141,7 +157,7 @@ export const AddCustomerDialog = ({ onCustomerAdded, trigger }: AddCustomerDialo
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </Content>
+    </Root>
   );
 };

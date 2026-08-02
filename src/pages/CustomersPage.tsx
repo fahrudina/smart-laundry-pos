@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Table,
   TableBody,
@@ -22,6 +23,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,6 +70,9 @@ import { EditCustomerDialog } from '@/components/pos/EditCustomerDialog';
 import { CustomerPointsCard } from '@/components/customers/CustomerPointsCard';
 import { CustomerPointsBadge } from '@/components/customers/CustomerPointsBadge';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
+import { MobilePageHeader } from '@/components/layout/MobilePageHeader';
 
 interface Customer {
   id: string;
@@ -90,7 +101,13 @@ export const CustomersPage: React.FC = () => {
   const { currentStore } = useStore();
   const { toast } = useToast();
   const navigate = useNavigate();
-  
+  const isMobile = useIsMobile();
+  const DetailsRoot = isMobile ? Drawer : Dialog;
+  const DetailsContent = isMobile ? DrawerContent : DialogContent;
+  const DetailsHeader = isMobile ? DrawerHeader : DialogHeader;
+  const DetailsTitle = isMobile ? DrawerTitle : DialogTitle;
+  const DetailsDescription = isMobile ? DrawerDescription : DialogDescription;
+
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -354,62 +371,111 @@ export const CustomersPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/home')}
-            className="p-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Customers</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">Manage your customer database</p>
-          </div>
-        </div>
-        <AddCustomerDialog
-          trigger={
-            <Button className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Customer
-            </Button>
+      {isMobile ? (
+        <MobilePageHeader
+          title="Customers"
+          onBack={() => navigate('/home')}
+          trailing={
+            <AddCustomerDialog
+              trigger={
+                <Button size="icon" variant="ghost" className="h-9 w-9" aria-label="Add Customer">
+                  <Plus className="h-5 w-5" />
+                </Button>
+              }
+              onCustomerAdded={() => fetchCustomers(pagination.currentPage, debouncedSearchQuery)}
+            />
           }
-          onCustomerAdded={() => fetchCustomers(pagination.currentPage, debouncedSearchQuery)}
         />
-      </div>
+      ) : (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/home')}
+              className="p-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Customers</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">Manage your customer database</p>
+            </div>
+          </div>
+          <AddCustomerDialog
+            trigger={
+              <Button className="w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Customer
+              </Button>
+            }
+            onCustomerAdded={() => fetchCustomers(pagination.currentPage, debouncedSearchQuery)}
+          />
+        </div>
+      )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pagination.totalCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Customers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeCustomersCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New This Month</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{newThisMonthCount}</div>
-          </CardContent>
-        </Card>
-      </div>
+      {isMobile ? (
+        <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
+          <Card className="min-w-[130px] flex-shrink-0">
+            <CardContent className="p-3">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Total</span>
+                <Users className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <div className="text-xl font-bold">{pagination.totalCount}</div>
+            </CardContent>
+          </Card>
+          <Card className="min-w-[130px] flex-shrink-0">
+            <CardContent className="p-3">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Active</span>
+                <Users className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <div className="text-xl font-bold">{activeCustomersCount}</div>
+            </CardContent>
+          </Card>
+          <Card className="min-w-[130px] flex-shrink-0">
+            <CardContent className="p-3">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">New</span>
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <div className="text-xl font-bold">{newThisMonthCount}</div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pagination.totalCount}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Customers</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activeCustomersCount}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">New This Month</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{newThisMonthCount}</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Search and Filters */}
       <Card>
@@ -449,106 +515,134 @@ export const CustomersPage: React.FC = () => {
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead className="hidden md:table-cell">Contact</TableHead>
-                    <TableHead className="hidden sm:table-cell">Orders</TableHead>
-                    <TableHead className="hidden lg:table-cell">Joined</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              {isMobile ? (
+                <div className="-mx-6 divide-y">
                   {customers.map((customer) => (
-                    <TableRow 
+                    <button
                       key={customer.id}
-                      className="cursor-pointer hover:bg-muted/50"
+                      type="button"
                       onClick={() => handleCustomerClick(customer)}
+                      className="flex w-full items-center gap-3 px-6 py-3 text-left active:bg-muted/50"
                     >
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{customer.name}</div>
-                          <div className="text-sm text-muted-foreground md:hidden flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {customer.phone}
-                          </div>
-                          {customer.email && (
-                            <div className="text-sm text-muted-foreground hidden md:block">{customer.email}</div>
-                          )}
+                      <Avatar className="h-10 w-10 flex-shrink-0">
+                        <AvatarFallback className="bg-primary/10 font-semibold text-primary">
+                          {customer.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-medium">{customer.name}</div>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Phone className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{customer.phone}</span>
                         </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <div className="flex items-center space-x-2">
-                          <Phone className="h-4 w-4 text-muted-foreground" />
-                          <span>{customer.phone}</span>
-                        </div>
-                        {customer.address && (
-                          <div className="flex items-center space-x-2 text-sm text-muted-foreground mt-1">
-                            <MapPin className="h-3 w-3" />
-                            <span className="truncate max-w-[200px]">{customer.address}</span>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        <div className="flex flex-col gap-1">
-                          <Badge variant="secondary">
-                            {customer._count?.orders || 0} orders
-                          </Badge>
-                          <CustomerPointsBadge customerPhone={customer.phone} />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
-                        {formatDate(customer.created_at)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={(e) => e.stopPropagation()}
-                              className="h-8 w-8 p-0"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCustomerClick(customer);
-                              }}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditCustomer(customer);
-                              }}
-                            >
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteClick(customer);
-                              }}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                      <CustomerPointsBadge customerPhone={customer.phone} />
+                      <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                    </button>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead className="hidden md:table-cell">Contact</TableHead>
+                      <TableHead className="hidden sm:table-cell">Orders</TableHead>
+                      <TableHead className="hidden lg:table-cell">Joined</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customers.map((customer) => (
+                      <TableRow
+                        key={customer.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleCustomerClick(customer)}
+                      >
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{customer.name}</div>
+                            <div className="text-sm text-muted-foreground md:hidden flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              {customer.phone}
+                            </div>
+                            {customer.email && (
+                              <div className="text-sm text-muted-foreground hidden md:block">{customer.email}</div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <div className="flex items-center space-x-2">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <span>{customer.phone}</span>
+                          </div>
+                          {customer.address && (
+                            <div className="flex items-center space-x-2 text-sm text-muted-foreground mt-1">
+                              <MapPin className="h-3 w-3" />
+                              <span className="truncate max-w-[200px]">{customer.address}</span>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <div className="flex flex-col gap-1">
+                            <Badge variant="secondary">
+                              {customer._count?.orders || 0} orders
+                            </Badge>
+                            <CustomerPointsBadge customerPhone={customer.phone} />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
+                          {formatDate(customer.created_at)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => e.stopPropagation()}
+                                className="h-8 w-8 p-0"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCustomerClick(customer);
+                                }}
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditCustomer(customer);
+                                }}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteClick(customer);
+                                }}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
 
               {/* Pagination */}
               {pagination.totalPages > 1 && (
@@ -562,17 +656,22 @@ export const CustomersPage: React.FC = () => {
       </Card>
 
       {/* Customer Details Dialog */}
-      <Dialog open={showCustomerDetails} onOpenChange={setShowCustomerDetails}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Customer Details</DialogTitle>
-            <DialogDescription>
+      <DetailsRoot open={showCustomerDetails} onOpenChange={setShowCustomerDetails} {...(isMobile ? { shouldScaleBackground: false } : {})}>
+        <DetailsContent className={isMobile ? 'flex max-h-[85vh] flex-col' : 'max-w-md'}>
+          <DetailsHeader>
+            <DetailsTitle>Customer Details</DetailsTitle>
+            <DetailsDescription>
               View and manage customer information
-            </DialogDescription>
-          </DialogHeader>
-          
+            </DetailsDescription>
+          </DetailsHeader>
+
           {selectedCustomer && (
-            <div className="space-y-4">
+            <div
+              className={cn(
+                'space-y-4',
+                isMobile && 'min-h-0 flex-1 overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]'
+              )}
+            >
               <div>
                 <h3 className="font-medium text-lg">{selectedCustomer.name}</h3>
                 <p className="text-sm text-muted-foreground">Customer since {formatDate(selectedCustomer.created_at)}</p>
@@ -638,8 +737,8 @@ export const CustomersPage: React.FC = () => {
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </DetailsContent>
+      </DetailsRoot>
 
       {/* Edit Customer Dialog */}
       <EditCustomerDialog
