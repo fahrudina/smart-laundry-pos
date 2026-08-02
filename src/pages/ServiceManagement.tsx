@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, DollarSign, Settings, AlertCircle, ChevronRight } from 'lucide-react';
+import { Plus, Edit2, Trash2, DollarSign, Settings, AlertCircle, ChevronRight, Scale, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -103,15 +103,20 @@ const ServiceManagement = () => {
     }
   };
 
-  const getPriceLabel = (service: ServiceData) => {
-    const parts: string[] = [];
+  const PRICE_STYLES = {
+    kilo: { icon: Scale, className: 'text-blue-600' },
+    unit: { icon: Package, className: 'text-purple-600' },
+  } as const;
+
+  const getPriceEntries = (service: ServiceData) => {
+    const entries: { type: keyof typeof PRICE_STYLES; label: string }[] = [];
     if (service.supports_kilo) {
-      parts.push(`Rp${service.kilo_price?.toLocaleString('id-ID') || '0'}/kg`);
+      entries.push({ type: 'kilo', label: `Rp${service.kilo_price?.toLocaleString('id-ID') || '0'}/kg` });
     }
     if (service.supports_unit) {
-      parts.push(`Rp${service.unit_price?.toLocaleString('id-ID') || '0'}/unit`);
+      entries.push({ type: 'unit', label: `Rp${service.unit_price?.toLocaleString('id-ID') || '0'}/unit` });
     }
-    return parts.join(' · ');
+    return entries;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -306,7 +311,20 @@ const ServiceManagement = () => {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate font-medium">{service.name}</span>
-                      <span className="flex-shrink-0 text-sm font-semibold">{getPriceLabel(service)}</span>
+                      <div className="flex flex-shrink-0 flex-wrap items-center justify-end gap-x-2 gap-y-0.5">
+                        {getPriceEntries(service).map(({ type, label }) => {
+                          const { icon: PriceIcon, className } = PRICE_STYLES[type];
+                          return (
+                            <span
+                              key={type}
+                              className={cn('flex items-center gap-1 text-sm font-semibold', className)}
+                            >
+                              <PriceIcon className="h-3.5 w-3.5" />
+                              {label}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
                     <div className="truncate text-sm text-muted-foreground">
                       {getCategoryLabel(service.category)}
