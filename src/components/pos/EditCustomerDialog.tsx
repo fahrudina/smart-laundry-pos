@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 interface Customer {
   id: string;
@@ -31,6 +34,13 @@ export const EditCustomerDialog = ({
   onOpenChange,
   onCustomerUpdated 
 }: EditCustomerDialogProps) => {
+  const isMobile = useIsMobile();
+  const Root = isMobile ? Drawer : Dialog;
+  const Content = isMobile ? DrawerContent : DialogContent;
+  const Header = isMobile ? DrawerHeader : DialogHeader;
+  const Title = isMobile ? DrawerTitle : DialogTitle;
+  const Description = isMobile ? DrawerDescription : DialogDescription;
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -106,15 +116,21 @@ export const EditCustomerDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-[425px] max-h-[90vh] overflow-y-auto mx-4 my-8">
-        <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">Edit Customer</DialogTitle>
-          <DialogDescription>
+    <Root open={open} onOpenChange={onOpenChange} {...(isMobile ? { shouldScaleBackground: false } : {})}>
+      <Content className={isMobile ? 'flex max-h-[85vh] flex-col' : 'w-[95vw] max-w-[425px] max-h-[90vh] overflow-y-auto mx-4 my-8'}>
+        <Header>
+          <Title className="text-lg sm:text-xl">Edit Customer</Title>
+          <Description>
             Update customer information
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pb-2">
+          </Description>
+        </Header>
+        <form
+          onSubmit={handleSubmit}
+          className={cn(
+            'space-y-4 pb-2',
+            isMobile && 'min-h-0 flex-1 overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]'
+          )}
+        >
           <div className="space-y-2">
             <Label htmlFor="edit-name" className="text-sm font-medium">Name *</Label>
             <Input
@@ -181,7 +197,7 @@ export const EditCustomerDialog = ({
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </Content>
+    </Root>
   );
 };

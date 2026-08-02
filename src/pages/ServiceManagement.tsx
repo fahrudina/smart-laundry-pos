@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, DollarSign, Settings, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Edit2, Trash2, DollarSign, Settings, AlertCircle, ChevronRight, Scale, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,8 +13,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useServices, useCreateService, useUpdateService, useDeleteService, useSeedDefaultServices, ServiceFormData as ServiceFormType } from '@/hooks/useServices';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useServices, useCreateService, useUpdateService, useDeleteService, useSeedDefaultServices, ServiceFormData as ServiceFormType, ServiceData } from '@/hooks/useServices';
 import { SectionLoading } from '@/components/ui/loading-spinner';
+import { MobilePageHeader } from '@/components/layout/MobilePageHeader';
+import { cn } from '@/lib/utils';
 
 interface ServiceFormData {
   name: string;
@@ -43,6 +48,12 @@ const initialFormData: ServiceFormData = {
 const ServiceManagement = () => {
   usePageTitle('Manajemen Layanan');
 
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const FormDialog = isMobile ? Drawer : Dialog;
+  const FormDialogContent = isMobile ? DrawerContent : DialogContent;
+  const FormDialogHeader = isMobile ? DrawerHeader : DialogHeader;
+  const FormDialogTitle = isMobile ? DrawerTitle : DialogTitle;
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingService, setEditingService] = useState<any>(null);
   const [formData, setFormData] = useState<ServiceFormData>(initialFormData);
@@ -90,6 +101,22 @@ const ServiceManagement = () => {
       case 'other_goods': return 'Produk Lainnya';
       default: return category;
     }
+  };
+
+  const PRICE_STYLES = {
+    kilo: { icon: Scale, className: 'text-blue-600' },
+    unit: { icon: Package, className: 'text-purple-600' },
+  } as const;
+
+  const getPriceEntries = (service: ServiceData) => {
+    const entries: { type: keyof typeof PRICE_STYLES; label: string }[] = [];
+    if (service.supports_kilo) {
+      entries.push({ type: 'kilo', label: `Rp${service.kilo_price?.toLocaleString('id-ID') || '0'}/kg` });
+    }
+    if (service.supports_unit) {
+      entries.push({ type: 'unit', label: `Rp${service.unit_price?.toLocaleString('id-ID') || '0'}/unit` });
+    }
+    return entries;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -169,16 +196,18 @@ const ServiceManagement = () => {
     setShowCreateDialog(true);
   };
 
-  const handleDelete = async (serviceId: string) => {
+  const handleDelete = async (serviceId: string): Promise<boolean> => {
     if (!confirm('Apakah Anda yakin ingin menghapus layanan ini?')) {
-      return;
+      return false;
     }
 
     try {
       await deleteServiceMutation.mutateAsync(serviceId);
+      return true;
     } catch (error) {
       // Error handling is done in the mutation hook
       console.error('Error deleting service:', error);
+      return false;
     }
   };
 
@@ -191,20 +220,38 @@ const ServiceManagement = () => {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Manajemen Layanan</h1>
-          <p className="text-muted-foreground">Kelola layanan dan harga laundry Anda</p>
+      {isMobile ? (
+        <MobilePageHeader title="Manajemen Layanan" onBack={() => navigate('/home')} />
+      ) : (
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Manajemen Layanan</h1>
+            <p className="text-muted-foreground">Kelola layanan dan harga laundry Anda</p>
+          </div>
+          <Button
+            onClick={openCreateDialog}
+            className="flex items-center space-x-2"
+            disabled={isProcessing}
+          >
+            <Plus className="h-4 w-4" />
+            <span>Tambah Layanan</span>
+          </Button>
         </div>
+      )}
+
+      {/* Mobile FAB */}
+      {isMobile && (
         <Button
           onClick={openCreateDialog}
-          className="flex items-center space-x-2"
           disabled={isProcessing}
+          size="icon"
+          aria-label="Tambah Layanan"
+          className="fixed right-4 z-40 h-14 w-14 rounded-full shadow-medium"
+          style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
         >
-          <Plus className="h-4 w-4" />
-          <span>Tambah Layanan</span>
+          <Plus className="h-6 w-6" />
         </Button>
-      </div>
+      )}
 
       {/* Loading State */}
       {loading && <SectionLoading text="Memuat layanan..." />}
@@ -252,14 +299,51 @@ const ServiceManagement = () => {
                 </div>
               </CardContent>
             </Card>
+          ) : isMobile ? (
+            <div className="divide-y rounded-lg border bg-card">
+              {services.map((service) => (
+                <button
+                  key={service.id}
+                  type="button"
+                  onClick={() => handleEdit(service)}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-muted/50"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate font-medium">{service.name}</span>
+                      <div className="flex flex-shrink-0 flex-wrap items-center justify-end gap-x-2 gap-y-0.5">
+                        {getPriceEntries(service).map(({ type, label }) => {
+                          const { icon: PriceIcon, className } = PRICE_STYLES[type];
+                          return (
+                            <span
+                              key={type}
+                              className={cn('flex items-center gap-1 text-sm font-semibold', className)}
+                            >
+                              <PriceIcon className="h-3.5 w-3.5" />
+                              {label}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="truncate text-sm text-muted-foreground">
+                      {getCategoryLabel(service.category)}
+                      {service.duration_value > 0 &&
+                        ` · ${service.duration_value} ${service.duration_unit === 'hours' ? 'jam' : 'hari'}`}
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                </button>
+              ))}
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {services.map((service) => (
           <Card key={service.id} className="hover:shadow-medium transition-shadow">
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{service.name}</CardTitle>
-                <Badge className={getCategoryColor(service.category)}>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="min-w-0 truncate text-lg">{service.name}</CardTitle>
+                <Badge className={cn('flex-shrink-0', getCategoryColor(service.category))}>
                   {getCategoryLabel(service.category)}
                 </Badge>
               </div>
@@ -318,33 +402,27 @@ const ServiceManagement = () => {
             </CardContent>
           </Card>
         ))}
-
-        {services.length === 0 && (
-          <div className="col-span-full text-center py-12">
-            <Settings className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No services yet</h3>
-            <p className="text-muted-foreground mb-4">Create your first service to get started</p>
-            <Button onClick={openCreateDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Service
-            </Button>
-          </div>
-        )}
             </div>
           )}
         </>
       )}
 
       {/* Create/Edit Service Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
+      <FormDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} {...(isMobile ? { shouldScaleBackground: false } : {})}>
+        <FormDialogContent className={isMobile ? 'max-h-[85vh] flex flex-col' : 'max-w-2xl'}>
+          <FormDialogHeader>
+            <FormDialogTitle>
               {editingService ? 'Edit Layanan' : 'Buat Layanan Baru'}
-            </DialogTitle>
-          </DialogHeader>
+            </FormDialogTitle>
+          </FormDialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={handleSubmit}
+            className={cn(
+              'space-y-6',
+              isMobile && 'min-h-0 flex-1 overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]'
+            )}
+          >
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -490,6 +568,23 @@ const ServiceManagement = () => {
               </div>
             </div>
 
+            {/* Delete (mobile edit mode only - desktop keeps the per-card delete button) */}
+            {isMobile && editingService && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full text-destructive hover:text-destructive"
+                onClick={async () => {
+                  if (await handleDelete(editingService.id)) {
+                    setShowCreateDialog(false);
+                  }
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Hapus Layanan
+              </Button>
+            )}
+
             {/* Form Actions */}
             <div className="flex justify-end space-x-2 pt-4">
               <Button
@@ -505,8 +600,8 @@ const ServiceManagement = () => {
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
+        </FormDialogContent>
+      </FormDialog>
     </div>
   );
 };

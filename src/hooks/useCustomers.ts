@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { useToast } from '@/hooks/use-toast';
 
-interface Customer {
+export interface Customer {
   id: string;
   name: string;
   phone: string;
