@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, DollarSign, Settings, AlertCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, DollarSign, Settings, AlertCircle, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useServices, useCreateService, useUpdateService, useDeleteService, useSeedDefaultServices, ServiceFormData as ServiceFormType } from '@/hooks/useServices';
+import { useServices, useCreateService, useUpdateService, useDeleteService, useSeedDefaultServices, ServiceFormData as ServiceFormType, ServiceData } from '@/hooks/useServices';
 import { SectionLoading } from '@/components/ui/loading-spinner';
 import { MobilePageHeader } from '@/components/layout/MobilePageHeader';
 import { cn } from '@/lib/utils';
@@ -103,6 +103,17 @@ const ServiceManagement = () => {
     }
   };
 
+  const getPriceLabel = (service: ServiceData) => {
+    const parts: string[] = [];
+    if (service.supports_kilo) {
+      parts.push(`Rp${service.kilo_price?.toLocaleString('id-ID') || '0'}/kg`);
+    }
+    if (service.supports_unit) {
+      parts.push(`Rp${service.unit_price?.toLocaleString('id-ID') || '0'}/unit`);
+    }
+    return parts.join(' · ');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -180,16 +191,18 @@ const ServiceManagement = () => {
     setShowCreateDialog(true);
   };
 
-  const handleDelete = async (serviceId: string) => {
+  const handleDelete = async (serviceId: string): Promise<boolean> => {
     if (!confirm('Apakah Anda yakin ingin menghapus layanan ini?')) {
-      return;
+      return false;
     }
 
     try {
       await deleteServiceMutation.mutateAsync(serviceId);
+      return true;
     } catch (error) {
       // Error handling is done in the mutation hook
       console.error('Error deleting service:', error);
+      return false;
     }
   };
 
@@ -281,6 +294,30 @@ const ServiceManagement = () => {
                 </div>
               </CardContent>
             </Card>
+          ) : isMobile ? (
+            <div className="divide-y rounded-lg border bg-card">
+              {services.map((service) => (
+                <button
+                  key={service.id}
+                  type="button"
+                  onClick={() => handleEdit(service)}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-muted/50"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate font-medium">{service.name}</span>
+                      <span className="flex-shrink-0 text-sm font-semibold">{getPriceLabel(service)}</span>
+                    </div>
+                    <div className="truncate text-sm text-muted-foreground">
+                      {getCategoryLabel(service.category)}
+                      {service.duration_value > 0 &&
+                        ` · ${service.duration_value} ${service.duration_unit === 'hours' ? 'jam' : 'hari'}`}
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                </button>
+              ))}
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {services.map((service) => (
@@ -347,18 +384,6 @@ const ServiceManagement = () => {
             </CardContent>
           </Card>
         ))}
-
-        {services.length === 0 && (
-          <div className="col-span-full text-center py-12">
-            <Settings className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No services yet</h3>
-            <p className="text-muted-foreground mb-4">Create your first service to get started</p>
-            <Button onClick={openCreateDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Service
-            </Button>
-          </div>
-        )}
             </div>
           )}
         </>
@@ -524,6 +549,23 @@ const ServiceManagement = () => {
                 </Select>
               </div>
             </div>
+
+            {/* Delete (mobile edit mode only - desktop keeps the per-card delete button) */}
+            {isMobile && editingService && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full text-destructive hover:text-destructive"
+                onClick={async () => {
+                  if (await handleDelete(editingService.id)) {
+                    setShowCreateDialog(false);
+                  }
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Hapus Layanan
+              </Button>
+            )}
 
             {/* Form Actions */}
             <div className="flex justify-end space-x-2 pt-4">
