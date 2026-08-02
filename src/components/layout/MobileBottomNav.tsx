@@ -8,6 +8,8 @@ export interface BottomNavItem {
   icon: LucideIcon;
   active: boolean;
   onClick: () => void;
+  /** Renders as an elevated circular FAB embedded in the bar, for the single primary action. */
+  primary?: boolean;
 }
 
 interface MobileBottomNavProps {
@@ -25,27 +27,40 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ items }) => {
       className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card shadow-medium md:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="mx-auto flex max-w-md justify-center gap-4 px-4">
-        {items.map((item) => (
-          <button
-            key={item.id}
-            onClick={item.onClick}
-            className={cn(
-              'flex max-w-[120px] flex-1 flex-col items-center justify-center gap-1 py-2.5 transition-colors',
-              item.active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <div
+      <div className="mx-auto flex max-w-md items-end justify-center gap-4 px-4">
+        {items.map((item) =>
+          item.primary ? (
+            <button
+              key={item.id}
+              onClick={item.onClick}
+              className="flex max-w-[120px] flex-1 flex-col items-center justify-center gap-1 pb-2 text-primary"
+            >
+              <div className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full border-4 border-card bg-primary text-primary-foreground shadow-medium">
+                <item.icon className="h-6 w-6" />
+              </div>
+              <span className="text-[11px] font-medium">{item.title}</span>
+            </button>
+          ) : (
+            <button
+              key={item.id}
+              onClick={item.onClick}
               className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-full',
-                item.active && 'bg-pos-highlight/50'
+                'flex max-w-[120px] flex-1 flex-col items-center justify-center gap-1 py-2.5 transition-colors',
+                item.active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <item.icon className="h-5 w-5" />
-            </div>
-            <span className="text-[11px] font-medium">{item.title}</span>
-          </button>
-        ))}
+              <div
+                className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-full',
+                  item.active && 'bg-pos-highlight/50'
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+              </div>
+              <span className="text-[11px] font-medium">{item.title}</span>
+            </button>
+          )
+        )}
       </div>
     </div>
   );

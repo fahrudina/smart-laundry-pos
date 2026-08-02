@@ -26,6 +26,7 @@ export const useMobileBottomNavItems = (): BottomNavItem[] => {
       icon: Plus,
       active: location.pathname === '/pos',
       onClick: () => navigate('/pos'),
+      primary: true,
     },
     isOwner
       ? {
