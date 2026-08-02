@@ -1,17 +1,17 @@
 import { useState } from 'react';
+import { UserPlus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UserPlus } from 'lucide-react';
-import { useCustomers } from '@/hooks/useCustomers';
+import { useCustomers, type Customer } from '@/hooks/useCustomers';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 interface AddCustomerDialogProps {
-  onCustomerAdded?: (customer: any) => void;
+  onCustomerAdded?: (customer: Customer) => void;
   trigger?: React.ReactNode;
 }
 
