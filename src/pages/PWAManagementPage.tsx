@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { PWAManualInstall } from '@/components/ui/PWAManualInstall';
 import { PWADiagnostics } from '@/components/ui/PWADiagnostics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 interface PWAManagementPageProps {
   onBack?: () => void;
@@ -11,6 +12,13 @@ interface PWAManagementPageProps {
 
 export const PWAManagementPage: React.FC<PWAManagementPageProps> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState('install');
+
+  usePageMeta({
+    title: 'Cara Install Aplikasi Smart Laundry POS - Android, iOS, Desktop',
+    description:
+      'Panduan instal Smart Laundry POS sebagai aplikasi (PWA) di Android, iOS, Windows, dan Mac. Akses offline dan tampilan seperti aplikasi native langsung dari layar utama.',
+    path: '/install',
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">

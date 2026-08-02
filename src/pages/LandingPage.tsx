@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import {
   Zap,
   Receipt,
@@ -147,6 +148,49 @@ const comparisonRows: {
   },
 ];
 
+const faqs: { question: string; answer: string }[] = [
+  {
+    question: 'Apakah Smart Laundry POS gratis digunakan?',
+    answer:
+      'Ya. Smart Laundry POS bisa langsung dipakai gratis tanpa kartu kredit dan tanpa kontrak jangka panjang. Setup awal toko hanya butuh sekitar 5 menit.',
+  },
+  {
+    question: 'Apakah bisa dipakai tanpa koneksi internet?',
+    answer:
+      'Bisa. Smart Laundry POS mendukung mode offline sehingga input pesanan tetap jalan saat sinyal internet di toko sedang tidak stabil, lalu data tersinkron otomatis saat koneksi kembali.',
+  },
+  {
+    question: 'Apakah mendukung laundry kiloan, satuan, dan kombinasi?',
+    answer:
+      'Mendukung ketiganya. Layanan kiloan dihitung dari berat (kg), layanan satuan dihitung per item (misalnya sepatu atau bed cover), dan layanan kombinasi menggabungkan berat sekaligus jumlah item dalam satu pesanan.',
+  },
+  {
+    question: 'Bisakah dipakai untuk lebih dari satu cabang atau outlet laundry?',
+    answer:
+      'Bisa. Smart Laundry POS mendukung multi-outlet dan multi-kasir dalam satu sistem yang sama, jadi pemilik usaha bisa memantau semua cabang tanpa perlu buku catatan terpisah per toko.',
+  },
+  {
+    question: 'Apakah pelanggan dapat notifikasi otomatis saat cucian selesai?',
+    answer:
+      'Ya. Pesanan yang statusnya berubah menjadi siap diambil bisa mengirim notifikasi WhatsApp otomatis ke pelanggan, sehingga mereka tidak perlu menelepon toko untuk menanyakan progres cucian.',
+  },
+  {
+    question: 'Apa bedanya Smart Laundry POS dengan aplikasi kasir umum seperti Qasir, Pawoon, atau Majoo?',
+    answer:
+      'Aplikasi kasir umum dibuat untuk toko kelontong atau restoran lalu dipaksakan untuk laundry. Smart Laundry POS dibangun khusus untuk alur kerja laundry: timbang, hitung harga per kg/unit otomatis, lacak status cucian, dan kirim notifikasi WhatsApp — fitur yang biasanya tidak ada di POS umum.',
+  },
+  {
+    question: 'Apakah Smart Laundry POS punya sistem poin loyalitas pelanggan?',
+    answer:
+      'Punya. Fitur Smart Point mengumpulkan poin secara otomatis dari setiap transaksi pelanggan, dan bisa diaktifkan atau dimatikan sesuai kebutuhan masing-masing toko di menu pengaturan.',
+  },
+  {
+    question: 'Perlu instal aplikasi khusus atau bisa langsung dipakai dari HP?',
+    answer:
+      'Tidak perlu unduh dari app store. Smart Laundry POS berjalan di browser dan bisa dipasang sebagai aplikasi (PWA) langsung dari layar utama HP, tablet, atau komputer — mendukung Android, iOS, Windows, dan Mac.',
+  },
+];
+
 const Mark: React.FC<{ value: 'yes' | 'no' | 'partial'; note?: string }> = ({ value, note }) => {
   if (value === 'yes') return <span className="tk-check">✓</span>;
   if (value === 'no')
@@ -165,6 +209,14 @@ const Mark: React.FC<{ value: 'yes' | 'no' | 'partial'; note?: string }> = ({ va
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   useLandingFonts();
+  // index.html already ships these as the default (matches this page), but this
+  // keeps them pinned to "/" when the SPA navigates back here from /login or /install.
+  usePageMeta({
+    title: 'Smart Laundry POS - Sistem Kasir Modern untuk Laundry Indonesia',
+    description:
+      'Sistem Point of Sale (POS) modern untuk bisnis laundry di Indonesia. Kelola pesanan, pelanggan, dan pembayaran dengan mudah. Aplikasi mobile, cloud-based, dan bisa diinstall seperti aplikasi native.',
+    path: '/',
+  });
 
   return (
     <div className="tk-page min-h-screen pb-24 sm:pb-0">
@@ -572,6 +624,32 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="tk-perforation" />
+
+      {/* FAQ — content mirrors the FAQPage JSON-LD in index.html, keep them in sync */}
+      <section id="faq" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-14">
+            <span className="tk-eyebrow mb-5">Pertanyaan yang Sering Diajukan</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-[var(--tk-graphite)] mb-4">
+              Yang biasanya ditanyakan pemilik laundry
+            </h2>
+            <p className="text-lg text-[var(--tk-ink-soft)] max-w-2xl mx-auto">
+              Jawaban singkat sebelum kamu memutuskan pindah dari nota tulis tangan.
+            </p>
+          </div>
+
+          <div className="space-y-5">
+            {faqs.map((faq) => (
+              <div key={faq.question} className="tk-stub rounded-sm">
+                <h3 className="text-lg font-bold text-[var(--tk-graphite)] mb-2">{faq.question}</h3>
+                <p className="text-[var(--tk-ink-soft)]">{faq.answer}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
