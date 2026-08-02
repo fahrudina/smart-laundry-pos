@@ -1,7 +1,8 @@
-import React from 'react';
-import { LucideIcon, TrendingUp, TrendingDown, CheckCircle2, Circle, ArrowRight, Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { LucideIcon, TrendingUp, TrendingDown, CheckCircle2, Circle, ArrowRight, Plus, LayoutGrid } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { cn } from '@/lib/utils';
 
 export interface OnboardingStep {
@@ -35,6 +36,7 @@ interface MobileHomeViewProps {
   totalSteps: number;
   onCreateOrder: () => void;
   gridActions: QuickAction[];
+  moreMenuItems: QuickAction[];
 }
 
 export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
@@ -53,7 +55,10 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
   totalSteps,
   onCreateOrder,
   gridActions,
+  moreMenuItems,
 }) => {
+  const [moreOpen, setMoreOpen] = useState(false);
+
   return (
     <div>
       {/* Hero: edge-to-edge via negative margins canceling AppLayout's padding */}
@@ -191,9 +196,47 @@ export const MobileHomeView: React.FC<MobileHomeViewProps> = ({
                 </p>
               </button>
             ))}
+            <button
+              onClick={() => setMoreOpen(true)}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl py-1 transition-colors active:bg-muted"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-pos-highlight/30">
+                <LayoutGrid className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-center text-xs font-medium leading-tight text-foreground">
+                Lainnya
+              </p>
+            </button>
           </CardContent>
         </Card>
       </div>
+
+      <Drawer open={moreOpen} onOpenChange={setMoreOpen} shouldScaleBackground={false}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader>
+            <DrawerTitle>Menu Lainnya</DrawerTitle>
+          </DrawerHeader>
+          <div className="grid grid-cols-4 gap-y-4 overflow-y-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            {moreMenuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setMoreOpen(false);
+                  item.onClick();
+                }}
+                className="flex flex-col items-center justify-center gap-2 rounded-xl py-1 transition-colors active:bg-muted"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-pos-highlight/30">
+                  <item.icon className="h-6 w-6 text-primary" />
+                </div>
+                <p className="text-center text-xs font-medium leading-tight text-foreground">
+                  {item.title}
+                </p>
+              </button>
+            ))}
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
