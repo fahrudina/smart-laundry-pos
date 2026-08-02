@@ -1,15 +1,24 @@
+# A named User-agent group is matched exclusively (RFC 9309) - it does NOT also
+# inherit the "*" group's rules. So every crawler that should be kept out of the
+# authenticated app shares this one group with the wildcard, rather than each
+# getting its own "Allow: /"-only block that would leave /home, /customers, etc.
+# open to them.
 User-agent: Googlebot
-Allow: /
-
 User-agent: Bingbot
-Allow: /
-
 User-agent: Twitterbot
-Allow: /
-
 User-agent: facebookexternalhit
-Allow: /
-
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: OAI-SearchBot
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: anthropic-ai
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: CCBot
 User-agent: *
 Allow: /
 Allow: /login
@@ -27,6 +36,9 @@ Disallow: /receipt/
 
 # Sitemap
 Sitemap: https://pos.fahrudina.my.id/sitemap.xml
+
+# LLM / generative-engine context file (https://llmstxt.org)
+# https://pos.fahrudina.my.id/llms.txt
 
 # Contact Information
 # Email: fahrudinjaya@gmail.com

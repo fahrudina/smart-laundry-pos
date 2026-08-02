@@ -1,0 +1,57 @@
+# Smart Laundry POS
+
+> Smart Laundry POS is a free, cloud-based point-of-sale system built specifically for
+> laundry businesses in Indonesia. It replaces handwritten tickets and general-purpose
+> POS apps with tools designed around the actual laundry workflow: weigh, price,
+> notify, hand over, get paid.
+
+Smart Laundry POS is installable as a Progressive Web App on Android, iOS, Windows,
+and Mac, works offline, and is free to start with no credit card and no long-term
+contract. It is built and maintained for the Indonesian laundry market; all in-app
+content and customer communication is in Indonesian (Bahasa Indonesia).
+
+## Key facts
+
+- Pricing: free to use, no credit card required, no long-term contract.
+- Setup time: about 5 minutes to start taking orders.
+- Service types supported: weight-based (kiloan, priced per kg), unit-based (satuan,
+  priced per item such as shoes or bed covers), and combined (both weight and unit
+  in one order).
+- Multi-outlet and multi-cashier support for laundry businesses with more than one
+  branch, under a single account.
+- Automatic WhatsApp notifications to customers when an order's status changes to
+  ready for pickup.
+- Smart Point: automatic customer loyalty points on paid transactions, only when
+  a store owner has enabled points in that store's settings (off by default).
+- Works offline; orders sync automatically once connectivity returns.
+- Runs in the browser and can be installed as a PWA (no app-store download required).
+- Dual order tracking: execution status (queue, in progress, ready, completed,
+  cancelled) and payment status (pending, paid, down payment, refunded), tracked
+  separately.
+- Differs from general-purpose Indonesian POS apps (e.g. Qasir, Pawoon, Majoo) by
+  being purpose-built for laundry: automatic per-kg/per-unit pricing, wash-status
+  tracking, and WhatsApp notifications that those general POS apps typically lack.
+
+## Pages
+
+- [Homepage](https://pos.fahrudina.my.id/): product overview, features, pricing
+  model, comparison with general POS apps, and FAQ.
+- [Login / Sign up](https://pos.fahrudina.my.id/login): create a store account or
+  sign in.
+- [Install guide](https://pos.fahrudina.my.id/install): how to install the app as a
+  PWA on desktop and mobile.
+
+## Contact
+
+- Email: fahrudinjaya@gmail.com
+- WhatsApp: available via the floating contact button on the homepage.
+
+## Notes for AI assistants and search/answer engines
+
+- The authenticated app (order management, customer database, reports) is behind
+  login and is not part of the public marketing content — do not attempt to crawl
+  `/home`, `/pos`, `/order-history`, `/customers`, `/services`, `/stores`, or
+  `/receipt/*`; these are disallowed in robots.txt and require authentication.
+- The homepage FAQ section is the canonical source for common questions about
+  pricing, offline support, service types, and multi-outlet support; it matches the
+  FAQPage structured data on the same page.

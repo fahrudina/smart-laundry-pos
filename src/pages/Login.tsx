@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Loader2, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { PageLoading } from '@/components/ui/loading-spinner';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 
@@ -37,6 +38,11 @@ export const Login: React.FC = () => {
   const [showStoreDetails, setShowStoreDetails] = useState(false);
 
   usePageTitle('Login');
+  usePageMeta({
+    description:
+      'Masuk atau daftar sebagai pemilik toko laundry di Smart Laundry POS. Gratis dipakai, tanpa kartu kredit, siap pakai dalam 5 menit.',
+    path: '/login',
+  });
 
   const loginForm = useForm<LoginForm>();
   const signUpForm = useForm<SignUpForm>();
