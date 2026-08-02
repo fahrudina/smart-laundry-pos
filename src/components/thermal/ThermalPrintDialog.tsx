@@ -7,19 +7,25 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ThermalPrinterManager } from '@/components/thermal/ThermalPrinterManager';
+import type { LocalReceiptData } from '@/lib/printUtils';
 
 interface ThermalPrintDialogProps {
   isOpen: boolean;
   onClose: () => void;
   orderId: string | null;
   customerName?: string;
+  // In-memory receipt for an offline order that hasn't synced to Supabase
+  // yet - bypasses the get_receipt_data RPC, which requires a
+  // server-confirmed order.
+  localReceiptData?: LocalReceiptData;
 }
 
 export const ThermalPrintDialog: React.FC<ThermalPrintDialogProps> = ({
   isOpen,
   onClose,
   orderId,
-  customerName
+  customerName,
+  localReceiptData
 }) => {
   const handlePrintSuccess = () => {
     // Keep dialog open so user can print more receipts if needed
@@ -49,6 +55,7 @@ export const ThermalPrintDialog: React.FC<ThermalPrintDialogProps> = ({
         
         <ThermalPrinterManager
           orderId={orderId || undefined}
+          localReceiptData={localReceiptData}
           onPrintSuccess={handlePrintSuccess}
           onPrintError={handlePrintError}
         />

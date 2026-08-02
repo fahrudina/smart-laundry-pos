@@ -10,6 +10,7 @@ export interface Store {
   is_active: boolean;
   enable_qr: boolean;
   enable_points: boolean;
+  enable_offline_mode: boolean;
   wa_use_store_number: boolean;
   wa_sender_id?: string | null;
   wa_sender_last_verified?: string | null;
@@ -40,6 +41,7 @@ export interface StoreWithOwnershipInfo {
   is_active: boolean;
   enable_qr: boolean;
   enable_points: boolean;
+  enable_offline_mode: boolean;
   wa_use_store_number: boolean;
   wa_sender_id?: string | null;
   wa_sender_last_verified?: string | null;

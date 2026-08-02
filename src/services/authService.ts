@@ -381,7 +381,7 @@ class AuthService {
 
   async setStoreFeatureFlags(
     storeId: string,
-    flags: { enableQr: boolean; enablePoints: boolean }
+    flags: { enableQr: boolean; enablePoints: boolean; enableOfflineMode: boolean }
   ): Promise<void> {
     if (!this.isAuthenticated()) {
       throw new Error('User not authenticated');
@@ -392,6 +392,7 @@ class AuthService {
       target_store_id: storeId,
       p_enable_qr: flags.enableQr,
       p_enable_points: flags.enablePoints,
+      p_enable_offline_mode: flags.enableOfflineMode,
     });
 
     if (error) {

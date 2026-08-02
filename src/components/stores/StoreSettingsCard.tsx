@@ -7,12 +7,13 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { authService } from '@/services/authService';
-import { QrCode, Settings, Save, Star } from 'lucide-react';
+import { QrCode, Settings, Save, Star, WifiOff } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface StoreSettings {
   enable_qr: boolean;
   enable_points: boolean;
+  enable_offline_mode: boolean;
 }
 
 export const StoreSettingsCard: React.FC = () => {
@@ -20,6 +21,7 @@ export const StoreSettingsCard: React.FC = () => {
   const [settings, setSettings] = useState<StoreSettings>({
     enable_qr: false,
     enable_points: false,
+    enable_offline_mode: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -37,7 +39,7 @@ export const StoreSettingsCard: React.FC = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('stores')
-        .select('enable_qr, enable_points')
+        .select('enable_qr, enable_points, enable_offline_mode')
         .eq('id', currentStore.store_id)
         .single();
 
@@ -55,6 +57,7 @@ export const StoreSettingsCard: React.FC = () => {
         setSettings({
           enable_qr: data.enable_qr || false,
           enable_points: data.enable_points || false,
+          enable_offline_mode: data.enable_offline_mode || false,
         });
       }
     } catch (error) {
@@ -81,6 +84,7 @@ export const StoreSettingsCard: React.FC = () => {
       await authService.setStoreFeatureFlags(currentStore.store_id, {
         enableQr: settings.enable_qr,
         enablePoints: settings.enable_points,
+        enableOfflineMode: settings.enable_offline_mode,
       });
 
       toast({
@@ -110,6 +114,13 @@ export const StoreSettingsCard: React.FC = () => {
     setSettings(prev => ({
       ...prev,
       enable_points: checked,
+    }));
+  };
+
+  const handleOfflineModeToggle = (checked: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      enable_offline_mode: checked,
     }));
   };
 
@@ -233,6 +244,53 @@ export const StoreSettingsCard: React.FC = () => {
                         <li>• Pelanggan mendapat 1 poin per unit untuk layanan berbasis jumlah</li>
                         <li>• Poin secara otomatis diberikan saat pembayaran selesai</li>
                         <li>• Saldo poin terlihat pada struk dan profil pelanggan</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Offline Mode Settings */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <WifiOff className="h-5 w-5 text-muted-foreground" />
+                <Label htmlFor="enable-offline-mode" className="text-base font-medium">
+                  Mode Offline
+                </Label>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border rounded-lg">
+                <div className="space-y-1 flex-1">
+                  <Label htmlFor="enable-offline-mode" className="font-normal">
+                    Izinkan Buat Pesanan Saat Offline
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Staf tetap bisa membuat pesanan baru saat internet toko putus - pesanan tersimpan di perangkat dan otomatis sinkron saat koneksi kembali
+                  </p>
+                </div>
+                <Switch
+                  id="enable-offline-mode"
+                  checked={settings.enable_offline_mode}
+                  onCheckedChange={handleOfflineModeToggle}
+                  disabled={saving}
+                  className="self-start sm:self-center"
+                />
+              </div>
+
+              {settings.enable_offline_mode && (
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <WifiOff className="h-5 w-5 text-slate-600 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-slate-900">
+                        Mode Offline Aktif
+                      </p>
+                      <ul className="text-sm text-slate-700 space-y-1">
+                        <li>• Hanya berlaku untuk pembuatan pesanan baru - status/pembayaran pesanan tetap butuh koneksi internet</li>
+                        <li>• Penukaran poin tidak tersedia untuk pesanan yang dibuat offline</li>
+                        <li>• Staf harus login ulang jika sesi mereka habis saat offline sebelum bisa membuat pesanan baru</li>
+                        <li>• Harga layanan yang dipakai offline mengikuti data terakhir saat perangkat masih online</li>
                       </ul>
                     </div>
                   </div>

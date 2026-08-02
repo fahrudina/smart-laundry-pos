@@ -21,6 +21,9 @@ import { formatDate, isDateOverdue } from '@/lib/utils';
 import { openReceiptForView, openReceiptForPrint, generateReceiptPDFFromUrl, sanitizeFilename } from '@/lib/printUtils';
 import { usePageTitle, updatePageTitleWithCount } from '@/hooks/usePageTitle';
 import { useStore } from '@/contexts/StoreContext';
+import { usePendingOrders } from '@/hooks/useOfflineOrderQueue';
+import { retryOfflineOrderNow } from '@/hooks/useOfflineOrderSync';
+import { useWhatsApp } from '@/hooks/useWhatsApp';
 import { toast } from 'sonner';
 import { DateRange } from 'react-day-picker';
 import { startOfDay, endOfDay, subDays, subMonths } from 'date-fns';
@@ -42,7 +45,10 @@ interface SortState {
 export const OrderHistory = () => {
   const navigate = useNavigate();
   usePageTitle('Riwayat Pesanan');
-  const { isOwner } = useStore();
+  const { isOwner, currentStore } = useStore();
+  const pendingOfflineOrders = usePendingOrders(currentStore?.store_id);
+  const { notifyOrderCreated } = useWhatsApp();
+  const [retryingOrderId, setRetryingOrderId] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   // Deep-link support (e.g. Home page's "Pesanan Batal" tile): ?status=cancelled
   // preselects the execution-status filter and widens the date range so
@@ -470,6 +476,15 @@ export const OrderHistory = () => {
     }
   }, [resendNotification]);
 
+  const handleRetryOfflineOrder = useCallback(async (id: string) => {
+    setRetryingOrderId(id);
+    try {
+      await retryOfflineOrderNow(id, notifyOrderCreated);
+    } finally {
+      setRetryingOrderId(null);
+    }
+  }, [notifyOrderCreated]);
+
   return (
     <div className="min-h-screen bg-gray-50 -mx-4 sm:-mx-6 lg:-mx-8 -my-8">
       <div className="space-y-2 sm:space-y-6 lg:space-y-8">
@@ -715,6 +730,54 @@ export const OrderHistory = () => {
                 </Popover>
               </div>
             </div>
+
+            {/* Pending Offline Sync - queued orders not yet in Supabase.
+                Sourced independently from Dexie, not the React Query cache,
+                since there's no optimistic-cache precedent in this codebase
+                to inject synthetic pages into the paginated order list. */}
+            {pendingOfflineOrders.length > 0 && (
+              <Card className="border-pos-warning/40 bg-pos-warning/5">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Clock className="h-4 w-4" />
+                    Menunggu Sinkronisasi ({pendingOfflineOrders.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {pendingOfflineOrders.map((order) => {
+                    const statusLabel: Record<string, string> = {
+                      queued: 'Menunggu sinkronisasi',
+                      syncing: 'Sedang sinkron...',
+                      error_retryable: 'Mencoba lagi otomatis',
+                      error_permanent: 'Gagal - perlu tindakan',
+                    };
+                    return (
+                      <div key={order.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{order.payload.customer_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Rp{order.payload.total_amount.toLocaleString('id-ID')} · {statusLabel[order.status] || order.status}
+                          </p>
+                          {order.status === 'error_permanent' && order.lastError && (
+                            <p className="text-xs text-destructive">{order.lastError.message}</p>
+                          )}
+                        </div>
+                        {(order.status === 'error_permanent' || order.status === 'error_retryable') && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={retryingOrderId === order.id}
+                            onClick={() => handleRetryOfflineOrder(order.id)}
+                          >
+                            {retryingOrderId === order.id ? 'Mencoba...' : 'Coba Lagi'}
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Payment Summary Cards - Owner Only */}
             {isOwner && <PaymentSummaryCards orders={filteredOrders} />}

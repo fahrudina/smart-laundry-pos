@@ -23,16 +23,26 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { AndroidBackButtonHandler } from "./components/layout/AndroidBackButtonHandler";
 import { NativeSplashScreenHider } from "./components/layout/NativeSplashScreenHider";
 import { queryClient } from "./lib/queryClient";
+import { useOfflineOrderSync } from "./hooks/useOfflineOrderSync";
 import { PublicReceiptPage } from "./pages/PublicReceiptPage";
 import { PWAManagementPage } from "./pages/PWAManagementPage";
 import { CustomersPage } from "./pages/CustomersPage";
 import { WhatsAppBroadcastPage } from "./pages/WhatsAppBroadcastPage";
 import { RevenueReportPage } from "./pages/RevenueReportPage";
 
+// Mounted once for the app's lifetime: wires the unified offline-sync
+// trigger set (online event, focus/visibility, foreground poll) so queued
+// orders sync automatically without any per-page setup.
+const OfflineSyncEngine = () => {
+  useOfflineOrderSync();
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <NativeSplashScreenHider />
+      <OfflineSyncEngine />
       <Toaster />
       <Sonner
         position="top-center"

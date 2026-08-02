@@ -139,62 +139,19 @@ export const useCreateOrderWithNotifications = () => {
         });
 
         if (pointsEarned > 0) {
-          // Update order with points earned
-          await supabase
-            .from('orders')
-            .update({ points_earned: pointsEarned })
-            .eq('id', order.id);
+          // Atomic RPC: does the guard + points upsert + ledger insert as a
+          // single transaction, closing the race the old read-then-write
+          // sequence had (two concurrent completions for the same new
+          // customer could double-insert a points row).
+          const { error: awardError } = await supabase.rpc('award_points_for_synced_order', {
+            p_order_id: order.id,
+            p_store_id: currentStore?.store_id,
+            p_customer_phone: orderData.customer_phone,
+            p_points_earned: pointsEarned,
+          });
 
-          // Update points table (existing table in the database)
-          const { data: existingPoints } = await supabase
-            .from('points')
-            .select('point_id, accumulated_points, current_points')
-            .eq('customer_phone', orderData.customer_phone)
-            .eq('store_id', currentStore?.store_id)
-            .single();
-
-          let pointId: number;
-
-          if (existingPoints) {
-            // Add to existing points
-            await supabase
-              .from('points')
-              .update({ 
-                accumulated_points: existingPoints.accumulated_points + pointsEarned,
-                current_points: existingPoints.current_points + pointsEarned,
-                updated_at: new Date().toISOString(),
-              })
-              .eq('point_id', existingPoints.point_id);
-            
-            pointId = existingPoints.point_id;
-          } else {
-            // Create new customer points record
-            const { data: newPoint } = await supabase
-              .from('points')
-              .insert({
-                customer_phone: orderData.customer_phone,
-                accumulated_points: pointsEarned,
-                current_points: pointsEarned,
-                store_id: currentStore?.store_id,
-              })
-              .select('point_id')
-              .single();
-            
-            pointId = newPoint?.point_id;
-          }
-
-          // Create point transaction record for earning points
-          if (pointId) {
-            await supabase
-              .from('point_transactions')
-              .insert({
-                point_id: pointId,
-                order_id: order.id,
-                points_changed: pointsEarned,
-                transaction_type: 'earning',
-                transaction_date: new Date().toISOString(),
-                notes: `Points earned from order ${order.id.slice(0, 8)}`,
-              });
+          if (awardError) {
+            console.error('Error awarding points:', awardError);
           }
         }
       }

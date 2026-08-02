@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/contexts/StoreContext';
 
-interface UnitItem {
+export interface UnitItem {
   item_name: string;
   quantity: number;
   price_per_unit: number;
@@ -42,7 +42,7 @@ interface Order {
   order_items: OrderItem[];
 }
 
-interface CreateOrderData {
+export interface CreateOrderData {
   customer_name: string;
   customer_phone: string;
   items: {

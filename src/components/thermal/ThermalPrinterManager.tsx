@@ -15,26 +15,33 @@ import {
   Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { 
+import {
   isBluetoothSupported,
   isThermerAppAvailable,
   printToThermalPrinter,
   printToThermerApp,
-  fetchReceiptDataForThermal
+  fetchReceiptDataForThermal,
+  type LocalReceiptData
 } from '@/lib/printUtils';
 import { useThermalPrinter } from '@/contexts/ThermalPrinterContext';
 
 interface ThermalPrinterManagerProps {
   orderId?: string;
+  // When set, printing uses this in-memory receipt directly instead of
+  // fetching via the get_receipt_data RPC - for orders not yet synced to
+  // Supabase (offline order creation).
+  localReceiptData?: LocalReceiptData;
   onPrintSuccess?: () => void;
   onPrintError?: (error: string) => void;
 }
 
 export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
   orderId,
+  localReceiptData,
   onPrintSuccess,
   onPrintError
 }) => {
+  const canPrint = Boolean(orderId || localReceiptData);
   const [isPrinting, setIsPrinting] = useState(false);
   
   // Use thermal printer context for global connection management
@@ -58,7 +65,7 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
   }, [disconnectPrinter]);
 
   const handlePrintBluetooth = useCallback(async () => {
-    if (!printerConnection || !orderId) {
+    if (!printerConnection || !canPrint) {
       return;
     }
 
@@ -66,9 +73,10 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
     clearError();
 
     try {
-      // Fetch receipt data
-      const receiptData = await fetchReceiptDataForThermal(orderId);
-      
+      // Fetch receipt data, unless we already have it in memory (an
+      // offline order that hasn't synced to Supabase yet).
+      const receiptData = localReceiptData ?? await fetchReceiptDataForThermal(orderId!);
+
       // Print to thermal printer
       await printToThermalPrinter(receiptData, printerConnection, {
         paperWidth: 32,
@@ -90,18 +98,19 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
     } finally {
       setIsPrinting(false);
     }
-  }, [printerConnection, orderId, onPrintSuccess, onPrintError, clearError]);
+  }, [printerConnection, canPrint, orderId, localReceiptData, onPrintSuccess, onPrintError, clearError]);
 
   const handlePrintThermer = useCallback(async () => {
-    if (!orderId) return;
+    if (!canPrint) return;
 
     setIsPrinting(true);
     clearError();
 
     try {
-      // Fetch receipt data
-      const receiptData = await fetchReceiptDataForThermal(orderId);
-      
+      // Fetch receipt data, unless we already have it in memory (an
+      // offline order that hasn't synced to Supabase yet).
+      const receiptData = localReceiptData ?? await fetchReceiptDataForThermal(orderId!);
+
       // Print via Thermer app
       await printToThermerApp(receiptData);
 
@@ -119,7 +128,7 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
     } finally {
       setIsPrinting(false);
     }
-  }, [orderId, onPrintSuccess, onPrintError, clearError]);
+  }, [canPrint, orderId, localReceiptData, onPrintSuccess, onPrintError, clearError]);
 
   const bluetoothSupported = isBluetoothSupported();
   const thermerAvailable = isThermerAppAvailable();
@@ -183,7 +192,7 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
                 <>
                   <Button
                     onClick={handlePrintBluetooth}
-                    disabled={isPrinting || !orderId}
+                    disabled={isPrinting || !canPrint}
                     className="flex items-center space-x-2"
                     size="sm"
                   >
@@ -245,7 +254,7 @@ export const ThermalPrinterManager: React.FC<ThermalPrinterManagerProps> = ({
 
             <Button
               onClick={handlePrintThermer}
-              disabled={isPrinting || !orderId}
+              disabled={isPrinting || !canPrint}
               variant="outline"
               size="sm"
               className="flex items-center space-x-2 w-full"

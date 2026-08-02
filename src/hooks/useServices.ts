@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { useToast } from './use-toast';
+import { offlineDb } from '@/lib/offlineDb';
 
 // Service data interface matching the database schema
 export interface ServiceData {
@@ -83,15 +85,26 @@ export const useServices = (category?: string) => {
   return useQuery({
     queryKey: ['services', currentStore?.store_id, category],
     queryFn: async (): Promise<ServiceData[]> => {
-      if (!currentStore?.store_id) {
+      const storeId = currentStore?.store_id;
+      if (!storeId) {
         throw new Error('No store selected');
+      }
+
+      const readCachedServices = async (): Promise<ServiceData[]> => {
+        const cached = await offlineDb.cachedServices.get(storeId);
+        const services = cached?.services ?? [];
+        return category ? services.filter((s) => s.category === category) : services;
+      };
+
+      if (!navigator.onLine) {
+        return readCachedServices();
       }
 
       try {
         let query = supabase
           .from('services')
           .select('*')
-          .eq('store_id', currentStore.store_id)
+          .eq('store_id', storeId)
           .eq('is_active', true)
           .order('name', { ascending: true });
 
@@ -106,16 +119,33 @@ export const useServices = (category?: string) => {
           throw error;
         }
 
-        return data || [];
+        const services = data || [];
+        // Write-through the full-catalog fetch into the offline cache so
+        // order creation still has last-known prices when connectivity
+        // drops. Skipped for category-scoped queries so the cache always
+        // holds the complete catalog, not a partial slice.
+        if (!category) {
+          offlineDb.cachedServices.put({ storeId, services, cachedAt: Date.now() }).catch(() => {});
+        }
+        return services;
       } catch (error) {
         console.error('Error in useServices:', error);
-        // If database fetch fails, return empty array instead of mock data
-        return [];
+        return readCachedServices();
       }
     },
     enabled: !!currentStore?.store_id,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+};
+
+// Reads when the current store's service catalog was last cached for
+// offline use, so the UI can show "prices as of [time]" while offline.
+export const useCachedServicesMeta = (storeId?: string) => {
+  const cached = useLiveQuery(
+    () => (storeId ? offlineDb.cachedServices.get(storeId) : undefined),
+    [storeId]
+  );
+  return cached?.cachedAt ?? null;
 };
 
 // Hook to fetch services by category
