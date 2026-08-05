@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X, CheckCircle2, ArrowDown, ChevronDown } from 'lucide-react';
+import { Search, Plus, Clock, CreditCard, User, ShoppingCart, CheckCircle, X, CheckCircle2, ArrowDown, ChevronDown, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -7,9 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useCustomers } from '@/hooks/useCustomers';
-import { useCreateOrderWithNotifications as useCreateOrder, UnitItem } from '@/hooks/useOrdersWithNotifications';
+import { useCreateOrderWithNotifications as useCreateOrder, UnitItem, CreateOrderData } from '@/hooks/useOrdersWithNotifications';
 import { toast } from 'sonner';
 import { useServices, useSeedDefaultServices } from '@/hooks/useServices';
+import { useStore } from '@/contexts/StoreContext';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { queueOfflineOrder, OfflineSessionExpiredError, usePendingOrders } from '@/hooks/useOfflineOrderQueue';
+import { buildReceiptDataFromLocalOrder, type LocalReceiptData } from '@/lib/printUtils';
 import { EnhancedOrderItem, DynamicOrderItemData } from './orderTypes';
 import { getJakartaNow, buildOrderItems, validateOrderReadiness, ORDER_ERROR_TOAST_STYLE } from './orderPayload';
 import { InlineServiceSelector, Service as CatalogService, DynamicItem } from './InlineServiceSelector';
@@ -47,12 +51,87 @@ export const EnhancedLaundryPOS = () => {
   // Collapsed until customer info is complete, then auto-expands - no point
   // showing the service list before there's a customer to attach it to.
   const [isServiceSectionExpanded, setIsServiceSectionExpanded] = useState(false);
+  const [isQueuingOffline, setIsQueuingOffline] = useState(false);
+  const [offlineReceiptData, setOfflineReceiptData] = useState<LocalReceiptData | null>(null);
 
   const navigate = useNavigate();
   const { customers, searchCustomers, getCustomerByPhone, loading: customersLoading } = useCustomers();
   const createOrderMutation = useCreateOrder();
+  const { currentStore } = useStore();
+  const isOnline = useOnlineStatus();
+  const pendingOfflineOrders = usePendingOrders(currentStore?.store_id);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const serviceSectionRef = useRef<HTMLDivElement>(null);
+
+  // Queues an order locally to sync automatically once connectivity
+  // returns. Points redemption is never part of the offline path (see docs
+  // on offline order creation): the field is stripped here, not just
+  // zeroed, so an offline order can never carry a stale redemption the
+  // sync worker would otherwise have to reconcile against a balance it has
+  // no live read on.
+  const queueOrderOffline = async (orderData: CreateOrderData): Promise<{ id: string; points_earned?: number }> => {
+    if (!currentStore?.enable_offline_mode) {
+      toast.error('❌ Toko belum mengaktifkan mode offline. Sambungkan internet untuk membuat pesanan.', {
+        style: ORDER_ERROR_TOAST_STYLE,
+      });
+      throw new Error('OFFLINE_MODE_DISABLED');
+    }
+
+    setIsQueuingOffline(true);
+    try {
+      const { points_redeemed, ...offlinePayload } = orderData;
+      const localId = await queueOfflineOrder(currentStore.store_id, offlinePayload);
+
+      setOfflineReceiptData(
+        buildReceiptDataFromLocalOrder(localId, offlinePayload, {
+          name: currentStore.store_name,
+          address: currentStore.store_address,
+          phone: currentStore.store_phone,
+          enable_qr: currentStore.enable_qr,
+        })
+      );
+
+      toast.success('Pesanan disimpan offline - akan sinkron otomatis saat koneksi kembali', {
+        duration: 4000,
+      });
+
+      return { id: localId, points_earned: 0 };
+    } catch (error) {
+      if (error instanceof OfflineSessionExpiredError) {
+        toast.error(`❌ ${error.message}`, { style: ORDER_ERROR_TOAST_STYLE });
+      } else {
+        // Any other failure (e.g. an IndexedDB write/quota error) means the
+        // order was neither queued nor created - staff must be told, not
+        // just left with a dialog that quietly closes.
+        toast.error('❌ Gagal menyimpan pesanan offline. Silakan coba lagi.', {
+          style: ORDER_ERROR_TOAST_STYLE,
+        });
+      }
+      throw error;
+    } finally {
+      setIsQueuingOffline(false);
+    }
+  };
+
+  // Routes an order through the normal online mutation, or - only when this
+  // store has opted in - queues it locally instead. `navigator.onLine` can
+  // report true while the device has no real route to the internet, so a
+  // failed online attempt still falls back to the offline queue rather
+  // than surfacing a lost order.
+  const submitOrder = async (orderData: CreateOrderData): Promise<{ id: string; points_earned?: number }> => {
+    if (isOnline) {
+      try {
+        return await createOrderMutation.mutateAsync(orderData);
+      } catch (error) {
+        if (!currentStore?.enable_offline_mode) {
+          throw error;
+        }
+        return queueOrderOffline(orderData);
+      }
+    }
+
+    return queueOrderOffline(orderData);
+  };
 
   // Load services from our service management system
   const { data: servicesData, isLoading: servicesLoading, error: servicesError } = useServices();
@@ -387,7 +466,7 @@ export const EnhancedLaundryPOS = () => {
         estimated_completion: completionDate?.toISOString(),
       };
 
-      const createdOrder = await createOrderMutation.mutateAsync(orderData);
+      const createdOrder = await submitOrder(orderData);
 
       // Close cash payment dialog
       setShowCashPaymentDialog(false);
@@ -430,7 +509,7 @@ export const EnhancedLaundryPOS = () => {
         estimated_completion: completionDate?.toISOString(),
       };
 
-      const createdOrder = await createOrderMutation.mutateAsync(orderData);
+      const createdOrder = await submitOrder(orderData);
 
       // Show order success dialog
       showOrderSuccess(createdOrder, totalAmount, paymentMethod);
@@ -474,7 +553,7 @@ export const EnhancedLaundryPOS = () => {
         estimated_completion: completionDate?.toISOString(),
       };
 
-      const createdOrder = await createOrderMutation.mutateAsync(orderData);
+      const createdOrder = await submitOrder(orderData);
 
       // Show order success dialog for draft order (same as paid orders)
       showOrderSuccess(createdOrder, totalAmount, 'pending');
@@ -544,6 +623,7 @@ export const EnhancedLaundryPOS = () => {
     
     // Reset last created order
     setLastCreatedOrder(null);
+    setOfflineReceiptData(null);
 
     // Reset drop off date to current time
     setDropOffDate(getJakartaNow());
@@ -556,6 +636,7 @@ export const EnhancedLaundryPOS = () => {
     setCustomerName('');
     setCustomerPhone('');
     setLastCreatedOrder(null);
+    setOfflineReceiptData(null);
   };
 
   if (servicesLoading) {
@@ -585,8 +666,39 @@ export const EnhancedLaundryPOS = () => {
     );
   }
 
+  const pendingSyncCount = pendingOfflineOrders.filter(
+    (o) => o.status === 'queued' || o.status === 'syncing' || o.status === 'error_retryable'
+  ).length;
+  const failedSyncCount = pendingOfflineOrders.filter((o) => o.status === 'error_permanent').length;
+
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Offline / Sync Status Banner */}
+      {(!isOnline || pendingSyncCount > 0 || failedSyncCount > 0) && (
+        <Card className={failedSyncCount > 0 ? 'border-destructive/40 bg-destructive/5' : 'border-pos-warning/40 bg-pos-warning/10'}>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-start gap-2 text-sm">
+              <WifiOff className={`mt-0.5 h-4 w-4 flex-shrink-0 ${failedSyncCount > 0 ? 'text-destructive' : 'text-pos-warning'}`} />
+              <div className="space-y-1">
+                {!isOnline && (
+                  <p className={failedSyncCount > 0 ? 'text-destructive' : 'text-pos-warning'}>
+                    {currentStore?.enable_offline_mode
+                      ? 'Anda sedang offline - pesanan baru disimpan di perangkat dan akan tersinkron otomatis saat koneksi kembali.'
+                      : 'Anda sedang offline - toko ini belum mengaktifkan mode offline, jadi pesanan baru belum bisa dibuat sampai koneksi kembali.'}
+                  </p>
+                )}
+                {pendingSyncCount > 0 && (
+                  <p className="text-muted-foreground">{pendingSyncCount} pesanan menunggu sinkronisasi</p>
+                )}
+                {failedSyncCount > 0 && (
+                  <p className="font-medium text-destructive">{failedSyncCount} pesanan gagal sinkron - perlu ditinjau di Riwayat Pesanan</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Service Management Notice */}
       {servicesData && servicesData.length === 0 && (
         <Card className="border-pos-warning/40 bg-pos-warning/10">
@@ -799,7 +911,7 @@ export const EnhancedLaundryPOS = () => {
         onProcessPayment={processPayment}
         onCreateDraft={createDraftOrder}
         onOpenServicePopup={() => serviceSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-        isProcessing={createOrderMutation.isPending}
+        isProcessing={createOrderMutation.isPending || isQueuingOffline}
         customerName={customerName}
         customerPhone={customerPhone}
         calculateFinishDate={calculateFinishDate}
@@ -845,8 +957,9 @@ export const EnhancedLaundryPOS = () => {
         <ThermalPrintDialog
           isOpen={showThermalPrintDialog}
           onClose={() => setShowThermalPrintDialog(false)}
-          orderId={lastCreatedOrder.id}
+          orderId={offlineReceiptData ? null : lastCreatedOrder.id}
           customerName={lastCreatedOrder.customerName}
+          localReceiptData={offlineReceiptData}
         />
       )}
     </div>

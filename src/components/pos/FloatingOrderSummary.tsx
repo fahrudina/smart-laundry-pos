@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCustomerPoints } from '@/hooks/useCustomerPoints';
 import { useStore } from '@/contexts/StoreContext';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { DynamicOrderItemData } from './orderTypes';
 
 interface OrderItem {
@@ -87,6 +88,7 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
   const [justAdded, setJustAdded] = useState(false);
 
   const { currentStore } = useStore();
+  const isOnline = useOnlineStatus();
   const { data: customerPoints } = useCustomerPoints(customerPhone);
 
   const itemCount = currentOrder.reduce((sum, item) => sum + item.quantity, 0) + dynamicItems.length;
@@ -138,6 +140,21 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
       onPointsRedeemedChange(points);
     }
   };
+
+  // Points redemption can't be validated against a live balance offline
+  // (see docs on offline order creation) - if connectivity drops while the
+  // points tab is active, fall back to no discount rather than let a
+  // redemption amount linger that offline order submission will silently
+  // strip anyway.
+  useEffect(() => {
+    if (!isOnline && discountType === 'points') {
+      setDiscountType('custom');
+      setPointsToRedeem('');
+      setCustomDiscount('');
+      onDiscountChange(0);
+      onPointsRedeemedChange(0);
+    }
+  }, [isOnline, discountType, onDiscountChange, onPointsRedeemedChange]);
 
   // Reset payment started state when processing completes or fails
   useEffect(() => {
@@ -394,11 +411,14 @@ export const FloatingOrderSummary: React.FC<FloatingOrderSummaryProps> = ({
                     <Percent className="h-3 w-3" />
                     Kustom
                   </TabsTrigger>
-                  <TabsTrigger value="points" className="flex items-center gap-1 text-xs" disabled={!hasPoints}>
+                  <TabsTrigger value="points" className="flex items-center gap-1 text-xs" disabled={!hasPoints || !isOnline}>
                     <Gift className="h-3 w-3" />
                     Poin {hasPoints && `(${pointsAvailable})`}
                   </TabsTrigger>
                 </TabsList>
+                {!isOnline && (
+                  <p className="mt-1 text-xs text-muted-foreground">Penukaran poin tidak tersedia saat offline</p>
+                )}
                 <TabsContent value="custom" className="space-y-1 mt-2">
                   <Input
                     type="number"

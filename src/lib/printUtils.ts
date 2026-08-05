@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { BleClient, BleService } from '@capacitor-community/bluetooth-le';
 import { Capacitor } from '@capacitor/core';
+import type { OfflineOrderPayload } from '@/lib/offlineDb';
 
 // Constants
 const IFRAME_RENDER_WAIT_MS = 1000;
@@ -948,6 +949,75 @@ export const printToThermalPrinter = async (
     console.error('Error printing to thermal printer:', error);
     throw error instanceof Error ? error : new Error('Failed to print to thermal printer');
   }
+};
+
+export interface LocalReceiptStoreInfo {
+  name: string;
+  address?: string;
+  phone?: string;
+  enable_qr?: boolean;
+}
+
+export interface LocalReceiptData {
+  storeName: string;
+  storeAddress: string;
+  storePhone: string;
+  customerName: string;
+  customerPhone: string;
+  orderId: string;
+  orderDate: string;
+  items: Array<OfflineOrderPayload['items'][number] & { line_total: number }>;
+  totalAmount: number;
+  subtotal: number;
+  taxAmount: number;
+  discountAmount: number;
+  pointsRedeemed: number;
+  paymentMethod: string;
+  paymentStatus: string;
+  paymentAmount: number | null;
+  executionStatus: string;
+  estimatedCompletion: string | null;
+  cashReceived: number | null;
+  enableQr: boolean;
+}
+
+/**
+ * Builds the same receipt shape fetchReceiptDataForThermal returns, but
+ * directly from an in-memory order that hasn't synced to Supabase yet
+ * (offline order creation - get_receipt_data is an RPC that requires a
+ * server-confirmed order, so it isn't reachable for these).
+ */
+export const buildReceiptDataFromLocalOrder = (
+  localOrderId: string,
+  payload: OfflineOrderPayload,
+  storeInfo: LocalReceiptStoreInfo
+): LocalReceiptData => {
+  return {
+    storeName: storeInfo.name || 'SMART LAUNDRY POS',
+    storeAddress: storeInfo.address || '',
+    storePhone: storeInfo.phone || '',
+    customerName: payload.customer_name || '',
+    customerPhone: payload.customer_phone || '',
+    orderId: localOrderId,
+    orderDate: payload.order_date || new Date().toISOString(),
+    items: payload.items.map((item) => ({
+      ...item,
+      item_type: item.item_type || 'service',
+      line_total: item.service_price * item.quantity,
+    })),
+    totalAmount: payload.total_amount || 0,
+    subtotal: payload.subtotal || 0,
+    taxAmount: payload.tax_amount || 0,
+    discountAmount: payload.discount_amount || 0,
+    pointsRedeemed: 0,
+    paymentMethod: payload.payment_method || 'cash',
+    paymentStatus: payload.payment_status || 'pending',
+    paymentAmount: payload.payment_amount ?? null,
+    executionStatus: payload.execution_status || 'in_queue',
+    estimatedCompletion: payload.estimated_completion || null,
+    cashReceived: payload.cash_received ?? null,
+    enableQr: storeInfo.enable_qr || false,
+  };
 };
 
 /**

@@ -7,19 +7,25 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ThermalPrinterManager } from '@/components/thermal/ThermalPrinterManager';
+import type { LocalReceiptData } from '@/lib/printUtils';
 
 interface ThermalPrintDialogProps {
   isOpen: boolean;
   onClose: () => void;
   orderId: string | null;
   customerName?: string;
+  // In-memory receipt for an offline order that hasn't synced to Supabase
+  // yet - bypasses the get_receipt_data RPC, which requires a
+  // server-confirmed order.
+  localReceiptData?: LocalReceiptData;
 }
 
 export const ThermalPrintDialog: React.FC<ThermalPrintDialogProps> = ({
   isOpen,
   onClose,
   orderId,
-  customerName
+  customerName,
+  localReceiptData
 }) => {
   const handlePrintSuccess = () => {
     // Keep dialog open so user can print more receipts if needed
@@ -31,16 +37,22 @@ export const ThermalPrintDialog: React.FC<ThermalPrintDialogProps> = ({
     console.error('Thermal print error:', error);
   };
 
+  // For an offline order, orderId is null (it hasn't synced to Supabase
+  // yet) but localReceiptData carries its local id - fall back to that so
+  // the description still shows the specific receipt being printed
+  // instead of the generic "connect your printer" message.
+  const displayOrderId = orderId || localReceiptData?.orderId;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Thermal Printer</DialogTitle>
           <DialogDescription>
-            {customerName && orderId ? (
-              <>Print receipt for <strong>{customerName}</strong> (Order #{orderId})</>
-            ) : orderId ? (
-              <>Print receipt for Order #{orderId}</>
+            {customerName && displayOrderId ? (
+              <>Print receipt for <strong>{customerName}</strong> (Order #{displayOrderId})</>
+            ) : displayOrderId ? (
+              <>Print receipt for Order #{displayOrderId}</>
             ) : (
               'Connect to your thermal printer to print receipts'
             )}
@@ -49,6 +61,7 @@ export const ThermalPrintDialog: React.FC<ThermalPrintDialogProps> = ({
         
         <ThermalPrinterManager
           orderId={orderId || undefined}
+          localReceiptData={localReceiptData}
           onPrintSuccess={handlePrintSuccess}
           onPrintError={handlePrintError}
         />
