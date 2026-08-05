@@ -33,6 +33,22 @@ const getPaymentStatusIndonesian = (status: string): string => {
 };
 
 /**
+ * Warm, personalized closing lines shared by every notification template
+ * (order completed, payment confirmation, ...). One is picked at random
+ * per message so repeat customers don't see the exact same line every time.
+ */
+const WARM_CLOSINGS = [
+  'Semoga rezekinya makin lancar dan selalu diberi kesehatan ya! 🙏😊',
+  'Terima kasih atas kepercayaannya, semoga harinya menyenangkan! ✨',
+  'Semoga rezekinya makin berkah dan keluarga di rumah selalu sehat. Sampai jumpa lagi! 🙏',
+  'Terima kasih sudah setia menggunakan layanan kami, sukses selalu untuk Anda! 🌟',
+  'Semoga aktivitasnya lancar dan sehat selalu. Ditunggu kedatangannya lagi ya! 😊',
+];
+
+const getRandomWarmClosing = (): string =>
+  WARM_CLOSINGS[Math.floor(Math.random() * WARM_CLOSINGS.length)];
+
+/**
  * WhatsApp Message Templates
  * Contains pre-defined message templates for different scenarios
  */
@@ -142,6 +158,8 @@ ${getReceiptBaseUrl()}/receipt/${data.orderId}`;
 
     return `🎉 *LAUNDRY SELESAI* 🎉
 
+Hai ${data.customerName} 👋
+
 ${data.storeInfo.name}
 ${data.storeInfo.address}
 No. HP ${data.storeInfo.phone}
@@ -160,8 +178,10 @@ Selesai pada : ${data.completedAt}
 Siap diambil : YA
 ====================
 
-Laundry Anda sudah selesai dan siap diambil!
-Silakan datang ke toko dengan membawa nota ini.
+Laundry Anda sudah selesai, wangi, dan siap diambil! 🧺✨
+Silakan datang ke toko dengan membawa nota ini ya.
+
+${getRandomWarmClosing()}
 
 ====================
 Klik link dibawah ini untuk melihat nota digital
@@ -222,12 +242,13 @@ ${getReceiptBaseUrl()}/receipt/${data.orderId}`;
 
     return `✅ *KONFIRMASI PEMBAYARAN* ✅
 
-Hai ${data.customerName},
+Hai ${data.customerName} 👋
 
-Pembayaran Anda telah dikonfirmasi.
+Pembayaran Anda telah dikonfirmasi, terima kasih! 💚
 Status Bayar: ${getPaymentStatusIndonesian(data.paymentStatus)}${pointsEarnedMessage}
 
-Terima kasih telah menggunakan layanan kami! 🙏
+${getRandomWarmClosing()}
+
 ====================
 Klik link dibawah ini untuk melihat nota digital
 ${getReceiptBaseUrl()}/receipt/${data.orderId}`;
