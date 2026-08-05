@@ -38,3 +38,7 @@ research/
 # regenerates this fresh from the web build via `cap add android` on every run.
 android/
 ios/
+
+# GTM campaign run state — contains real recipient emails/phones + send logs
+scripts/gtm-campaign/state.json
+scripts/gtm-campaign/*.log
