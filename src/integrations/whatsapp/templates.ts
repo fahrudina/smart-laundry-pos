@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { MessageTemplate, OrderCreatedData, OrderCompletedData, OrderReadyForPickupData, PaymentConfirmationData } from './types';
 import { POINTS_TO_CURRENCY_RATE } from '@/components/orders/PayLaterPaymentDialog';
 
@@ -9,13 +10,22 @@ const getReceiptBaseUrl = (): string => {
   if (import.meta.env.VITE_RECEIPT_BASE_URL) {
     return import.meta.env.VITE_RECEIPT_BASE_URL;
   }
-  
-  // In production, use the current domain
-  if (typeof window !== 'undefined') {
+
+  // VITE_APP_ORIGIN is already baked into native builds for the WhatsApp API
+  // base URL (see whatsapp-config.ts) - reuse it here too.
+  if (import.meta.env.VITE_APP_ORIGIN) {
+    return import.meta.env.VITE_APP_ORIGIN;
+  }
+
+  // On native platforms the WebView's own origin is a synthetic local
+  // address (`https://localhost` on Android, `capacitor://localhost` on
+  // iOS), never the real deployed domain, so it must never be used here -
+  // fall straight through to the hardcoded production fallback instead.
+  if (typeof window !== 'undefined' && !Capacitor.isNativePlatform()) {
     return window.location.origin;
   }
-  
-  // Fallback for server-side rendering or build time
+
+  // Fallback for native builds without env vars, SSR, or build time
   return 'https://pos.fahrudina.my.id';
 };
 
