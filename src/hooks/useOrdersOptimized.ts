@@ -428,6 +428,49 @@ export const useUpdateExecutionStatus = () => {
   });
 };
 
+// Delete order mutation (owner only). order_items are removed via ON DELETE CASCADE.
+export const useDeleteOrder = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { currentStore, isOwner } = useStore();
+
+  return useMutation({
+    mutationFn: async (orderId: string) => {
+      if (!isOwner || !currentStore?.store_id) {
+        throw new Error('Hanya owner yang dapat menghapus pesanan');
+      }
+
+      // Scope by store_id and select the deleted row so a silently blocked delete (e.g. RLS) is detected
+      const { data, error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId)
+        .eq('store_id', currentStore.store_id)
+        .select('id');
+
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error('Pesanan tidak ditemukan atau tidak dapat dihapus');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ORDERS_QUERY_KEY });
+      toast({
+        title: "Berhasil",
+        description: "Pesanan berhasil dihapus",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error deleting order:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Gagal menghapus pesanan",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
 // Get orders by customer
 export const useOrdersByCustomer = (customerPhone: string) => {
   const { currentStore } = useStore();

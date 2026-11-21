@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useOrders, OrderFilters, Order } from '@/hooks/useOrdersOptimized';
+import { useOrders, useDeleteOrder, OrderFilters, Order } from '@/hooks/useOrdersOptimized';
 import { useUpdateOrderStatusWithNotifications } from '@/hooks/useOrdersWithNotifications';
 import { useResendOrderNotification } from '@/hooks/useResendOrderNotification';
 import { OrderDetailsDialog } from '@/components/pos/OrderDetailsDialog';
@@ -176,6 +177,8 @@ export const OrderHistory = () => {
   // Track which order is currently being processed
   const [processingOrderId, setProcessingOrderId] = useState<string | null>(null);
   const [processingAction, setProcessingAction] = useState<string | null>(null);
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
+  const deleteOrder = useDeleteOrder();
 
   // Enhanced filtering function with sorting (client-side for complex filters)
   // Note: Date range filtering is now handled server-side for better performance
@@ -475,6 +478,27 @@ export const OrderHistory = () => {
       setProcessingAction(null);
     }
   }, [resendNotification]);
+
+  const handleDeleteOrder = useCallback((order: Order) => {
+    if (!isOwner) return;
+    setOrderToDelete(order);
+  }, [isOwner]);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!isOwner || !orderToDelete) return;
+    const orderId = orderToDelete.id;
+    setOrderToDelete(null);
+    setProcessingOrderId(orderId);
+    setProcessingAction('delete');
+    try {
+      await deleteOrder.mutateAsync(orderId);
+    } catch {
+      // Error toast is shown by the mutation's onError handler
+    } finally {
+      setProcessingOrderId(null);
+      setProcessingAction(null);
+    }
+  }, [isOwner, orderToDelete, deleteOrder]);
 
   const handleRetryOfflineOrder = useCallback(async (id: string) => {
     if (!navigator.onLine) {
@@ -833,6 +857,7 @@ export const OrderHistory = () => {
                       onPrintThermal={handleThermalPrint}
                       onExportReceiptPDF={handleExportReceiptPDF}
                       onResendNotification={handleResendNotification}
+                      onDeleteOrder={isOwner ? handleDeleteOrder : undefined}
                       processingOrderId={processingOrderId}
                       processingAction={processingAction}
                       height={500} // Fixed responsive height
@@ -868,6 +893,29 @@ export const OrderHistory = () => {
             </Card>
           </div>
         </div>
+
+        {/* Delete Order Confirmation (owner only) */}
+        {isOwner && (
+          <AlertDialog open={!!orderToDelete} onOpenChange={(open) => !open && setOrderToDelete(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Hapus Pesanan?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Pesanan atas nama <strong>{orderToDelete?.customer_name}</strong> beserta seluruh item di dalamnya akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Batal</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleConfirmDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Hapus
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
 
         {/* Order Details Dialog */}
         {selectedOrder && (
