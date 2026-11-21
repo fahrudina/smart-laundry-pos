@@ -437,7 +437,10 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
   // Responsive item size - accounts for all action buttons including WhatsApp resend
   // Mobile: 460px to prevent button overlap on small screens
   // Desktop: 410px provides adequate spacing for all buttons
-  const itemSize = isMobile ? 460 : 410;
+  // Owners get an extra delete button row (h-9 button + spacing), so rows must be taller
+  const DELETE_ROW_HEIGHT = 44;
+  const baseItemSize = isMobile ? 460 : 410;
+  const itemSize = onDeleteOrder ? baseItemSize + DELETE_ROW_HEIGHT : baseItemSize;
 
   return (
     <List
