@@ -3,7 +3,7 @@ import { FixedSizeList as List } from 'react-window';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, Printer, Download, Receipt, Bluetooth, MessageSquare, Loader2 } from 'lucide-react';
+import { Eye, Printer, Download, Receipt, Bluetooth, MessageSquare, Loader2, Trash2 } from 'lucide-react';
 import { Order } from '@/hooks/useOrdersOptimized';
 
 interface VirtualizedOrderListProps {
@@ -18,6 +18,7 @@ interface VirtualizedOrderListProps {
   onPrintThermal?: (orderId: string) => void;
   onExportReceiptPDF?: (orderId: string, customerName: string) => void;
   onResendNotification?: (orderId: string) => void;
+  onDeleteOrder?: (order: Order) => void;
   processingOrderId?: string | null;
   processingAction?: string | null;
 }
@@ -33,6 +34,7 @@ interface ItemData {
   onPrintThermal?: (orderId: string) => void;
   onExportReceiptPDF?: (orderId: string, customerName: string) => void;
   onResendNotification?: (orderId: string) => void;
+  onDeleteOrder?: (order: Order) => void;
   processingOrderId?: string | null;
   processingAction?: string | null;
 }
@@ -353,6 +355,29 @@ const OrderItem = memo(({ index, style, data }: {
                     </Button>
                   </div>
                 )}
+
+                {/* Row 4: Delete Action (owner only - handler is only passed for owners) */}
+                {data.onDeleteOrder && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => data.onDeleteOrder!(order)}
+                    disabled={isButtonLoading(order.id, 'delete')}
+                    className="w-full flex items-center justify-center space-x-1 text-xs border-destructive/30 text-destructive hover:bg-destructive/5"
+                  >
+                    {isButtonLoading(order.id, 'delete') ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>Menghapus...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-3 w-3" />
+                        <span>Hapus Pesanan</span>
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -376,6 +401,7 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
   onPrintThermal,
   onExportReceiptPDF,
   onResendNotification,
+  onDeleteOrder,
   processingOrderId,
   processingAction
 }) => {
@@ -403,6 +429,7 @@ export const VirtualizedOrderList: React.FC<VirtualizedOrderListProps> = ({
     onPrintThermal,
     onExportReceiptPDF,
     onResendNotification,
+    onDeleteOrder,
     processingOrderId,
     processingAction,
   };
